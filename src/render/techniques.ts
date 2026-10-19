@@ -12,6 +12,7 @@ function limb(
   mechanical = false,
   ending: "fist" | "foot" | "hoof" = "fist",
   haki = false,
+  heated = false,
 ): void {
   ctx.lineCap = "round";
   ctx.strokeStyle = "#473e37";
@@ -20,10 +21,22 @@ function limb(
   ctx.moveTo(start.x, start.y);
   ctx.lineTo(end.x, end.y);
   ctx.stroke();
-  ctx.strokeStyle = haki ? "#342c40" : mechanical ? "#9ab3b7" : "#e7af83";
+  ctx.strokeStyle = haki
+    ? "#342c40"
+    : mechanical
+      ? "#9ab3b7"
+      : heated
+        ? "#d27a81"
+        : "#e7af83";
   ctx.lineWidth = mechanical ? 7 : 6;
   ctx.stroke();
-  ctx.strokeStyle = haki ? "#a74850" : mechanical ? "#e7eeee" : "#ffd4a2";
+  ctx.strokeStyle = haki
+    ? "#a74850"
+    : mechanical
+      ? "#e7eeee"
+      : heated
+        ? "#ffa1ac"
+        : "#ffd4a2";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(start.x - 1, start.y - 2);
@@ -55,9 +68,21 @@ function limb(
   }
   ctx.fillStyle = "#473e37";
   ctx.fillRect(end.x - 6, end.y - 6, 13, 12);
-  ctx.fillStyle = haki ? "#292a39" : mechanical ? "#a9c4c8" : "#efbd91";
+  ctx.fillStyle = haki
+    ? "#292a39"
+    : mechanical
+      ? "#a9c4c8"
+      : heated
+        ? "#e88d98"
+        : "#efbd91";
   ctx.fillRect(end.x - 4, end.y - 5, 9, 8);
-  ctx.fillStyle = haki ? "#b45259" : mechanical ? "#e1eddd" : "#ffe0ae";
+  ctx.fillStyle = haki
+    ? "#b45259"
+    : mechanical
+      ? "#e1eddd"
+      : heated
+        ? "#ffb3b9"
+        : "#ffe0ae";
   ctx.fillRect(end.x - 3, end.y - 5, 7, 2);
   ctx.fillStyle = "#a77758";
   ctx.fillRect(end.x - 3, end.y + 1, 1, 2);
@@ -72,9 +97,9 @@ export function drawTechniques(
     const definition = weaponById(attack.weapon);
     const progress = animationProgress(attack);
     const caster = casterPosition(run, attack.caster);
-    const origin = { x: caster.x, y: caster.y - 31 };
+    const origin = { x: caster.x, y: caster.y - 45 };
     const point = attackEndpoint(run, attack);
-    const target = { x: attack.target.x, y: attack.target.y - 31 };
+    const target = { x: attack.target.x, y: attack.target.y - 45 };
     const angle = Math.atan2(attack.direction.y, attack.direction.x);
     const phase = (attack.age - attack.windup) / attack.active;
     const active = progress.phase === "active";
@@ -106,7 +131,9 @@ export function drawTechniques(
           const side = i % 2 === 0 ? -1 : 1;
           const shoulder = { x: origin.x + side * 8, y: origin.y };
           const oscillation =
-            definition.animation === "barrage" && active
+            (definition.animation === "barrage" ||
+              (attack.caster === "luffy" && attack.form === 2)) &&
+            active
               ? 0.35 +
                 0.65 *
                   Math.abs(
@@ -121,7 +148,7 @@ export function drawTechniques(
               attack.direction.y * spread,
             y:
               shoulder.y +
-              (point.y - 31 - origin.y) * extension * oscillation +
+              (point.y - 45 - origin.y) * extension * oscillation +
               attack.direction.x * spread,
           };
           limb(
@@ -132,6 +159,7 @@ export function drawTechniques(
             definition.animation === "chain",
             "fist",
             attack.caster === "luffy" && attack.form === 2,
+            attack.caster === "luffy" && attack.form === 1,
           );
         }
         break;

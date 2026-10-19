@@ -1,8 +1,18 @@
 # Recursos visuales — FASE 3
 
-El juego incluye cuerpos animados y enemigos dibujados con Canvas, más retratos y rostros de fan art original MIT. No necesita descargar imágenes durante la partida. Los sprites no proceden de juegos oficiales ni capturas del anime.
+El juego carga **33 atlas PNG ilustrados**: diez personajes × tres estilos y tres tipos de enemigo. Son hojas nuevas creadas para este proyecto con asistencia de IA de imagen, separadas, normalizadas y exportadas al contrato del juego. Se sirven desde el propio repositorio; no hay dependencia de una web externa. El render procedural y el fan art MIT anterior quedan como reserva si falta un archivo.
 
-## Procedencia y créditos
+## Arte principal — revisión de acabado
+
+Los atlas están en `public/assets/characters/<id>-<forma>.png` y `public/assets/enemies/<tipo>.png`, registrados en `public/assets/manifest.json`. Cada uno tiene silueta corporal, cara, ropa y equipo propios; hay vistas frontal, lateral y trasera. Chopper conserva una altura menor en Brain Point; las formas mecánicas, gigantes y Asura cambian anatomía/equipo. La exportación separa figuras por componentes de alfa para evitar recortes de pies, duplicar fragmentos del vecino o dejar fondos pintados.
+
+Las imágenes maestras se generaron durante esta revisión y no son sprites descargados ni extraídos de videojuegos. Los PNG compilados están versionados y bastan para jugar, probar y compilar en una sesión nueva. El permiso de uso de una ilustración no transfiere derechos sobre los personajes de One Piece.
+
+El atlas reproduce seis tiempos de marcha a partir de **dos poses clave por dirección**, con pausas y cambios de apoyo; no son seis dibujos independientes. Reposo, anticipación/ataque y daño se derivan de esas poses con desplazamiento, inclinación y recuperación. Las extremidades de las técnicas continúan animándose por separado y el cuerpo utiliza la edad del ataque. Este cambio mejora el acabado, sin presentarse como una animación final de seis fotogramas dibujados a mano.
+
+La adaptación opcional se hace con `node scripts/compile-sprite-art.mjs /ruta/config.json`. La configuración es una lista de `{ "id": "luffy", "source": "/ruta/hoja1536x1024.png", "heights": [68,68,72] }`; las hojas maestras deben tener tres pares de poses × cuatro orientaciones. Se necesita Chromium (o `CHROMIUM_PATH`). No se ejecuta generación de imágenes durante el build. Las variantes `profile` y `flipKeys` corrigen hojas cuya orientación no coincide con la fila pedida.
+
+## Recursos anteriores de reserva — procedencia y créditos
 
 - Autor: **gshklovs**, proyecto [opshell](https://github.com/gshklovs/opshell).
 - Revisión fijada: `4f51b3530104f47f5efdd4874e3f3d8abe3a3271`.
@@ -30,11 +40,11 @@ Los otros IDs son zoro/nami/usopp/sanji/chopper/robin/franky/brook/jinbe; cada u
 
 Contrato corporal: **960×320 PNG transparente**, celdas **64×80**, 15 columnas y 4 filas. Filas: abajo, izquierda, derecha, arriba. Columnas: reposo 0–3, caminar 4–9, ataque 10–12, daño 13–14. Ancla de pies `(32,74)` dentro de cada celda. Cuatro/seis/tres/dos fotogramas por estado; reproducción aproximada 3/10/12/10 FPS. Resolución ampliada respecto a los 32×32 propuestos inicialmente para conservar detalle y formas grandes. No estirar los cuerpos para llenar la celda.
 
-Los atlas generados se cachean por personaje/forma en memoria. La orientación lateral adapta la pose, cabeza y extremidades; no equivale a cuatro ilustraciones independientes de autor. La revisión ampliada se conserva en [galería](screenshots/fase3-galeria.png). Es una primera versión jugable pendiente de valoración artística del usuario.
+Los PNG principales se precargan y decodifican antes de mostrar el puerto. En reserva, los atlas procedurales se cachean por personaje/forma. La revisión ampliada actual se conserva en [galería](screenshots/fase3-galeria.png); el selector utiliza los mismos modelos de cuerpo completo que el combate. El acabado sigue sujeto a valoración artística del usuario.
 
 ## Ataques y anclas
 
-El atlas es corporal: la extensión de un brazo no cabe en una celda. `src/render/techniques.ts` dibuja extremidades/armas conectadas desde el actor, con hombro visual a `(0,-31)` respecto a pies. `src/game/techniques.ts` controla anticipación, fase activa, impactos y recuperación con paso fijo; el render consume esos tiempos. Sustituir un atlas no cambia daño ni colisión. Luffy mantiene hombro–brazo–puño al estirar y retraer; Zoro mueve hojas; Sanji extiende/gira piernas. Franky utiliza cadena metálica y Boundman brazos oscuros de haki, con estilos separados.
+El atlas es corporal: la extensión de un brazo no cabe en una celda. `src/render/techniques.ts` dibuja extremidades/armas conectadas desde el actor, con hombro visual a `(0,-45)` respecto a pies. `src/game/techniques.ts` controla anticipación, fase activa, impactos y recuperación con paso fijo; el render consume esos tiempos. Sustituir un atlas no cambia daño ni colisión. Luffy mantiene hombro–brazo–puño al estirar y retraer; Zoro mueve hojas; Sanji extiende/gira piernas. Franky utiliza cadena metálica y Boundman brazos oscuros de haki, con estilos separados.
 
 Cada personaje tiene idle, caminar, ataque y daño; las piernas alternan y las armas acompañan la pose. La reducción de movimiento conserva las señales funcionales y reduce vapor, temblores y partículas. Los enemigos tienen uniforme y gorra de la Marina, ropa de la banda de Buggy o cuerpo pesado/maza de los matones de Alvida. Son esbirros originales; jefes con nombre en fase 4.
 

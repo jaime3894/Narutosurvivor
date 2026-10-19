@@ -29,7 +29,7 @@ function actor(
   const hurt = !support && run.player.invulnerable > 0;
   const state = hurt ? "hurt" : attack ? "attack" : moving ? "walk" : "idle";
   const atlas = getSpriteAtlas(id, form);
-  const time = reducedMotion ? 0 : run.elapsed;
+  const time = reducedMotion ? 0 : attack ? attack.age : run.elapsed;
   ctx.save();
   ctx.fillStyle = support ? "#2c514b" : "#294c43";
   ctx.beginPath();
@@ -52,6 +52,7 @@ function actor(
   }
   const inflate = attacks.find((item) => item.weapon === "balloon");
   if (inflate) {
+    drawSprite(ctx, atlas, position, direction, state, time);
     const extension = Math.max(0, animationProgress(inflate).extension),
       radius = 22 + extension * 24;
     ctx.fillStyle = "#a66c56";
@@ -85,11 +86,11 @@ function actor(
       frame * 64,
       row * 80,
       64,
-      38,
+      30,
       position.x - 32,
       position.y - 74 - extension * 14,
       64,
-      38,
+      30,
     );
   } else drawSprite(ctx, atlas, position, direction, state, time);
   if (id === "luffy" && form > 0 && !reducedMotion) {

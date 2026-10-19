@@ -8,7 +8,6 @@ import {
 } from "../data/crew";
 import { characterNames } from "../data/content";
 import { getSpriteAtlas, drawSprite } from "../render/sprites";
-import { paintPortrait } from "../render/portraits";
 export function openCrew(
   initial: CrewSelection,
   onConfirm: (selection: CrewSelection) => void,
@@ -31,7 +30,7 @@ export function openCrew(
       activeSynergies(selection.captain, selection.nakama)
         .map((item) => `${item.name}: ${item.description}`)
         .join("<br>") || "Combina nakama para descubrir sinergias."
-    }</p></div><button id="confirm-crew">Confirmar tripulación ↗</button></div><p class="art-credit">Retratos y rostros base: <a href="https://github.com/gshklovs/opshell" target="_blank" rel="noopener noreferrer">gshklovs / opshell</a> · arte original de fan, MIT. Cuerpos y animaciones adaptados para el juego. <a href="./licenses/opshell-MIT.txt" target="_blank" rel="noopener noreferrer">Licencia</a></p>`;
+    }</p></div><button id="confirm-crew">Confirmar tripulación ↗</button></div><p class="art-credit">Fan art procedural de reserva: <a href="https://github.com/gshklovs/opshell" target="_blank" rel="noopener noreferrer">gshklovs / opshell</a> · arte original de fan, MIT. Sprites de cuerpo completo creados para este juego con asistencia de IA y adaptados al atlas animado. <a href="./licenses/opshell-MIT.txt" target="_blank" rel="noopener noreferrer">Licencia</a></p>`;
     for (const canvas of dialog.querySelectorAll<HTMLCanvasElement>(
       "[data-portrait]",
     )) {
@@ -39,7 +38,16 @@ export function openCrew(
         (item) => item.id === canvas.dataset.portrait,
       )?.id;
       const ctx = canvas.getContext("2d");
-      if (id && ctx) paintPortrait(ctx, id, 0, 0, 4);
+      if (id && ctx)
+        drawSprite(
+          ctx,
+          getSpriteAtlas(id, 0),
+          { x: 56, y: 107 },
+          "down",
+          "idle",
+          0,
+          1.4,
+        );
     }
     dialog
       .querySelectorAll<HTMLButtonElement>("[data-captain]")

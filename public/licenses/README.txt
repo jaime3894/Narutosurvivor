@@ -5,3 +5,8 @@ Archivos: packs/onepiece/art/{luffy,zoro,nami,usopp,sanji,chopper,robin,franky,b
 El README de origen declara que MIT cubre su código y su arte original.
 Nombres y personajes de One Piece pertenecen a sus titulares; la licencia no transfiere derechos sobre ellos.
 Cambios: extracción de variante common, adaptación de rostros e integración con cuerpos y animaciones propios.
+
+Arte principal de la revisión artística: public/assets/characters/*.png y public/assets/enemies/*.png.
+Creado para Marea de aventuras con asistencia de IA de imagen, después adaptado al atlas animado.
+No procede del proyecto opshell ni de sprites extraídos de videojuegos. La licencia MIT anterior corresponde solo a los retratos/rostros de reserva en src/assets/portraits/.
+Nombres y personajes de One Piece pertenecen a sus titulares; no se presenta como producto oficial.

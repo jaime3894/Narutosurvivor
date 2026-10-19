@@ -1,6 +1,6 @@
 # Marea de aventuras
 
-Survivor pirata web con pixel art propio y retratos de fan art MIT. **Fase 3 implementada:** diez capitanes, tres estilos por personaje, innatos y hasta dos nakama con sinergias. Mantiene las partidas de cinco minutos, 18 técnicas, 14 pasivos, cofres y evoluciones. Pendiente validar la diversión con una partida humana.
+Survivor pirata web con 33 atlas 2D de cuerpo completo creados para el juego con asistencia de IA. **Fase 3 implementada:** diez capitanes, tres estilos por personaje, innatos y hasta dos nakama con sinergias. Mantiene las partidas de cinco minutos, 18 técnicas, 14 pasivos, cofres y evoluciones. Pendiente validar la diversión con una partida humana.
 
 ## Jugar online
 
@@ -35,7 +35,7 @@ npm run build
 npm run test:e2e
 ```
 
-Los 98 tests de lógica incluyen ejecución y evolución de las 18 técnicas, compatibilidades y tres simulaciones completas de cinco minutos sin trucos. Las doce pruebas E2E usan el build de producción en el puerto 4173 y verifican controles, pausa, mejoras, resultados, diseño móvil, catálogo, las 18 técnicas en el banco, la evolución desde un cofre, tripulación, 30 vistas de formas, sprites propios y la ruta de GitHub Pages. La victoria E2E usa salud restaurada en depuración; verifica interfaz, no dificultad.
+Los 132 tests de lógica y recursos incluyen ejecución y evolución de las 18 técnicas, compatibilidades y tres simulaciones completas de cinco minutos sin trucos. Las trece pruebas E2E usan el build de producción en el puerto 4173 y verifican controles, pausa, mejoras, resultados, diseño móvil, catálogo, las 18 técnicas en el banco, la evolución desde un cofre, tripulación, 30 vistas de formas, sprites propios y la ruta de GitHub Pages. La victoria E2E usa salud restaurada en depuración; verifica interfaz, no dificultad.
 
 El entorno cloud ya tiene Chromium en `/usr/bin/chromium`. Fuera de él puedes usar `CHROMIUM_PATH=/ruta/al/navegador npm run test:e2e` o instalar el navegador de Playwright con `npx playwright install chromium`. No requiere ese navegador para jugar, compilar ni ejecutar los tests de lógica.
 
@@ -49,4 +49,4 @@ El entorno cloud ya tiene Chromium en `/usr/bin/chromium`. Fuera de él puedes u
 - [Contrato de recursos](docs/ASSETS.md)
 - [Publicación en GitHub Pages](docs/PUBLICAR.md)
 
-Retratos y rostros base originales de [gshklovs/opshell](https://github.com/gshklovs/opshell), licencia MIT conservada en `public/licenses/`. Cuerpos, animaciones y enemigos dibujados para el juego. Puedes añadir tus atlas PNG siguiendo [ASSETS.md](docs/ASSETS.md). No incluye sprites extraídos de juegos oficiales, backend ni credenciales. Los cambios se entregan por fases en GitHub después de pasar build y tests.
+Los modelos jugables usan atlas ilustrados propios; el arte procedural anterior queda como reserva. Retratos de reserva originales de [gshklovs/opshell](https://github.com/gshklovs/opshell), licencia MIT conservada en `public/licenses/`. Cuerpos, animaciones y enemigos adaptados para el juego. Puedes añadir tus atlas PNG siguiendo [ASSETS.md](docs/ASSETS.md). No incluye sprites extraídos de juegos oficiales, backend ni credenciales. Los cambios se entregan por fases en GitHub después de pasar build y tests.

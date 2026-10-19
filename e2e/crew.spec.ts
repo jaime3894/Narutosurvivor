@@ -176,3 +176,53 @@ test("un atlas PNG local sustituye al personaje sin cambiar el código del juego
   await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
   await expect(page.locator("#battle")).toBeVisible();
 });
+
+test("los 33 atlas reales tienen transparencia, cuatro vistas y dos claves de marcha distintas", async ({
+  page,
+}) => {
+  const failures: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "warning") failures.push(message.text());
+  });
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const manifest: Record<string, string> = await (
+      await fetch("./assets/manifest.json")
+    ).json();
+    return Promise.all(
+      Object.entries(manifest).map(async ([id, path]) => {
+        const image = new Image();
+        image.src = path;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = 960;
+        canvas.height = 320;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+        ctx.drawImage(image, 0, 0);
+        const views = [0, 1, 2, 3].map((row) => {
+          const first = ctx.getImageData(4 * 64, row * 80, 64, 80).data;
+          const second = ctx.getImageData(7 * 64, row * 80, 64, 80).data;
+          let opaque = 0,
+            transparent = 0,
+            difference = 0;
+          for (let i = 0; i < first.length; i += 4) {
+            if (first[i + 3]! > 0) opaque++;
+            else transparent++;
+            for (let c = 0; c < 4; c++)
+              if (first[i + c] !== second[i + c]) difference++;
+          }
+          return { opaque, transparent, difference };
+        });
+        return { id, views };
+      }),
+    );
+  });
+  expect(result).toHaveLength(33);
+  for (const atlas of result)
+    for (const view of atlas.views) {
+      expect(view.opaque, atlas.id).toBeGreaterThan(150);
+      expect(view.transparent, atlas.id).toBeGreaterThan(100);
+      expect(view.difference, atlas.id).toBeGreaterThan(20);
+    }
+  expect(failures).toEqual([]);
+});

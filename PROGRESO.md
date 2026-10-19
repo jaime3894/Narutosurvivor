@@ -96,3 +96,11 @@ Nombre actual del repositorio: jaime3894/One-piece-survivor. Origin actualizado 
 ### Límites concretos
 
 El arte incorporado mejora identidad, volumen y movimiento; es una primera versión jugable, no una aprobación del usuario del acabado definitivo. Las vistas laterales usan poses adaptadas, no ilustraciones independientes dibujadas a mano. Los nakama combaten en estilo base y no tienen barra de salud propia. Algunos personajes representan tres estilos de combate en vez de tres transformaciones anatómicas canónicas; decisión explicada en GDD. Prueba humana de diversión pendiente; audio, mando y pulido global siguen en fase 6. No se adelantan islas/jefes, guardado ni gacha.
+
+## Corrección de acabado artístico — FASE 3
+
+Solicitud del usuario: rehacer el acabado tomando como referencia modelos 2D detallados, sin avanzar de fase. Se han creado e integrado 33 atlas PNG de cuerpo completo: 30 estilos de los diez personajes y tres enemigos. Sustituyen la presentación procedural habitual tanto en selector como en combate. Incluyen caras, ropa, equipo y vistas específicas. Las ilustraciones se generaron para el proyecto con asistencia de IA; no se descargaron sprites oficiales. Investigación y decisión en GDD.
+
+Compilación por componentes de alfa para conservar figuras completas, corrección de perfiles y eliminación de restos de sprites vecinos. Marcha con dos poses clave por dirección y seis tiempos; preparación, ataque y daño derivados del cuerpo, junto con las extremidades de las técnicas. Se corrigieron ancla de hombro, color de Gear Second, multigolpes de Boundman y composición de Fusen. Fuentes y límites documentados en ASSETS.
+
+Verificación: 132 tests de lógica/recursos, build estricto y 13 E2E del build. Los recursos tienen dimensiones correctas, transparencia real, cuatro vistas, poses distintas y un total inferior a 5 MB. Galería completa, selector y combate revisados en Chromium; control móvil y ruta de Pages cubiertos. Continúan pendientes la aprobación artística del usuario y su prueba humana de cinco minutos. Los ciclos no son seis dibujos manuales independientes; se documenta expresamente. Siguiente fase prevista sigue siendo 4, después de revisar este acabado.
