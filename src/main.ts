@@ -1,26 +1,28 @@
-import './style.css';
-import { game } from './data/game';
-import { drawIsland } from './render/island';
-const root = document.querySelector<HTMLDivElement>('#app');
-if (!root) throw new Error('Falta el contenedor principal');
-root.innerHTML = `
-  <header><a href="./" class="brand">MAREA<span> / SURVIVOR</span></a><span class="badge">${game.phase}</span></header>
-  <main>
-    <section class="intro"><p class="eyebrow">BITÁCORA 001 / EL COMIENZO</p><h1>El horizonte<br>nos espera<span>.</span></h1><p class="description">${game.subtitle}<br>Estamos construyendo la próxima gran aventura.</p><button id="explore">Explorar el proyecto <span>↗</span></button><p class="caption">Base técnica lista · Combate en la fase 1</p></section>
-    <section class="map" aria-label="Vista procedural de East Blue"><div class="map-label"><span>01 / EAST BLUE</span><span>MAR EN CALMA</span></div><canvas aria-label="Isla pixel art con palmeras, embarcadero y un aventurero"></canvas><div class="map-footer"><span>UN MUNDO POR DESCUBRIR</span><span>✦</span></div></section>
-    <section class="status" id="project" tabindex="-1"><div><span class="number">01</span><h2>Un núcleo que se sienta bien</h2><p>La siguiente fase pondrá a prueba cinco minutos de movimiento, combate y decisiones.</p></div><div><span class="number">02</span><h2>Arte con identidad propia</h2><p>Escenarios procedurales y una ruta preparada para incorporar tus propios assets.</p></div><div><span class="number">03</span><h2>Rumbo trazado</h2><p>Contenido, tripulación e islas llegarán por fases, con validación en cada etapa.</p></div></section>
-  </main><footer>MAREA DE AVENTURAS <span>PROTOTIPO EN CONSTRUCCIÓN · SIN ASSETS OFICIALES</span></footer>`;
-const canvas = root.querySelector('canvas');
-if (!canvas) throw new Error('Falta el lienzo');
-drawIsland(canvas, game.island.seed);
-root.querySelector('#explore')?.addEventListener('click', () => {
-  const project = document.querySelector<HTMLElement>('#project');
-  project?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
-  project?.focus({ preventScroll: true });
-});
-if (new URLSearchParams(location.search).has('debug')) {
-  const debug = document.createElement('p');
-  debug.className = 'debug';
-  debug.textContent = `Depuración · semilla ${game.island.seed} · paso ${game.fixedStep.toFixed(4)} s · fase 0`;
-  root.append(debug);
+import "./style.css";
+import "./ui/battle.css";
+import { game } from "./data/game";
+import { drawIsland } from "./render/island";
+import { startSession } from "./ui/session";
+
+const root = document.querySelector<HTMLDivElement>("#app");
+if (!root) throw new Error("Falta el contenedor principal");
+const app: HTMLDivElement = root;
+let cleanup: (() => void) | undefined;
+const debug = new URLSearchParams(location.search).has("debug");
+function showPort(): void {
+  cleanup?.();
+  cleanup = undefined;
+  app.innerHTML = `
+    <header><a href="./" class="brand">MAREA<span> / SURVIVOR</span></a><span class="badge">${game.phase}</span></header>
+    <main>
+      <section class="intro"><p class="eyebrow">BITÁCORA 002 / EL PRIMER DESEMBARCO</p><h1>Una ola más<span>.</span><br>Una aventura tuya.</h1><p class="description">Cinco minutos para conquistar la costa.<br>Muévete, embiste y encuentra tu propio ritmo.</p><button id="play">Zarpar hacia East Blue <span>↗</span></button><p class="caption">WASD / flechas · Espacio para embestir · Ataque automático</p></section>
+      <section class="map" aria-label="Vista procedural de East Blue"><div class="map-label"><span>01 / EAST BLUE</span><span>LA MAREA SUBE</span></div><canvas aria-label="Isla pixel art con palmeras, embarcadero y un aventurero"></canvas><div class="map-footer"><span>RESISTE · MEJORA · REPITE</span><span>✦</span></div></section>
+      <section class="status"><div><span class="number">01</span><h2>No dejes de moverte</h2><p>Tus proyectiles buscan al enemigo cercano. Tú eliges dónde combatir.</p></div><div><span class="number">02</span><h2>Rompe el cerco</h2><p>Embestir te protege y derriba a los enemigos en tu camino. Úsalo para abrir una salida.</p></div><div><span class="number">03</span><h2>Haz tuya la partida</h2><p>Recoge cristales y elige mejoras. Sobrevive cinco minutos para asegurar la costa.</p></div></section>
+    </main><footer>MAREA DE AVENTURAS <span>PROTOTIPO FASE 1 · ARTE PROCEDURAL ORIGINAL</span></footer>`;
+  const canvas = app.querySelector("canvas");
+  if (canvas) drawIsland(canvas, game.island.seed);
+  app.querySelector("#play")?.addEventListener("click", () => {
+    cleanup = startSession(app, showPort, debug);
+  });
 }
+showPort();

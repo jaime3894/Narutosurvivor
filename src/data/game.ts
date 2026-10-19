@@ -1,7 +1,7 @@
 export const game = {
-  title: 'Marea de aventuras',
-  subtitle: 'Una tripulación. Un océano de posibilidades.',
-  phase: 'FASE 0 · ASTILLERO',
-  island: { name: 'East Blue', seed: 3894 },
+  title: "Marea de aventuras",
+  subtitle: "Una tripulación. Un océano de posibilidades.",
+  phase: "FASE 1 · PRIMER DESEMBARCO",
+  island: { name: "East Blue", seed: 3894 },
   fixedStep: 1 / 60,
 } as const;

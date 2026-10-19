@@ -3,7 +3,9 @@
 La fase 0 dibuja su isla y su aventurero directamente con Canvas en src/render/island.ts. No descarga imágenes, fuentes, logotipos, audio ni sprites de terceros.
 
 ## Contrato previsto para recursos propios
+
 Ubicación futura: public/assets/. No se requieren estos archivos para iniciar la fase 0.
+
 - characters/<id>.png: atlas transparente, celdas 32×32; filas abajo, izquierda, derecha y arriba. Cada fila: seis cuadros de caminar y cuatro de reposo.
 - bosses/<id>.png: celdas 96×96; preparar un manifiesto de animaciones antes de integrar ataques y anticipaciones.
 - tiles/<island>.png: celdas 16×16 sin suavizado.
