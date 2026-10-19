@@ -42,3 +42,10 @@ Por indicación del usuario, trabajar en cloud y subir cada fase a jaime3894/Nar
 ## Información incompleta
 
 El mensaje inicial recibido empieza al final de la fase 1; no contiene la definición original de fase 0 ni el inicio del GDD. Los supuestos se registran en docs/GDD.md sin bloquear el desarrollo.
+
+## Requisitos de identidad y animación confirmados
+
+- Mantener las técnicas fieles a One Piece y a cada personaje/forma: por ejemplo, Luffy no utiliza ataques de agua. El catálogo de fase 2 debe incluir restricciones explícitas, también para mejoras y evoluciones.
+- El usuario pide animación corporal reconocible para todos: extensión e impacto/retracción del brazo de Luffy, cortes de Zoro, patadas de Sanji, etc. No sustituir estas acciones por bolas genéricas.
+- Fase 2 prepara el contrato temporal y visual de técnicas; fase 3 integra los personajes y formas con sus animaciones. El fallback procedural debe cumplir el mismo criterio aunque aún no haya atlas propios.
+- Los disparos actuales son provisionales del prototipo; no son la animación definitiva de Luffy. Este registro solo modifica documentación, no implementa aún las animaciones.

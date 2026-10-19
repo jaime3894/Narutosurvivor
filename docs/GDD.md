@@ -66,3 +66,34 @@ Los tests verifican mecánicas y partidas completas, no sensaciones humanas. Tre
 Repositorio: https://github.com/JPTER78/pokesurvivor. Revisados README, GDD y los sistemas de combate y aparición de enemigos. Se usa como referencia de diseño; no se incorpora código ni assets. Nuestra implementación sigue en TypeScript estricto con recursos procedurales originales.
 
 Aspectos útiles para las siguientes iteraciones: familias de ataques con comportamientos distintos (fase 2), terreno e interacciones que dan motivos para explorar (fase 4) y cambios de ritmo mediante oleadas concentradas (director de fase 4). La densidad de enemigos debe servir a la legibilidad y al movimiento. La referencia no implica añadir ahora cuentas, multijugador ni su gacha, ni saltarse las fases previstas. Antes de ampliar contenido se mantiene la prioridad de pulir el núcleo de cinco minutos.
+
+## Identidad de One Piece y animaciones de técnicas
+
+Requisito del usuario: la identidad del personaje debe reconocerse tanto en la técnica como en su ejecución visual. PokéSurvivor inspira estructura y sensaciones; no determina nuestros poderes. Cada técnica debe declarar personajes y formas compatibles. El azar de mejoras, las afinidades y las evoluciones respetarán esa compatibilidad: Luffy no recibe ataques de agua; una técnica exclusiva no se convierte en un ataque universal por compartir estadísticas.
+
+| Personaje | Lenguaje visual de sus técnicas |
+| --- | --- |
+| Luffy | Postura de preparación, brazo conectado al hombro que se estira, puño que conecta y retracción elástica. Patadas y ráfagas usan sus extremidades y las particularidades de la forma desbloqueada. |
+| Zoro | Preparación con sus espadas, movimiento de las hojas y arcos de corte sincronizados; los cortes a distancia solo en técnicas que los justifiquen. |
+| Nami | Gesto con Clima-Tact, formación del fenómeno meteorológico y descarga; las nubes y rayos tienen origen y secuencia visibles. |
+| Usopp | Tensado del tirachinas, suelta y munición identificable; cada munición muestra su efecto propio al impactar. |
+| Sanji | Anticipación corporal, giro o extensión de pierna, impacto de patada y recuperación. El fuego requiere su técnica o forma correspondiente. |
+| Chopper | Cambio de silueta según la forma, preparación corporal y golpes coherentes con esa anatomía. |
+| Robin | Aparición reconocible de brazos o piernas, acción coordinada e impacto, seguida de desaparición; no proyectiles genéricos. |
+| Franky | Apertura o preparación del mecanismo, postura de disparo y cañón o rayo con origen visible; los efectos dependen de la técnica. |
+| Brook | Desenvaine o postura de esgrima, desplazamiento y corte; hielo o efectos de alma solo cuando estén habilitados. |
+| Jinbe | Posturas y golpes de karate gyojin; el agua, cuando corresponda, sigue el gesto y la técnica. |
+
+Esto define el lenguaje de animación, no desbloquea ahora personajes, formas o técnicas de fases posteriores. El catálogo exacto y sus restricciones se concretan en fase 2; personajes, formas y animaciones específicas se integran en fase 3, siguiendo el orden acordado. Fase 2 debe dejar listo el contrato de anticipación, fase activa, impacto y recuperación para que cada técnica tenga una representación propia. No se da por terminada una técnica de personaje si solo funciona su daño y su presentación sigue siendo una bola genérica.
+
+### Criterios visuales y temporales
+
+- Cada ataque posee preparación, ejecución e impacto, y recuperación. El daño se vincula al momento o intervalo activo de la simulación; no se aplica al comenzar una animación que aún no ha conectado.
+- En un puñetazo de goma se ve la continuidad hombro–brazo–puño durante extensión y retracción, incluso al cambiar de dirección. No es un puño desconectado que viaja como una bala. El alcance y la colisión siguen la técnica, no el tamaño de un sprite ornamental.
+- Los ataques dirigidos conservan una dirección u objetivo de impacto coherente durante su ejecución. Si el objetivo desaparece, la animación termina sin saltos hacia otro enemigo ni daño duplicado.
+- Multigolpes y técnicas simultáneas pueden compartir recursos de render, pero cada impacto conserva su origen, timing y lectura. Cadencia, número de golpes y evoluciones no autorizan reemplazar la anatomía por puntos o destellos indistinguibles.
+- Pixel art sí; técnicas indistinguibles hechas con las mismas bolitas de distinto color, no. Los proyectiles son válidos para munición, disparos o técnicas que realmente lo sean, con silueta y efecto propios.
+- La reducción de movimiento atenúa sacudidas y partículas; mantiene la animación funcional y las señales necesarias para leer el ataque.
+- Se revisan en movimiento normal y lento, en varias direcciones y con varios enemigos. Los tests verifican eventos de daño y estados; la revisión visual verifica postura, continuidad y carácter reconocible.
+
+Se usarán dibujos procedurales articulados y assets propios cuando estén disponibles. La ausencia de atlas no elimina este requisito: el fallback también debe representar la acción del personaje. No se descargarán ni integrarán sprites, animaciones, música o logotipos extraídos de obras oficiales. Los proyectiles de la fase 1 son un mecanismo provisional del prototipo y no representan el ataque definitivo de Luffy.
