@@ -1,3 +1,4 @@
+import { bladeMotion, contactReach, ease } from "./motion";
 import { luffyLayers } from "./luffy-assets";
 import { casterPosition } from "../game/crew";
 import type { Position } from "../core/entity";
@@ -11,7 +12,7 @@ function limb(
   end: Position,
   twist = false,
   mechanical = false,
-  ending: "fist" | "foot" | "hoof" = "fist",
+  ending: "fist" | "foot" | "hoof" | "sandal" = "fist",
   haki = false,
   heated = false,
 ): void {
@@ -22,22 +23,28 @@ function limb(
   ctx.moveTo(start.x, start.y);
   ctx.lineTo(end.x, end.y);
   ctx.stroke();
-  ctx.strokeStyle = haki
-    ? "#342c40"
-    : mechanical
-      ? "#9ab3b7"
-      : heated
-        ? "#d27a81"
-        : "#e7af83";
+  ctx.strokeStyle =
+    ending === "foot"
+      ? "#293848"
+      : haki
+        ? "#342c40"
+        : mechanical
+          ? "#9ab3b7"
+          : heated
+            ? "#d27a81"
+            : "#e7af83";
   ctx.lineWidth = mechanical ? 7 : 6;
   ctx.stroke();
-  ctx.strokeStyle = haki
-    ? "#a74850"
-    : mechanical
-      ? "#e7eeee"
-      : heated
-        ? "#ffa1ac"
-        : "#ffd4a2";
+  ctx.strokeStyle =
+    ending === "foot"
+      ? "#6d7b8b"
+      : haki
+        ? "#a74850"
+        : mechanical
+          ? "#e7eeee"
+          : heated
+            ? "#ffa1ac"
+            : "#ffd4a2";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(start.x - 1, start.y - 2);
@@ -59,12 +66,33 @@ function limb(
     }
   }
   if (ending !== "fist") {
-    ctx.fillStyle = ending === "hoof" ? "#6b493a" : "#3a3b37";
-    ctx.fillRect(end.x - 7, end.y - 4, 15, 9);
-    ctx.fillStyle = ending === "hoof" ? "#b58862" : "#d3a46c";
-    ctx.fillRect(end.x - 6, end.y - 3, 12, 5);
-    ctx.fillStyle = "#453d33";
-    ctx.fillRect(end.x - 1, end.y - 3, 2, 6);
+    ctx.save();
+    ctx.translate(end.x, end.y);
+    ctx.rotate(Math.atan2(end.y - start.y, end.x - start.x));
+    ctx.fillStyle = ending === "hoof" ? "#503b31" : "#26313a";
+    ctx.fillRect(-6, -5, 16, 11);
+    ctx.fillStyle =
+      ending === "hoof"
+        ? "#a87c58"
+        : ending === "sandal"
+          ? "#eeb88b"
+          : "#3b4655";
+    ctx.fillRect(-5, -4, 14, 7);
+    ctx.fillStyle =
+      ending === "hoof"
+        ? "#5c4437"
+        : ending === "sandal"
+          ? "#4c4437"
+          : "#89949a";
+    ctx.fillRect(
+      ending === "hoof" ? 1 : ending === "sandal" ? 3 : -4,
+      -3,
+      ending === "hoof" ? 2 : ending === "sandal" ? 2 : 9,
+      ending === "sandal" ? 7 : 2,
+    );
+    ctx.fillStyle = "#a49b7c";
+    ctx.fillRect(-5, 4, 15, 2);
+    ctx.restore();
     return;
   }
   ctx.fillStyle = "#473e37";
@@ -175,23 +203,40 @@ export function drawTechniques(
           angle +
           (sweep ? Math.max(0, phase) * Math.PI * 2 : -0.25 * extension);
         const length =
-          (sweep ? attack.range : Math.min(attack.range, 105)) * extension;
+          (sweep
+            ? attack.range
+            : Math.min(
+                attack.range,
+                definition.animation === "hoof" ? 50 : 56,
+              )) * (sweep ? extension : contactReach(attack));
         const hip = {
           x: origin.x,
           y: origin.y + (definition.animation === "hoof" ? 0 : 10),
         };
-        limb(
-          ctx,
-          hip,
-          {
-            x: hip.x + Math.cos(rotation) * length,
-            y: hip.y + Math.sin(rotation) * length,
-          },
-          false,
-          false,
-          definition.animation === "hoof" ? "hoof" : "foot",
-        );
+        if (sweep || length > 1)
+          limb(
+            ctx,
+            hip,
+            {
+              x: hip.x + Math.cos(rotation) * length,
+              y: hip.y + Math.sin(rotation) * length,
+            },
+            false,
+            false,
+            definition.animation === "hoof"
+              ? "hoof"
+              : attack.caster === "luffy"
+                ? "sandal"
+                : "foot",
+          );
         if (active) {
+          const contact =
+            attack.strikes[0]?.at ??
+            attack.windup + Math.min(0.04, attack.active * 0.25);
+          const contacted = attack.age >= contact;
+          ctx.globalAlpha = contacted
+            ? 1 - ease((attack.age - contact) / 0.12)
+            : 0.2;
           ctx.strokeStyle =
             attack.caster === "sanji" && attack.form > 0
               ? attack.form === 2
@@ -205,11 +250,17 @@ export function drawTechniques(
           ctx.arc(
             hip.x,
             hip.y,
-            Math.max(1, Math.abs(length)),
+            Math.max(
+              1,
+              contacted && attack.caster === "sanji"
+                ? Math.min(attack.range, attack.distance)
+                : Math.abs(length),
+            ),
             rotation - 0.5,
             rotation + 0.1,
           );
           ctx.stroke();
+          ctx.globalAlpha = 1;
         }
         break;
       }
@@ -233,8 +284,10 @@ export function drawTechniques(
       case "slash":
       case "iai":
       case "cutwave": {
-        const rotation = angle - 0.8 + extension * 1.6;
-        const length = 52;
+        const blade = bladeMotion(attack);
+        const thrust = definition.animation === "iai";
+        const rotation = thrust ? angle : angle + blade.offset;
+        const length = thrust ? 30 + 30 * contactReach(attack) : 52;
         ctx.strokeStyle = "#263e43";
         ctx.lineWidth = 7;
         ctx.beginPath();
@@ -258,8 +311,8 @@ export function drawTechniques(
             definition.animation === "cutwave"
               ? attack.distance * Math.min(1, phase * 5)
               : attack.range * 0.8,
-            angle - 0.65,
-            angle + 0.65,
+            rotation - blade.trail,
+            rotation + 0.02,
           );
           ctx.stroke();
         }

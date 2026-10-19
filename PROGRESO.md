@@ -113,3 +113,12 @@ Verificación: 132 tests de lógica/recursos, build estricto y 13 E2E del build.
 - 143 tests de lógica/recursos y 15 E2E del build: continuidad del puño, retorno, prioridad entre técnicas, dos brazos, alternancia Gatling, uso como nakama, seis dibujos de carrera en cuatro vistas y selector de demostración. Build estricto aprobado. Revisión visual ampliada y dentro de la interfaz.
 
 Límites: los otros nueve personajes y las marchas de Gear Second/Boundman conservan su ciclo de dos poses. Las capas nuevas cubren los puñetazos de Luffy; los ataques de pierna y Fusen mantienen su ejecución de fase 3. Las técnicas simultáneas comparten dos brazos visibles para conservar anatomía, aunque sus impactos sigan activos. La aprobación artística y la prueba humana de diversión siguen pendientes. No se avanza a fase 4 durante esta corrección.
+
+## Pulido final de técnicas — FASE 3
+
+- Aceleración/contacto/recuperación más naturales en Pistol y Bazooka; brazo curvo al recoger, mano de tamaño estable y torso con giro de cadera manteniendo unidos los hombros.
+- Gatling sincronizado con cada impacto real del motor, repartido entre dos brazos; sin manos de estela adicionales. Corrección verificada con los tiempos de ataques creados por la simulación.
+- Trayectoria de espada y estela coordinadas, estocadas con avance/retracción y pie orientado en las patadas. Sanji utiliza pantalón y zapato oscuros, con longitud de pierna limitada y señal del área de impacto.
+- 145 tests, build estricto y 15 E2E aprobados. Revisión visual ampliada de Pistol, Gatling, Bazooka, Oni Giri y Collier Shoot; banco completo de 18 técnicas cubierto por E2E. No cambian datos de daño, alcance ni colisiones.
+
+La fase 3 sigue disponible: diez personajes, tres estilos, innatos y nakama con sinergias. Pendientes de valoración humana: acabado de movimiento y diversión durante cinco minutos. El resto de cuerpos conserva sus animaciones actuales; este pulido no equivale a una renovación de todos los atlas. Siguiente bloque de contenido previsto: fase 4, islas y jefes, tras probar la tripulación actual.

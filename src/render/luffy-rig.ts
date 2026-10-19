@@ -1,3 +1,4 @@
+import { animationFeel } from "../data/animation";
 import type { Attack, Run } from "../game/types";
 import type { Direction } from "./sprites";
 import { luffyLayers } from "./luffy-assets";
@@ -24,17 +25,21 @@ export function drawLuffyRig(
   const row = ["down", "left", "right", "up"].indexOf(direction);
   const body = pose.form === 0 ? layers.baseBody : layers.bodies;
   ctx.imageSmoothingEnabled = false;
+  ctx.save();
+  ctx.translate(pose.root.x, pose.root.y - animationFeel.hipHeight);
+  ctx.rotate(pose.bodyAngle);
   ctx.drawImage(
     body,
     pose.form === 0 ? 0 : pose.form * 96,
     row * 80,
     pose.form === 0 ? 64 : 96,
     80,
-    Math.round(pose.root.x - (pose.form === 0 ? 32 : 48)),
-    Math.round(pose.root.y - 74),
+    -(pose.form === 0 ? 32 : 48),
+    animationFeel.hipHeight - 74,
     pose.form === 0 ? 64 : 96,
     80,
   );
+  ctx.restore();
   if (back && (direction === "down" || direction === "up")) {
     const size = pose.form === 2 ? 14 : 10;
     ctx.drawImage(
@@ -76,28 +81,49 @@ function drawArm(
       23 * bulk,
     );
   } else {
-    const dx = arm.fist.x - arm.shoulder.x,
-      dy = arm.fist.y - arm.shoulder.y,
-      length = Math.hypot(dx, dy),
-      angle = Math.atan2(dy, dx);
+    const point = (t: number) => ({
+      x:
+        (1 - t) ** 2 * arm.shoulder.x +
+        2 * (1 - t) * t * arm.elbow.x +
+        t * t * arm.fist.x,
+      y:
+        (1 - t) ** 2 * arm.shoulder.y +
+        2 * (1 - t) * t * arm.elbow.y +
+        t * t * arm.fist.y,
+    });
+    const length = Math.hypot(
+      arm.fist.x - arm.shoulder.x,
+      arm.fist.y - arm.shoulder.y,
+    );
+    const segments = Math.max(4, Math.min(18, Math.ceil(length / 18)));
+    for (let i = 0; i < segments; i++) {
+      const start = point(i / segments),
+        end = point((i + 1) / segments);
+      const distance = Math.hypot(end.x - start.x, end.y - start.y);
+      ctx.save();
+      ctx.translate(start.x, start.y);
+      ctx.rotate(Math.atan2(end.y - start.y, end.x - start.x));
+      ctx.drawImage(
+        image,
+        64 + (i / segments) * 32,
+        form * 64 + 24,
+        32 / segments,
+        24,
+        -0.5,
+        -4.5 * bulk,
+        distance + 1,
+        9 * bulk,
+      );
+      ctx.restore();
+    }
+    ctx.save();
     ctx.translate(arm.shoulder.x, arm.shoulder.y);
-    ctx.rotate(angle);
-    const col = arm.open ? 128 : 0;
-    // Solo se estira la textura del antebrazo; la mano mantiene su volumen.
-    ctx.drawImage(
-      image,
-      col + 64,
-      form * 64 + 24,
-      32,
-      24,
-      0,
-      -4.5 * bulk,
-      Math.max(1, length - 5 * bulk),
-      9 * bulk,
+    ctx.rotate(
+      Math.atan2(arm.elbow.y - arm.shoulder.y, arm.elbow.x - arm.shoulder.x),
     );
     ctx.drawImage(
       image,
-      col + 4,
+      4,
       form * 64 + 14,
       28,
       36,
@@ -106,6 +132,9 @@ function drawArm(
       10 * bulk,
       14 * bulk,
     );
+    ctx.restore();
+    ctx.translate(arm.fist.x, arm.fist.y);
+    ctx.rotate(Math.atan2(arm.fist.y - arm.elbow.y, arm.fist.x - arm.elbow.x));
     if (arm.open)
       ctx.drawImage(
         image,
@@ -113,13 +142,12 @@ function drawArm(
         form * 64 + 4,
         44,
         56,
-        length - 7 * bulk,
+        -7 * bulk,
         -11 * bulk,
         17 * bulk,
         22 * bulk,
       );
     else {
-      ctx.translate(length, 0);
       ctx.rotate(twist);
       ctx.drawImage(
         image,

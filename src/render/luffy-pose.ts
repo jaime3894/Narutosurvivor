@@ -1,3 +1,5 @@
+import { animationFeel } from "../data/animation";
+import { barrageReach, contactReach, ease } from "./motion";
 import { luffyShoulders } from "../data/luffy-art";
 import type { Position } from "../core/entity";
 import type { FormTier } from "../data/crew";
@@ -9,12 +11,14 @@ export interface LuffyArmPose {
   side: -1 | 1;
   shoulder: Position;
   fist: Position;
+  elbow: Position;
   extended: boolean;
   open: boolean;
 }
 export interface LuffyPose {
   root: Position;
   form: FormTier;
+  bodyAngle: number;
   arms: readonly [LuffyArmPose, LuffyArmPose];
   phase: "windup" | "active" | "recovery";
 }
@@ -54,29 +58,33 @@ export function makeLuffyPose(
       : attack.age < attack.windup + attack.active
         ? "active"
         : "recovery";
-  const activeTime = Math.max(0, (attack.age - attack.windup) / attack.active);
   const recovery = Math.min(
     1,
     Math.max(0, (attack.age - attack.windup - attack.active) / attack.recovery),
   );
-  const reach =
-    phase === "windup"
-      ? 0
-      : phase === "active"
-        ? Math.min(1, activeTime * 5)
-        : 1 - recovery;
+  const reach = contactReach(attack);
+  const prepare = ease(attack.age / attack.windup);
   const pull =
-    phase === "windup"
-      ? Math.sin(((attack.age / attack.windup) * Math.PI) / 2) * 5
-      : phase === "active"
-        ? 5 * (1 - reach)
-        : 0;
+    animationFeel.windupPull *
+    (phase === "windup" ? prepare : phase === "active" ? 1 - reach : 0);
   const lean =
     phase === "windup"
-      ? -Math.sin(((attack.age / attack.windup) * Math.PI) / 2)
+      ? -prepare
       : phase === "active"
         ? -1 + 2.5 * reach
-        : 1.5 * (1 - recovery);
+        : 1.5 * (1 - ease(recovery));
+  const profile = direction === "left" || direction === "right";
+  const sign = direction === "left" ? -1 : 1;
+  const bodyAngle = profile
+    ? sign *
+      (phase === "windup"
+        ? -animationFeel.torsoWindup * prepare
+        : phase === "active"
+          ? -animationFeel.torsoWindup +
+            (animationFeel.torsoWindup + animationFeel.torsoFollowThrough) *
+              reach
+          : animationFeel.torsoFollowThrough * (1 - ease(recovery)))
+    : 0;
   const origin = casterPosition(run, "luffy"),
     root = {
       x: origin.x + attack.direction.x * lean,
@@ -85,43 +93,54 @@ export function makeLuffyPose(
   const form = attack.form;
   const target = attackEndpoint(run, attack);
   const near: -1 | 1 = direction === "left" ? -1 : 1;
-  const alternation =
-    attack.weapon === "gatling"
-      ? Math.floor(activeTime * Math.max(2, attack.strikes.length)) % 2
-      : 0;
-  const striking: -1 | 1 = alternation === 1 ? (near === 1 ? -1 : 1) : near;
   const makeArm = (side: -1 | 1): LuffyArmPose => {
     const attachment = luffyShoulders[form][direction][side === -1 ? 0 : 1];
-    const shoulder = { x: root.x + attachment.x, y: root.y + attachment.y };
+    const ax = attachment.x,
+      ay = attachment.y + animationFeel.hipHeight;
+    const shoulder = {
+      x: root.x + ax * Math.cos(bodyAngle) - ay * Math.sin(bodyAngle),
+      y:
+        root.y -
+        animationFeel.hipHeight +
+        ax * Math.sin(bodyAngle) +
+        ay * Math.cos(bodyAngle),
+    };
     const rest = {
       x: shoulder.x + (side === -1 ? 12 : -10) - attack.direction.x * pull,
       y: shoulder.y + 6 - attack.direction.y * pull,
     };
-    const participates = attack.weapon === "bazooka" || side === striking;
-    const pulse =
+    const participates = attack.weapon === "bazooka" || side === near;
+    const amount =
       attack.weapon === "gatling"
-        ? phase === "active"
-          ? Math.sin(
-              ((activeTime * Math.max(2, attack.strikes.length)) % 1) * Math.PI,
-            )
-          : 0
-        : reach;
-    const amount = participates ? pulse : 0;
+        ? barrageReach(attack, side === near ? 0 : 1)
+        : participates
+          ? reach
+          : 0;
     const separation = attack.weapon === "bazooka" ? side * 7 : 0;
     const goal = {
       x: target.x - attack.direction.y * separation,
       y: target.y - 45 + attack.direction.x * separation,
     };
+    const fist = {
+      x: rest.x + (goal.x - rest.x) * amount,
+      y: rest.y + (goal.y - rest.y) * amount,
+    };
+    const dx = fist.x - shoulder.x,
+      dy = fist.y - shoulder.y,
+      length = Math.hypot(dx, dy) || 1;
+    const bend = animationFeel.armBend * Math.sin(Math.PI * amount) * side;
+    const elbow = {
+      x: (shoulder.x + fist.x) / 2 - (dy / length) * bend,
+      y: (shoulder.y + fist.y) / 2 + (dx / length) * bend,
+    };
     return {
       side,
       shoulder,
-      fist: {
-        x: rest.x + (goal.x - rest.x) * amount,
-        y: rest.y + (goal.y - rest.y) * amount,
-      },
+      fist,
+      elbow,
       extended: amount > 0.005,
       open: attack.weapon === "bazooka",
     };
   };
-  return { root, form, phase, arms: [makeArm(-1), makeArm(1)] };
+  return { root, form, bodyAngle, phase, arms: [makeArm(-1), makeArm(1)] };
 }

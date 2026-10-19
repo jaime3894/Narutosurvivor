@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createRun } from "../src/game/simulation";
+import { createRun, step } from "../src/game/simulation";
 import { weaponById, type WeaponId } from "../src/data/content";
 import { makeLuffyPose, selectLuffyPunch } from "../src/render/luffy-pose";
 import type { Attack, Run } from "../src/game/types";
@@ -20,7 +20,12 @@ function punch(run: Run, weapon: WeaponId = "pistol", age = 0.2): Attack {
     target: { x: 1350, y: 900 },
     strikes: Array.from({ length: definition.strikes }, (_, index) => ({
       index,
-      at: 0,
+      at:
+        definition.windup +
+        Math.min(definition.active * 0.25, 0.04) +
+        (definition.strikes > 1
+          ? (index / definition.strikes) * definition.active * 0.7
+          : 0),
       fired: false,
     })),
     hitIds: [],
@@ -53,7 +58,7 @@ describe("anatomía y continuidad de Luffy", () => {
       expect(pose.arms).toHaveLength(2);
       expect(
         pose.arms.filter((arm) => arm.extended).length,
-      ).toBeLessThanOrEqual(1);
+      ).toBeLessThanOrEqual(2);
       for (const arm of pose.arms) if (arm.extended) extended.add(arm.side);
     }
     expect(extended.size).toBe(2);
@@ -105,5 +110,53 @@ describe("anatomía y continuidad de Luffy", () => {
     const pose = makeLuffyPose(run, punch(run), "down");
     expect(pose.root.x).toBeCloseTo(run.nakama[0]!.position.x + 1.5);
     expect(pose.root.x).not.toBeCloseTo(run.player.position.x + 1.5);
+  });
+});
+
+describe("el gesto coincide con los impactos reales", () => {
+  it("cada golpe de Gatling alcanza su objetivo en el evento de daño del motor", () => {
+    const run = createRun(1);
+    run.weapons = [{ id: "gatling", timer: 0, evolved: false }];
+    run.ranks["weapon:gatling"] = 1;
+    run.enemies.push({
+      id: run.nextId++,
+      kind: "brute",
+      position: { x: 1320, y: 900 },
+      velocity: { x: 0, y: 0 },
+      health: { current: 10000, maximum: 10000 },
+      radius: 19,
+      flash: 0,
+    });
+    step(run, { x: 0, y: 0, dash: false }, 1 / 60);
+    const attack = run.attacks.find((item) => item.weapon === "gatling");
+    expect(attack).toBeDefined();
+    if (!attack) throw new Error("Gatling no arrancó");
+    for (const strike of attack.strikes) {
+      attack.age = strike.at;
+      const pose = makeLuffyPose(run, attack, "right");
+      const arm = pose.arms[strike.index % 2 === 0 ? 1 : 0];
+      expect(arm.fist.x).toBeCloseTo(run.player.position.x + attack.distance);
+      expect(arm.fist.y).toBeCloseTo(run.player.position.y - 45);
+    }
+  });
+  it("la recuperación dobla el brazo y llega a la guardia con velocidad suave", () => {
+    const run = createRun(1),
+      attack = punch(run);
+    attack.age = attack.windup + attack.active + attack.recovery * 0.5;
+    const arm = makeLuffyPose(run, attack, "right").arms[1];
+    const mid = {
+      x: (arm.shoulder.x + arm.fist.x) / 2,
+      y: (arm.shoulder.y + arm.fist.y) / 2,
+    };
+    expect(
+      Math.hypot(arm.elbow.x - mid.x, arm.elbow.y - mid.y),
+    ).toBeGreaterThan(5);
+    attack.age = attack.windup + attack.active + attack.recovery * 0.99;
+    expect(
+      Math.hypot(
+        makeLuffyPose(run, attack, "right").arms[1].fist.x - arm.shoulder.x,
+        makeLuffyPose(run, attack, "right").arms[1].fist.y - arm.shoulder.y,
+      ),
+    ).toBeLessThan(20);
   });
 });

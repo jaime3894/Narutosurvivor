@@ -19,7 +19,7 @@ Una vez activado, las siguientes fases se publican al subir a `main`. No hay que
 
 ## Validación local realizada
 
-- `npm test`: 143 tests aprobados.
+- `npm test`: 145 tests aprobados.
 - `npm run build`: tipos y build aprobados.
 - `npm run test:e2e`: quince pruebas aprobadas, incluida una que sirve `dist` bajo `/One-piece-survivor/`, carga el juego e inicia una partida.
 - `vite.config.ts` usa rutas relativas para que los assets funcionen en la subcarpeta del repositorio.
