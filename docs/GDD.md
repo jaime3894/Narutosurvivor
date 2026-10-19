@@ -97,3 +97,15 @@ Esto define el lenguaje de animación, no desbloquea ahora personajes, formas o 
 - Se revisan en movimiento normal y lento, en varias direcciones y con varios enemigos. Los tests verifican eventos de daño y estados; la revisión visual verifica postura, continuidad y carácter reconocible.
 
 Se usarán dibujos procedurales articulados y assets propios cuando estén disponibles. La ausencia de atlas no elimina este requisito: el fallback también debe representar la acción del personaje. No se descargarán ni integrarán sprites, animaciones, música o logotipos extraídos de obras oficiales. Los proyectiles de la fase 1 son un mecanismo provisional del prototipo y no representan el ataque definitivo de Luffy.
+
+## Dirección de arte de personajes — referencia visual del usuario
+
+El usuario aporta una captura de PokéSurvivor como referencia de calidad de sprites: personajes con silueta propia, perspectiva cenital de tres cuartos, volumen y sombreado pixel art. Se toma el nivel de acabado y legibilidad, no los diseños de Pokémon. Nuestro reparto es el de One Piece; la apariencia debe expresar personaje, vestuario y forma aun sin etiquetas ni efectos de combate.
+
+Los personajes actuales son placeholders de fase 1, no modelos definitivos ni una muestra del acabado aprobado. No se considerará resuelto el arte cambiando el color de un mismo muñeco rectangular para todo el reparto. Luffy necesita sombrero de paja con cinta, pelo negro, chaleco, pantalones cortos, sandalias y proporciones reconocibles; Zoro, pelo, vestuario y espadas; Sanji, silueta, peinado y traje. Los demás tienen el mismo requisito de identidad propia. Vestuario y rasgos se ajustarán a la versión o forma representada.
+
+La dirección mantiene figuras chibi expresivas, contornos selectivos, paletas coherentes, luces y sombras con intención, sombra de contacto y escala consistente con el escenario. Idle, caminar, atacar y recibir daño son estados distintos; no basta desplazar un dibujo rígido arriba y abajo. Las extremidades y armas se animan en conjunto con las técnicas descritas antes.
+
+Se conserva 32×32 como punto de partida del contrato, no como límite que obligue a perder rasgos. Se permiten celdas mayores por personaje o forma con metadatos explícitos y un ancla común a los pies, sin estirar ni deformar la imagen. La resolución elegida debe verse bien a la escala real de juego, en movimiento y con varias entidades en pantalla. La ampliación del pixel art debe ser nítida y uniforme.
+
+Antes de producir todo el reparto en fase 3, crear y revisar un personaje piloto de Luffy en reposo, caminando y ejecutando un golpe de goma. Validar identidad, proporciones, perspectiva y continuidad del brazo tanto de cerca como dentro de una partida. Después aplicar el acabado al resto. La fase 2 prepara técnicas y compatibilidad; esta exigencia no adelanta la implementación de los diez personajes ni modifica el orden de fases. Recursos originales dibujados o generados para el proyecto y assets propios del usuario; sin extracción de sprites oficiales.

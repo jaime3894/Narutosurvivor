@@ -29,3 +29,16 @@ Contrato a implementar en fase 2 y consumir con los personajes en fase 3:
 Caso de referencia obligatorio: Luffy prepara el golpe, el brazo se estira desde el hombro hacia el punto de contacto, el puño impacta y el brazo se retrae. Zoro mueve las espadas durante el corte y Sanji ejecuta una patada visible. No basta con emitir partículas o proyectiles desde un personaje inmóvil. La lista de lenguajes visuales para los diez personajes está en el GDD.
 
 Estado actual: contrato documentado; todavía no existe el sistema de animaciones por técnica ni se consideran implementadas estas animaciones.
+
+## Acabado visual exigido
+
+Referencia: captura de PokéSurvivor aportada por el usuario en la conversación. Se busca calidad comparable de silueta, detalle, sombreado y animación, representando a los personajes de One Piece con recursos originales.
+
+- Perspectiva cenital de tres cuartos, proporciones chibi consistentes y apariencia reconocible sin nombre encima.
+- Contornos definidos, paleta controlada, volumen en cara/cabello/ropa y sombra de contacto estable.
+- Vestuario, armas, accesorios y silueta específicos; las formas cambian lo que corresponde a su diseño, no solo el color.
+- Estados de reposo, caminar, atacar y recibir daño con poses propias. Cuerpo y técnica deben leerse como una misma acción.
+- Las celdas 32×32 del contrato inicial son una base. Si hace falta más detalle, registrar dimensiones por atlas y mantener el ancla a los pies; nunca deformar sprites para encajarlos.
+- Revisar a la escala real de partida, con fondos y enemigos, además de una vista ampliada. Un retrato detallado no sustituye un sprite jugable animado.
+
+Primer hito de arte en fase 3: Luffy como personaje piloto con hoja de poses y animación de golpe de goma. No producir ni aprobar el lote completo antes de revisar ese acabado. Los personajes rectangulares actuales son placeholders. Este documento fija el objetivo; todavía no se han creado ni integrado los sprites definitivos.
