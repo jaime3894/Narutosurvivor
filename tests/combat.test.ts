@@ -1,3 +1,9 @@
+import {
+  chooseBossReward,
+  linkTechnique,
+  bondCandidates,
+  selectTechnique,
+} from "../src/game/bonds";
 import { grantUpgrade, closeChest } from "../src/game/progression";
 import { passives, weaponKey } from "../src/data/content";
 import { describe, expect, it } from "vitest";
@@ -232,10 +238,11 @@ function pilot(run: Run): Input {
       Math.hypot(b.position.x - player.x, b.position.y - player.y),
   )[0];
   const phase = run.elapsed * 0.065;
-  const goal = nearestDrop?.position ?? {
-    x: 1200 + Math.cos(phase) * 370,
-    y: 900 + Math.sin(phase) * 320,
-  };
+  const goal = run.rift?.position ??
+    nearestDrop?.position ?? {
+      x: 1200 + Math.cos(phase) * 370,
+      y: 900 + Math.sin(phase) * 320,
+    };
   const dx = goal.x - player.x,
     dy = goal.y - player.y;
   const distance = Math.hypot(dx, dy) || 1;
@@ -257,13 +264,13 @@ function pilot(run: Run): Input {
 }
 function select(run: Run): void {
   const order: UpgradeId[] = [
+    "power",
+    "multishot",
+    "tempo",
     "weapon:pistol",
     "weapon:gatling",
     "weapon:whip",
     "weapon:bazooka",
-    "multishot",
-    "power",
-    "tempo",
     "vitality",
     "magnet",
     "stride",
@@ -273,6 +280,8 @@ function select(run: Run): void {
       ? "vitality"
       : (order.find((item) => run.choices.includes(item)) ?? run.choices[0]);
   if (!id || !chooseUpgrade(run, id)) throw new Error("Mejora inválida");
+  if (!run.linkedWeapons.length && run.weapons.some((w) => w.id === "gatling"))
+    selectTechnique(run, "gatling");
 }
 describe("partida representativa", () => {
   it("simula cinco minutos con enemigos, bajas y progresión usando las reglas reales", () => {
@@ -281,11 +290,31 @@ describe("partida representativa", () => {
       const run = createRun(seed);
       for (
         let frame = 0;
-        frame < 18100 && !["won", "lost"].includes(run.status);
+        frame < 33000 && !["won", "lost"].includes(run.status);
         frame++
       ) {
-        while (run.status === "upgrade" || run.status === "chest") {
-          if (run.status === "chest") closeChest(run);
+        while (
+          run.status === "upgrade" ||
+          run.status === "chest" ||
+          run.status === "bossReward"
+        ) {
+          if (run.status === "bossReward") {
+            const link = run.bossRewards.findIndex((r) => r.kind === "bond");
+            if (link >= 0) {
+              chooseBossReward(run, link);
+              const options = bondCandidates(run);
+              const id =
+                (["gatling", "pistol", "whip", "bazooka"] as const).find((w) =>
+                  options.includes(w),
+                ) ?? options[0];
+              if (!id || !linkTechnique(run, id))
+                throw new Error("Vínculo inválido");
+            } else
+              chooseBossReward(
+                run,
+                run.bossRewards.findIndex((r) => r.kind === "boon"),
+              );
+          } else if (run.status === "chest") closeChest(run);
           else select(run);
         }
         step(run, pilot(run), 1 / 60);
@@ -295,7 +324,7 @@ describe("partida representativa", () => {
         expect(Number.isFinite(run.player.position.x)).toBe(true);
       }
       results.push(
-        `${seed}: ${run.status}, ${run.elapsed.toFixed(1)}s, ${run.kills} bajas, nivel ${run.level}, ${run.player.health.current} HP`,
+        `${seed}: ${run.status}, ${run.elapsed.toFixed(1)}s, ${run.kills} bajas, nivel ${run.level}, ${run.player.health.current} HP, arena=${run.arena?.bossId}, boss=${run.enemies.find((e) => e.boss)?.boss?.kind}`,
       );
       expect(run.status, results.join("\n")).toBe("won");
       expect(run.kills).toBeGreaterThan(150);

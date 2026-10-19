@@ -1,3 +1,5 @@
+import { riftRules } from "../data/rifts";
+import { updateRifts, updateBoss, finishArena, clampArena } from "./rifts";
 import { characterById, validateCrew } from "../data/crew";
 import { updateCrew, tryRevive } from "./crew";
 import { createRandom } from "../core/random";
@@ -36,6 +38,19 @@ export function createRun(
     status: "playing",
     character,
     form: 0,
+    formUnlocked: 0,
+    assists: [],
+    activeWeapon: starter.id,
+    linkedWeapons: [],
+    rift: null,
+    arena: null,
+    nextRiftTime: riftRules.firstTime,
+    nextRiftKills: riftRules.firstKills,
+    bossesDefeated: 0,
+    hazards: [],
+    bossRewards: [],
+    rewardSerial: 0,
+    boons: { damage: 0, health: 0, speed: 0, armor: 0, regen: 0, tempo: 0 },
     energy: 100,
     formCooldown: 0,
     transformTime: 0,
@@ -157,7 +172,7 @@ export function step(run: Run, input: Input, dt: number): void {
     run.status = "lost";
     return;
   }
-  run.elapsed = Math.min(combat.duration, run.elapsed + dt);
+  if (!run.arena) run.elapsed = Math.min(combat.duration, run.elapsed + dt);
   updateCrew(run, dt);
   run.noticeTime = Math.max(0, run.noticeTime - dt);
   run.haste = Math.max(0, run.haste - dt);
@@ -189,12 +204,13 @@ export function step(run: Run, input: Input, dt: number): void {
   player.position.x += player.velocity.x * dt;
   player.position.y += player.velocity.y * dt;
   clampPlayer(run);
+  clampArena(run);
   run.distance += Math.hypot(
     player.position.x - before.x,
     player.position.y - before.y,
   );
-  run.spawnTimer -= dt;
-  if (run.spawnTimer <= 0) {
+  if (!run.arena) run.spawnTimer -= dt;
+  if (!run.arena && run.spawnTimer <= 0) {
     const batch = 1 + Math.floor(run.elapsed / 90);
     for (
       let i = 0;
@@ -223,6 +239,10 @@ export function step(run: Run, input: Input, dt: number): void {
         enemy.burnTick = 0.5;
       }
       if (enemy.health.current <= 0) continue;
+    }
+    if (enemy.boss) {
+      updateBoss(run, enemy, dt);
+      continue;
     }
     const speed =
       enemyTypes[enemy.kind].speed *
@@ -259,12 +279,20 @@ export function step(run: Run, input: Input, dt: number): void {
   }
   if (player.health.current > 0) {
     updateTechniques(run, dt);
-    updateLoot(run, dt);
+    if (!run.arena) updateLoot(run, dt);
   }
+  if (
+    player.health.current > 0 &&
+    run.arena &&
+    run.enemies.some((e) => e.id === run.arena?.bossId && e.health.current <= 0)
+  )
+    finishArena(run, true);
+  if (run.status === "playing") updateRifts(run, dt);
   run.enemies = run.enemies.filter((enemy) => enemy.health.current > 0);
   for (const item of run.effects) item.life -= dt;
   run.effects = run.effects.filter((item) => item.life > 0);
   if (player.health.current <= 0 && !tryRevive(run)) run.status = "lost";
-  else if (run.elapsed >= combat.duration) run.status = "won";
+  else if (run.status === "playing" && run.elapsed >= combat.duration)
+    run.status = "won";
   else offerUpgrades(run);
 }

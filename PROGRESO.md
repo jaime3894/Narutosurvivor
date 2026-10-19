@@ -58,7 +58,7 @@ El usuario pide sprites de One Piece con el nivel de detalle, volumen y animaci�
 
 - 18 técnicas por propietario, con ejecución, animación procedural y receta de evolución; 14 pasivos con efectos aplicados. Catálogo completo en docs/COMBATE.md.
 - Cuatro huecos de técnica y seis de pasivo, rangos máximos, ofertas sin duplicados y rechazo de técnicas ajenas. Luffy solo utiliza sus técnicas de goma.
-- Cofres de 1/3/5 premios, evolución condicionada a técnica 5 + pasivo 2 + 60 s, pantalla de botín pausada y entrega una sola vez.
+- Histórico de fase 2 (sustituido por FASE 4A): cofres de 1/3/5 premios, evolución condicionada a técnica 5 + pasivo 2 + 60 s, pantalla de botín pausada y entrega una sola vez.
 - Afinidades por grupos, berries de partida, carne, cristales, imán, barril e impulso; límites de entidades conservados.
 - Extremidades conectadas, ráfagas, barridos, torso inflado y torsión de Rifle; efectos de daño, críticos, recogida, nivel, evolución, explosión y cofres.
 - Cuaderno con las 18 técnicas, 14 pasivos y sus recetas; build y afinidades visibles en HUD; banco de técnicas con ?debug.
@@ -83,7 +83,7 @@ Nombre actual del repositorio: jaime3894/One-piece-survivor. Origin actualizado 
 
 ## FASE 3 — personajes, formas y nakama
 
-- Diez capitanes seleccionables con innatos, técnica inicial propia y tres estilos cada uno. Desbloqueos a nivel 4/8, energía compartida entre estilos, agotamiento automático y cambios con F o botones.
+- Diez capitanes seleccionables con innatos, técnica inicial propia y tres estilos cada uno. El desbloqueo original por nivel/agotamiento se sustituye en FASE 4A por dominio de técnicas y energía infinita.
 - Hasta dos nakama con seguimiento, ataques desde su posición, apoyo médico/cocina y diez sinergias por parejas. La selección sobrevive al reinicio de partida; persistencia entre recargas en fase 5.
 - Atlas de 30 estilos con cuatro orientaciones y estados idle/caminar/atacar/daño. Rostros y retratos de fan art original MIT de gshklovs/opshell; cuerpos, ropa, armas y animaciones adaptados para este juego. Licencia y procedencia incluidas. No se usan sprites oficiales extraídos.
 - Marines, piratas de la banda de Buggy y matones de Alvida sustituyen a las siluetas básicas: uniformes, pañuelos, parche, barba, sable y maza. Son esbirros; Alvida, Buggy y otros jefes con nombre pertenecen a fase 4.
@@ -135,3 +135,16 @@ La fase 3 sigue disponible: diez personajes, tres estilos, innatos y nakama con 
 Validación: 182 tests de lógica/recursos, build estricto y 18 E2E del build, incluida la comprobación de 288 celdas sin vacíos/recortes, selector de todas las técnicas, demostración de Zoro en móvil y ruta de Pages. Las tres simulaciones de cinco minutos conservan sus resultados de victoria y progresión. Los resultados exactos de ejecución se comunican junto al commit publicado.
 
 Pendientes documentados: valoración artística y prueba humana de diversión; direcciones de ataque con vistas de tres cuartos y espejo, sin dibujos independientes para 360 grados; marcha/reposo de los otros nueve personajes conserva dos poses; las técnicas simultáneas comparten un único gesto corporal y mantienen sus efectos/eventos. Esos límites no se presentan como acabado perfecto. La petición actual corrige FASE 3; no se adelantan islas, jefes o meta-progresión.
+
+
+## FASE 4A — Cofres elegibles, dominio, energía infinita y grietas
+
+- Cofres con tres botones reales: elegir una tarjeta concede únicamente esa recompensa. Evolución garantizada como alternativa al reunir los requisitos, sin aplicarse al abrir. Ratón, teclado 1–3 y móvil, con pausa y protección contra concesión duplicada.
+- Formas automáticas al dominar 5/5 las técnicas correspondientes; requisitos exactos visibles y separados en datos. Para los cinco personajes con una sola técnica, la tercera forma requiere su evolución. Energía infinita en todas las formas, sin agotamiento ni retorno forzado. La sinergia que regeneraba energía ahora regenera vida.
+- Grietas opcionales por tiempo o bajas; arena, jefe con anticipación/recuperación y regreso a la costa. Buggy, Kuro y Arlong con patrones distintos e ilustraciones originales asistidas por IA; sin sprites oficiales descargados. La costa y sus cofres se conservan al entrar/salir; sus cinco minutos se detienen durante el duelo.
+- Recompensa de jefe: unir dos técnicas y ampliar el mismo vínculo hasta tres y cuatro, o mejorar daño, vida, velocidad, armadura, regeneración o cadencia. Técnicas activas seleccionables con fichas y 1–4. Técnicas de otro personaje ejecutadas por asistentes visibles, sin prestar poderes al capitán ni añadir sinergias gratuitas.
+- Depuración `?debug`: botones Grieta/Derrotar jefe para revisar el ciclo, cofres y formas. Lista de vínculos desplazable, sin opciones inaccesibles fuera del marco.
+
+Pendiente de FASE 4: estructura completa de East Blue/Alabasta, minijefes de isla, director general de oleadas por datos y Buster Call; después el resto de islas. Los tres jefes actuales pertenecen al ciclo de grietas, no sustituyen ese contenido. Arte de jefes con cuatro poses, vistas posteriores para guardia y espejo lateral; ataques en tres cuartos sin dibujos independientes de espalda. No se declara animación perfecta ni aprobación artística humana. Balance y diversión requieren partida humana. Meta-progresión, guardado, audio y fases posteriores mantienen su orden.
+
+Validación de esta revisión: **200 tests de lógica/recursos y 21 E2E aprobados**, build estricto aprobado. Tres simulaciones de cinco minutos terminan en victoria sin alterar salud ni reglas; revisión visual de las tres arenas y la lista móvil en `docs/screenshots/*-v6.png`. Los tests incluyen decisiones sin mutación previa, dominio de los diez capitanes, energía infinita, caducidad/aislamiento/retorno de grietas, patrones de los tres jefes, límites y propietarios de vínculos, atributos reales y ciclos completos de interfaz en escritorio/móvil.

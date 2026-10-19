@@ -1,3 +1,5 @@
+import { drawBoss } from "./boss-assets";
+import { drawRifts, drawBossTelegraph } from "./rifts";
 import { drawProjectile } from "./projectile";
 import { getEnemyAtlas, drawSprite, facingDirection } from "./sprites";
 import { drawTechniques } from "./techniques";
@@ -110,6 +112,7 @@ export class BattleRenderer {
       ctx.fillStyle = "#c5c39d";
       ctx.fillRect(x + 3, y - 7, 18, 4);
     }
+    drawRifts(ctx, run, this.reducedMotion);
     drawLoot(ctx, run, this.reducedMotion);
     for (const enemy of [...run.enemies].sort(
       (a, b) => a.position.y - b.position.y,
@@ -121,6 +124,7 @@ export class BattleRenderer {
         enemy.position.y > camY + VIEW_HEIGHT + 40
       )
         continue;
+      drawBossTelegraph(ctx, enemy);
       ctx.fillStyle = "#284b42";
       ctx.beginPath();
       ctx.ellipse(
@@ -137,15 +141,18 @@ export class BattleRenderer {
         player.position.x - enemy.position.x,
         player.position.y - enemy.position.y,
       );
-      drawSprite(
-        ctx,
-        getEnemyAtlas(enemy.kind),
-        enemy.position,
-        direction,
-        enemy.flash > 0 ? "hurt" : "walk",
-        this.reducedMotion ? 0 : run.elapsed,
-        enemy.kind === "brute" ? 1.08 : 0.88,
-      );
+      if (!drawBoss(ctx, enemy, player.position, this.reducedMotion))
+        drawSprite(
+          ctx,
+          getEnemyAtlas(enemy.kind),
+          enemy.position,
+          direction,
+          enemy.flash > 0 ? "hurt" : "walk",
+          this.reducedMotion
+            ? 0
+            : run.elapsed + (run.arena ? 75 - run.arena.remaining : 0),
+          enemy.boss ? 1.5 : enemy.kind === "brute" ? 1.08 : 0.88,
+        );
       if (enemy.flash > 0) {
         ctx.fillStyle = "rgba(255,245,208,.5)";
         ctx.fillRect(enemy.position.x - 8, enemy.position.y - 35, 16, 13);
@@ -159,7 +166,7 @@ export class BattleRenderer {
         ctx.strokeStyle = "#abe2e9";
         ctx.strokeRect(enemy.position.x - 13, enemy.position.y - 6, 26, 10);
       }
-      if (enemy.health.current < enemy.health.maximum) {
+      if (!enemy.boss && enemy.health.current < enemy.health.maximum) {
         ctx.fillStyle = "#29423e";
         ctx.fillRect(enemy.position.x - 12, enemy.position.y - 60, 24, 3);
         ctx.fillStyle = "#f0b185";
@@ -263,6 +270,7 @@ export class BattleRenderer {
     }
     // Brújula hacia la experiencia lejana más cercana.
     const farDrop =
+      run.rift ??
       run.chests[0] ??
       run.drops
         .filter((drop) => drop.kind === "xp")

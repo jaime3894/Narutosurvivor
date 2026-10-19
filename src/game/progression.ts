@@ -1,3 +1,4 @@
+import { syncForms } from "./forms";
 import { xpForLevel } from "../data/combat";
 import {
   contentLimits,
@@ -19,7 +20,7 @@ export function eligibleUpgrades(run: Run): UpgradeId[] {
       if (item.id.startsWith("weapon:")) {
         const definition = weaponById(item.id.slice(7) as WeaponId);
         return (
-          definition.owner === run.character &&
+          (definition.owner === run.character || Boolean(weapon)) &&
           (!weapon || !weapon.evolved) &&
           (Boolean(weapon) || run.weapons.length < contentLimits.weapons)
         );
@@ -43,6 +44,7 @@ export function grantUpgrade(run: Run, id: UpgradeId): boolean {
       run.player.health.current + 35,
     );
   }
+  syncForms(run);
   return true;
 }
 export function offerUpgrades(run: Run): void {
@@ -115,53 +117,89 @@ export function openChest(run: Run, id: number): boolean {
   run.chests = run.chests.filter((chest) => chest.id !== id);
   run.openedChests++;
   run.chestSerial++;
-  const roll = run.random() * 100;
-  const count =
-    roll < 5 + run.ranks.luck ? 5 : roll < 30 + run.ranks.luck * 2 ? 3 : 1;
-  run.chestRewards = [];
-  for (let i = 0; i < count; i++) {
-    const evolution = evolutionCandidates(run)[0];
-    if (evolution) {
-      const slot = run.weapons.find((item) => item.id === evolution);
-      if (slot) {
-        slot.evolved = true;
-        run.evolvedCount++;
-        const definition = weaponById(evolution);
-        run.chestRewards.push({
-          kind: "evolution",
-          title: definition.evolution.title,
-          detail:
-            "Técnica evolucionada · +65% daño, +20% alcance y ejecución reforzada",
-          id: weaponKey(evolution),
-        });
-        effect(run, run.player.position, "evolve");
-      }
-    } else {
-      const pool = eligibleUpgrades(run);
-      const choice = pool[Math.floor(run.random() * pool.length)];
-      if (choice && grantUpgrade(run, choice)) {
-        run.chestRewards.push({
-          kind: "upgrade",
-          title: upgrades.find((item) => item.id === choice)?.title ?? choice,
-          detail: `Rango ${run.ranks[choice]}`,
-          id: choice,
-        });
-      } else {
-        const berries = Math.round(75 * stats(run).currency);
-        run.berries += berries;
-        run.chestRewards.push({
-          kind: "berries",
-          title: `${berries} berries`,
-          detail: "Botín de esta partida",
-        });
-      }
-    }
+  run.chestRewards = evolutionCandidates(run)
+    .slice(0, 1)
+    .map((id) => ({
+      kind: "evolution",
+      id: weaponKey(id),
+      title: weaponById(id).evolution.title,
+      detail: "Evolucionar · +65% daño, +20% alcance y ejecución reforzada",
+    }));
+  const pool = eligibleUpgrades(run).filter(
+    (id) => !run.chestRewards.some((r) => r.id === id),
+  );
+  while (pool.length && run.chestRewards.length < 3) {
+    const [id] = pool.splice(Math.floor(run.random() * pool.length), 1);
+    if (id)
+      run.chestRewards.push({
+        kind: "upgrade",
+        id,
+        title: upgrades.find((u) => u.id === id)?.title ?? id,
+        detail: `Rango ${run.ranks[id] + 1}`,
+      });
+  }
+  const amount = Math.round(
+    75 * stats(run).currency * (1 + run.ranks.luck * 0.1),
+  );
+  const fallback: Run["chestRewards"] = [
+    {
+      kind: "berries",
+      amount,
+      title: `${amount} berries`,
+      detail: "Botín de esta partida",
+    },
+    {
+      kind: "vitality",
+      amount: 15,
+      title: "Reserva de vitalidad",
+      detail: "+15 vida máxima y recuperas 15",
+    },
+    {
+      kind: "haste",
+      amount: 12,
+      title: "Impulso de combate",
+      detail: "12 segundos de velocidad y cadencia",
+    },
+  ];
+  while (run.chestRewards.length < 3) {
+    const reward = fallback.shift();
+    if (reward) run.chestRewards.push(reward);
   }
   run.status = "chest";
   return true;
 }
-export function closeChest(run: Run): void {
-  if (run.status !== "chest") return;
+export function chooseChestReward(run: Run, index: number): boolean {
+  const reward = run.chestRewards[index];
+  if (run.status !== "chest" || !Number.isInteger(index) || !reward)
+    return false;
+  if (reward.kind === "evolution" && reward.id) {
+    const slot = run.weapons.find(
+      (w) =>
+        weaponKey(w.id) === reward.id &&
+        evolutionCandidates(run).includes(w.id),
+    );
+    if (!slot) return false;
+    slot.evolved = true;
+    run.evolvedCount++;
+    effect(run, run.player.position, "evolve");
+    syncForms(run);
+  } else if (reward.kind === "upgrade" && reward.id) {
+    if (!grantUpgrade(run, reward.id)) return false;
+  } else if (reward.kind === "berries") run.berries += reward.amount ?? 0;
+  else if (reward.kind === "vitality") {
+    run.player.health.maximum += reward.amount ?? 15;
+    run.player.health.current = Math.min(
+      run.player.health.maximum,
+      run.player.health.current + (reward.amount ?? 15),
+    );
+  } else if (reward.kind === "haste")
+    run.haste = Math.max(run.haste, reward.amount ?? 12);
+  run.chestRewards = [];
   run.status = "playing";
   offerUpgrades(run);
+  return true;
+}
+// Compatibilidad con herramientas de simulación: equivale a elegir la primera tarjeta.
+export function closeChest(run: Run): void {
+  chooseChestReward(run, 0);
 }

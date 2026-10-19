@@ -9,7 +9,6 @@ export interface Modifiers {
   critical: number;
   regen: number;
   strikes: number;
-  energyRegen: number;
   food: number;
   currency: number;
   dash: number;
@@ -23,7 +22,6 @@ export const neutral: Readonly<Modifiers> = {
   critical: 0,
   regen: 0,
   strikes: 0,
-  energyRegen: 0,
   food: 1,
   currency: 1,
   dash: 1,
@@ -31,8 +29,6 @@ export const neutral: Readonly<Modifiers> = {
 export interface FormDefinition {
   name: string;
   description: string;
-  level: number;
-  drain: number;
   modifiers: Readonly<Modifiers>;
 }
 export interface CharacterDefinition {
@@ -47,14 +43,12 @@ export interface CharacterDefinition {
 function form(
   name: string,
   description: string,
-  tier: FormTier,
+  _tier: FormTier,
   modifiers: Partial<Modifiers> = {},
 ): FormDefinition {
   return {
     name,
     description,
-    level: [1, 4, 8][tier] ?? 1,
-    drain: [0, 8, 15][tier] ?? 0,
     modifiers: { ...neutral, ...modifiers },
   };
 }
@@ -357,8 +351,8 @@ export const synergies: readonly Synergy[] = [
     id: "science",
     pair: ["chopper", "franky"],
     name: "Ciencia a bordo",
-    description: "+4 energía/s en reposo y +1 armadura.",
-    modifiers: { energyRegen: 4, armor: 1 },
+    description: "+0,4 vida/s y +1 armadura.",
+    modifiers: { regen: 0.4, armor: 1 },
   },
 ];
 export const characterById = (id: CharacterId): CharacterDefinition => {
@@ -403,13 +397,7 @@ export function combinedSynergies(
     "currency",
     "dash",
   ] as const;
-  const additive = [
-    "armor",
-    "critical",
-    "regen",
-    "strikes",
-    "energyRegen",
-  ] as const;
+  const additive = ["armor", "critical", "regen", "strikes"] as const;
   for (const synergy of activeSynergies(captain, nakama)) {
     for (const key of multiplicative)
       result[key] *= synergy.modifiers[key] ?? 1;

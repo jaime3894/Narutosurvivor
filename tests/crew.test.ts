@@ -1,3 +1,6 @@
+import { formMilestones } from "../src/data/form-progression";
+import { syncForms } from "../src/game/forms";
+import { weaponKey } from "../src/data/content";
 import { describe, expect, it } from "vitest";
 import { characters, activeSynergies, validateCrew } from "../src/data/crew";
 import { weaponById } from "../src/data/content";
@@ -27,35 +30,50 @@ describe("tripulación y formas", () => {
     (character) => {
       const run = createRun(17, character.id);
       expect(weaponById(run.weapons[0]!.id).owner).toBe(character.id);
-      expect(character.forms.map((form) => form.level)).toEqual([1, 4, 8]);
+      expect(character.forms).toHaveLength(3);
       expect(changeForm(run, 1)).toBe(false);
-      run.level = 4;
+      run.level = 99;
+      expect(changeForm(run, 1)).toBe(false);
+      const rule = formMilestones[character.id];
+      run.ranks[weaponKey(rule.first)] = 5;
+      syncForms(run);
+      expect(run.form).toBe(1);
+      changeForm(run, 0);
+      run.formCooldown = 0;
       run.player.health.current = 43;
       expect(changeForm(run, 1)).toBe(true);
       expect(changeForm(run, 2)).toBe(false);
       expect(stats(run).damage).toBeGreaterThan(0);
       expect(changeForm(run, 0)).toBe(true);
-      run.level = 8;
+      if (rule.second) run.ranks[weaponKey(rule.second)] = 5;
+      else run.weapons[0]!.evolved = true;
+      syncForms(run);
+      expect(run.form).toBe(2);
+      changeForm(run, 0);
       run.formCooldown = 0;
       expect(changeForm(run, 2)).toBe(true);
       expect(run.player.health.current).toBe(43);
       expect(stats(run).damage).toBeGreaterThan(24);
       updateCrew(run, 7);
-      expect(run.energy).toBe(0);
-      expect(run.form).toBe(0);
+      expect(run.energy).toBe(100);
+      expect(run.form).toBe(2);
       updateCrew(run, 1);
-      expect(run.energy).toBeGreaterThan(0);
+      expect(run.energy).toBe(100);
     },
   );
   it("pausar congela energía, apoyo y transformaciones", () => {
     const run = createRun(1, "luffy", ["chopper"]);
-    run.level = 8;
-    changeForm(run, 2);
+    run.ranks["weapon:pistol"] = 5;
+    run.ranks["weapon:gatling"] = 5;
+    syncForms(run);
+    expect(run.form).toBe(2);
+    const transform = run.transformTime;
     const energy = run.energy,
       position = { ...run.nakama[0]!.position };
     togglePause(run);
     for (let i = 0; i < 60; i++) step(run, { x: 1, y: 0, dash: false }, 1 / 60);
     expect(run.energy).toBe(energy);
+    expect(run.transformTime).toBe(transform);
     expect(run.nakama[0]!.position).toEqual(position);
     expect(changeForm(run, 0)).toBe(false);
   });

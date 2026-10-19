@@ -19,6 +19,7 @@ import {
   evolutionCandidates,
   openChest,
   closeChest,
+  chooseChestReward,
   spawnChest,
 } from "../src/game/progression";
 import { affinities, hitEnemy } from "../src/game/rules";
@@ -176,8 +177,12 @@ describe("cofres y evoluciones", () => {
       if (!chest) throw new Error("No hay cofre");
       expect(openChest(run, chest.id)).toBe(true);
       expect(run.status).toBe("chest");
+      expect(run.weapons[0]?.evolved).toBe(false);
+      expect(run.evolvedCount).toBe(0);
+      const title = run.chestRewards[0]?.title;
+      expect(chooseChestReward(run, 0)).toBe(true);
       expect(run.weapons[0]?.evolved).toBe(true);
-      expect(run.chestRewards[0]?.title).toBe(weaponById(id).evolution.title);
+      expect(title).toBe(weaponById(id).evolution.title);
       expect(run.evolvedCount).toBe(1);
       expect(openChest(run, chest.id)).toBe(false);
       closeChest(run);
@@ -219,7 +224,7 @@ describe("cofres y evoluciones", () => {
     openChest(a, ca.id);
     openChest(b, cb.id);
     expect(a.chestRewards).toHaveLength(3);
-    expect(b.chestRewards).toHaveLength(5);
+    expect(b.chestRewards).toHaveLength(3);
     const full = prepare("pistol");
     for (const item of upgrades) full.ranks[item.id] = item.max;
     const cc = spawnChest(full);
@@ -228,10 +233,15 @@ describe("cofres y evoluciones", () => {
     expect(
       full.chestRewards.some((reward) => reward.kind === "evolution"),
     ).toBe(true);
-    expect(
-      full.chestRewards.filter((reward) => reward.kind === "berries").length +
-        1,
-    ).toBe(full.chestRewards.length);
+    expect(full.chestRewards).toHaveLength(3);
+    expect(new Set(full.chestRewards.map((r) => r.kind)).size).toBe(3);
+    expect(full.berries).toBe(0);
+    const berriesIndex = full.chestRewards.findIndex(
+      (r) => r.kind === "berries",
+    );
+    expect(chooseChestReward(full, berriesIndex)).toBe(true);
+    expect(full.berries).toBeGreaterThan(0);
+    expect(full.evolvedCount).toBe(0);
   });
 });
 describe("pasivos y recogibles", () => {

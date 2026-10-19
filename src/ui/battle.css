@@ -704,3 +704,34 @@ button:disabled {
     font-size: 10px;
   }
 }
+
+/* Las listas de vínculo pueden contener 17 técnicas: el principio siempre es alcanzable. */
+.battle-modal {
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px;
+}
+.upgrade-card[data-chest],
+.upgrade-card[data-boss-reward],
+.upgrade-card[data-link] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.loadout-chip[aria-pressed="true"] {
+  border-color: #f0cf83;
+  box-shadow: inset 0 0 0 1px #f0cf83;
+}
+#rift-status {
+  color: #dfc7f3;
+  font-size: 12px;
+  text-align: center;
+}
+#enter-rift {
+  display: block;
+  margin: 12px auto;
+}
+#enter-rift[hidden] {
+  display: none;
+}

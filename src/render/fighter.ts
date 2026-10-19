@@ -1,3 +1,4 @@
+import { casterForm } from "../game/crew";
 import { drawLuffyRig } from "./luffy-rig";
 import { selectLuffyPunch, selectLuffyBodyAction } from "./luffy-pose";
 import { drawLuffyKick } from "./luffy-kick";
@@ -34,7 +35,11 @@ function actor(
   const hurt = !support && run.player.invulnerable > 0;
   const state = hurt ? "hurt" : attack ? "attack" : moving ? "walk" : "idle";
   const atlas = getSpriteAtlas(id, form);
-  const time = reducedMotion ? 0 : attack ? attack.age : run.elapsed;
+  const time = reducedMotion
+    ? 0
+    : attack
+      ? attack.age
+      : run.elapsed + (run.arena ? 75 - run.arena.remaining : 0);
   ctx.save();
   ctx.fillStyle = support ? "#2c514b" : "#294c43";
   ctx.beginPath();
@@ -155,12 +160,12 @@ export function drawFighter(
   run: Run,
   reducedMotion: boolean,
 ): void {
-  const actors = run.nakama.map((item) => ({
+  const actors = [...run.nakama, ...run.assists].map((item) => ({
     id: item.character,
     position: item.position,
     facing: item.facing,
     moving: item.moving,
-    form: 0 as FormTier,
+    form: casterForm(run, item.character),
     support: true,
   }));
   actors.push({

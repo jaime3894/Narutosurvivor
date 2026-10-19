@@ -1,3 +1,4 @@
+import { masteredForm } from "./forms";
 import {
   activeSynergies,
   characterById,
@@ -29,7 +30,10 @@ export function affinities(run: Run): Partial<Record<Affinity, number>> {
 }
 export function stats(run: Run, caster: CharacterId = run.character) {
   const isCaptain = caster === run.character;
-  const form = characterById(caster).forms[isCaptain ? run.form : 0].modifiers;
+  const form =
+    characterById(caster).forms[
+      isCaptain ? run.form : masteredForm(run, caster)
+    ].modifiers;
   const synergy = combinedSynergies(
     run.character,
     run.nakama.map((item) => item.character),
@@ -41,17 +45,22 @@ export function stats(run: Run, caster: CharacterId = run.character) {
   return {
     damage:
       combat.player.damage *
-      (1 + run.ranks.power * 0.25 + run.ranks.spirit * 0.05) *
+      (1 +
+        run.ranks.power * 0.25 +
+        run.ranks.spirit * 0.05 +
+        run.boons.damage * 0.15) *
       form.damage *
       synergy.damage,
     attackPeriod:
-      ((combat.player.attackPeriod * 0.88 ** run.ranks.tempo) /
+      ((combat.player.attackPeriod *
+        0.88 ** run.ranks.tempo *
+        (1 / 1.1) ** run.boons.tempo) /
         (run.haste > 0 ? 1.2 : 1)) *
       form.cooldown *
       synergy.cooldown,
     speed:
       combat.player.speed *
-      (1 + run.ranks.stride * 0.1) *
+      (1 + run.ranks.stride * 0.1 + run.boons.speed * 0.1) *
       (run.haste > 0 ? 1.25 : 1) *
       form.speed *
       synergy.speed,
@@ -65,6 +74,7 @@ export function stats(run: Run, caster: CharacterId = run.character) {
     duration: 1 + run.ranks.duration * 0.15,
     armor:
       run.ranks.armor * 2 +
+      run.boons.armor * 2 +
       form.armor +
       synergy.armor +
       (isCaptain && caster === "franky" ? 2 : 0),
@@ -80,6 +90,7 @@ export function stats(run: Run, caster: CharacterId = run.character) {
       (isCaptain && caster === "jinbe" ? 0.8 : 1),
     regen:
       run.ranks.regen * 0.35 +
+      run.boons.regen * 0.5 +
       form.regen +
       synergy.regen +
       (isCaptain && caster === "chopper" ? 0.3 : 0),
@@ -162,8 +173,8 @@ export function hitEnemy(
   run.damageDealt += Math.min(enemy.health.current, amount);
   enemy.health.current -= amount;
   enemy.flash = critical ? 0.18 : 0.1;
-  enemy.velocity.x += impulse.x;
-  enemy.velocity.y += impulse.y;
+  enemy.velocity.x += impulse.x * (enemy.boss ? 0 : 1);
+  enemy.velocity.y += impulse.y * (enemy.boss ? 0 : 1);
   effect(
     run,
     enemy.position,

@@ -1,3 +1,4 @@
+import { activeTechniques } from "./bonds";
 import { characterById } from "../data/crew";
 import { casterPosition, casterForm } from "./crew";
 import type { CharacterId } from "../data/content";
@@ -216,23 +217,37 @@ function strike(run: Run, attack: Attack, index: number): void {
   }
 }
 export function updateTechniques(run: Run, dt: number): void {
-  for (const slot of run.weapons) {
-    slot.timer = Math.max(0, slot.timer - dt);
+  const active = activeTechniques(run);
+  const slots = run.weapons.filter((w) => active.includes(w.id));
+  for (const slot of slots) slot.timer = Math.max(0, slot.timer - dt);
+  const groupReady = slots.every((s) => s.timer === 0);
+  for (const slot of slots) {
+    if (!groupReady) continue;
     if (slot.timer > 0 || run.attacks.length >= 16) continue;
     const definition = weaponById(slot.id);
-    const attack = createAttack(run, definition, slot.evolved);
+    const attack = createAttack(
+      run,
+      definition,
+      slot.evolved,
+      definition.owner,
+    );
     if (!attack) continue;
     run.attacks.push(attack);
     slot.timer = Math.max(
       attack.windup + attack.active + attack.recovery,
-      (definition.cooldown * stats(run).attackPeriod) /
+      (definition.cooldown * stats(run, definition.owner).attackPeriod) /
         combat.player.attackPeriod,
     );
+  }
+  if (active.length > 1 && groupReady) {
+    const timer = Math.max(...slots.map((s) => s.timer));
+    for (const slot of slots) slot.timer = timer;
   }
   for (const nakama of run.nakama) {
     nakama.timer = Math.max(0, nakama.timer - dt);
     if (nakama.timer > 0 || run.attacks.length >= 16) continue;
     const definition = weaponById(characterById(nakama.character).starter);
+    if (active.includes(definition.id)) continue;
     const attack = createAttack(run, definition, false, nakama.character);
     if (attack) {
       run.attacks.push(attack);

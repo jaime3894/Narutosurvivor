@@ -54,7 +54,7 @@ Cada personaje tiene idle, caminar, ataque y daño; las piernas alternan y las a
 - Suelos: mosaicos 16×16 sin suavizado, integración por isla en fase 4.
 - Audio: solo original o con licencia registrada; implementación en fase 6.
 
-Registrar siempre autor, URL, licencia y modificaciones de cualquier nuevo recurso. El atlas corporal opcional ya funciona; los contratos de jefes, terreno y audio aún no son cargadores implementados.
+Registrar siempre autor, URL, licencia y modificaciones de cualquier nuevo recurso. El atlas corporal opcional ya funciona; los contratos de terreno y audio aún no son cargadores implementados; el cargador de jefes de grieta se describe abajo.
 
 ## Excepción de Luffy base: seis poses y capas de puñetazo
 
@@ -94,3 +94,17 @@ Exportar piezas: `node scripts/compile-luffy-art.mjs /ruta/config.json` admite a
 Procedencia: ilustraciones originales creadas para esta revisión con asistencia de IA de imagen, usando como referencia las hojas originales de la revisión anterior. No son sprites oficiales ni recursos extraídos de juegos. El registro MIT de los retratos de reserva continúa separado. La revisión visual no constituye aprobación artística del usuario.
 
 Banco visual: con `npm run dev` activo, `node scripts/review-combat-art.mjs` genera las galerías de [base](screenshots/tecnicas-forma-0-v5.png), [estilo 1](screenshots/tecnicas-forma-1-v5.png) y [estilo 2](screenshots/tecnicas-forma-2-v5.png): 18 técnicas × tres formas × seis tiempos. El selector incorpora «Ver técnica», elección de técnica propia y vista.
+
+
+## Jefes de grieta v6
+
+`public/assets/bosses/{buggy,kuro,arlong}-v6.png`: PNG transparente 1024×128, cuatro celdas de 256×128: guardia frontal de tres cuartos, guardia posterior, preparación frontal, ataque frontal. Ancla de pies (128,118). Exportación a escala constante por jefe; espejado lateral y ventanas del estado real del motor. Personajes originales ilustrados para este proyecto con asistencia de IA, sin descargar sprites de juegos/anime. Fuente conservada en `docs/art-source/rift-bosses-v6.png`; no se incluye en la descarga del jugador.
+
+Regenerar atlas desde la fuente aprobada:
+
+```sh
+node scripts/compile-boss-art.mjs scripts/boss-art.json
+node scripts/optimize-png.mjs public/assets/bosses/*.png
+```
+
+Carga local en `boss-assets.ts`, comprobación de dimensiones y respaldo visible si falta una hoja. Tres atlas suman menos de 250 KB; todo el arte precargado sigue bajo el presupuesto de 8 MB. No hay marcha de seis dibujos ni ataques de espalda independientes en estos jefes: se utilizan poses clave y dirección adaptada. El balance/área física está en `src/data/rifts.ts`, separado del arte.

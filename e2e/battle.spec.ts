@@ -187,12 +187,13 @@ test("recoger un cofre evoluciona Rifle, pausa y permite continuar con la nueva 
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("Gomu Gomu no Rifle");
   const state = await page.evaluate(() => window.__MAREA_DEBUG__?.snapshot());
-  expect(state?.weapons[0]?.evolved).toBe(true);
+  expect(state?.weapons[0]?.evolved).toBe(false);
+  await expect(dialog.locator("[data-chest]")).toHaveCount(3);
   await page.waitForTimeout(100);
   expect(
     await page.evaluate(() => window.__MAREA_DEBUG__?.snapshot().elapsed),
   ).toBe(state?.elapsed);
-  await page.getByRole("button", { name: "Continuar la aventura" }).click();
+  await dialog.getByRole("button", { name: /Gomu Gomu no Rifle/ }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.locator("#weapon-loadout .evolved")).toContainText("Rifle");
 });

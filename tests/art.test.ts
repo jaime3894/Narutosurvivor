@@ -1,3 +1,4 @@
+import { bossOrder } from "../src/data/rifts";
 import { readFileSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { characters } from "../src/data/crew";
@@ -81,6 +82,10 @@ describe("poses corporales de combate", () => {
     expect(
       base +
         poses +
+        bossOrder.reduce(
+          (sum, id) => sum + statSync(`public/assets/bosses/${id}-v6.png`).size,
+          0,
+        ) +
         layers.reduce(
           (sum, path) =>
             sum + statSync(`public/assets/characters/${path}`).size,
@@ -112,5 +117,15 @@ describe("capas anatómicas de Luffy", () => {
     const png = readFileSync(`public/assets/characters/${name}`);
     expect(png.readUInt32BE(16)).toBe(width);
     expect(png.readUInt32BE(20)).toBe(height);
+  });
+});
+
+describe("arte de jefes", () => {
+  it.each(bossOrder)("%s tiene cuatro poses en un PNG compacto", (id) => {
+    const path = `public/assets/bosses/${id}-v6.png`,
+      png = readFileSync(path);
+    expect(png.readUInt32BE(16)).toBe(1024);
+    expect(png.readUInt32BE(20)).toBe(128);
+    expect(statSync(path).size).toBeLessThan(100_000);
   });
 });

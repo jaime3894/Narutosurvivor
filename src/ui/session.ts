@@ -1,3 +1,15 @@
+import { formRequirement } from "../game/forms";
+import { formMilestones } from "../data/form-progression";
+import {
+  activeTechniques,
+  bondCandidates,
+  chooseBossReward,
+  linkTechnique,
+  cancelBond,
+  selectTechnique,
+} from "../game/bonds";
+import { spawnRift, enterRift } from "../game/rifts";
+import { bosses } from "../data/rifts";
 import {
   characterById,
   activeSynergies,
@@ -17,7 +29,12 @@ import {
   type WeaponId,
 } from "../data/content";
 import { addDrop, affinities, affinityDescription } from "../game/rules";
-import { closeChest, grantUpgrade, spawnChest } from "../game/progression";
+import {
+  closeChest,
+  chooseChestReward,
+  grantUpgrade,
+  spawnChest,
+} from "../game/progression";
 import { upgrades, xpForLevel, type UpgradeId } from "../data/combat";
 import {
   chooseUpgrade,
@@ -55,6 +72,10 @@ export interface DebugBridge {
     attacks: number;
     form: FormTier;
     energy: number;
+    linked: WeaponId[];
+    boss: string | null;
+    rift: boolean;
+    bossesDefeated: number;
     nakama: { character: CharacterId; x: number; y: number }[];
     synergies: string[];
     casters: CharacterId[];
@@ -69,6 +90,9 @@ export interface DebugBridge {
   spawnChest: () => void;
   closeChest: () => void;
   unlockForms: () => void;
+  openRift: () => void;
+  defeatBoss: () => void;
+  chooseChest: (index: number) => boolean;
   form: (tier: FormTier) => boolean;
 }
 declare global {
@@ -104,10 +128,10 @@ export function startSession(
         <div class="arena"><canvas id="battle" tabindex="0" aria-label="Campo de combate. Muévete con WASD o flechas. Espacio para embestir, Escape para pausar."></canvas><div id="overlay"></div><div class="arena-corner"><span id="fighter-name">LUFFY</span> / EAST BLUE <span>✦</span></div><div id="wave-note" class="wave-note">Encuentra tu ritmo. Recoge los cristales.</div></div>
         <div class="xp-row"><span id="level">NIVEL 1</span><div class="meter xp-meter" role="progressbar" aria-label="Experiencia" aria-valuemin="0"><i id="xp-bar"></i></div><span id="xp-text"></span></div>
         <div class="loadout"><div id="weapon-loadout" class="loadout-weapons"></div><div id="passive-loadout" class="loadout-passives"></div><div class="loadout-foot"><span id="affinities"></span><span id="loot-stats">฿ 0 · COFRES 0</span></div></div>
-        <div class="crew-hud"><div class="form-controls" role="group" aria-label="Cambiar forma">${[0, 1, 2].map((tier) => `<button data-form-tier="${tier}"></button>`).join("")}</div><div class="energy-row"><span>ENERGÍA <b id="energy-text">100</b></span><div class="meter energy-meter" role="progressbar" aria-label="Energía de forma" aria-valuemin="0" aria-valuemax="100"><i id="energy-bar"></i></div></div><p id="innate-label"></p><p id="nakama-label"></p><p id="synergy-label"></p></div>
+        <div class="crew-hud"><div class="form-controls" role="group" aria-label="Cambiar forma">${[0, 1, 2].map((tier) => `<button data-form-tier="${tier}"></button>`).join("")}</div><div class="energy-row"><span>ENERGÍA <b id="energy-text">∞</b></span><div class="meter energy-meter" role="progressbar" aria-label="Energía de forma infinita" aria-valuetext="Infinita" aria-valuemin="0" aria-valuemax="100"><i id="energy-bar"></i></div></div><p id="innate-label"></p><p id="nakama-label"></p><p id="synergy-label"></p></div>
         <div class="battle-bottom"><div><span class="keycap">W A S D</span> o flechas · movimiento <span class="keycap">ESPACIO</span> embestida</div><button class="dash-button" id="dash">➶ Embestir <span id="dash-state">LISTO</span></button></div>
-        <p class="battle-tip">F: cambiar forma · Técnicas automáticas · Recoge cofres para evolucionar · Arrastra en la arena para moverte</p>
-        ${debug ? `<div class="debug-tools"><span>BANCO DE TÉCNICAS Y FORMAS</span><button id="debug-xp">+10 XP</button><button id="debug-forms">Desbloquear formas</button><select id="debug-technique" aria-label="Técnica de depuración">${weapons.map((item) => `<option value="${item.id}">${characterNames[item.owner]} · ${item.title}</option>`).join("")}</select><button id="debug-evolution">Preparar evolución</button><button id="debug-chest">Cofre</button><button id="debug-vacuum">Imán</button></div>` : ""}
+        <button class="small-button" id="enter-rift" hidden>Entrar en la grieta</button><p id="rift-status" role="status"></p><p class="battle-tip">F: cambiar forma · 1–4: técnica o vínculo · Técnicas automáticas · Recoge cofres para evolucionar · Arrastra en la arena para moverte</p>
+        ${debug ? `<div class="debug-tools"><span>BANCO DE TÉCNICAS Y FORMAS</span><button id="debug-xp">+10 XP</button><button id="debug-forms">Desbloquear formas</button><select id="debug-technique" aria-label="Técnica de depuración">${weapons.map((item) => `<option value="${item.id}">${characterNames[item.owner]} · ${item.title}</option>`).join("")}</select><button id="debug-evolution">Preparar evolución</button><button id="debug-chest">Cofre</button><button id="debug-vacuum">Imán</button><button id="debug-rift">Grieta</button><button id="debug-boss">Derrotar jefe</button></div>` : ""}
       </main>
     </div>`;
   const query = <T extends HTMLElement>(selector: string): T => {
@@ -195,7 +219,7 @@ export function startSession(
     );
   function hud(): void {
     const character = characterById(run.character);
-    query("#energy-text").textContent = String(Math.floor(run.energy));
+    query("#energy-text").textContent = "∞";
     query("#energy-bar").style.width = `${run.energy}%`;
     query(".energy-meter").setAttribute(
       "aria-valuenow",
@@ -206,15 +230,12 @@ export function startSession(
       .forEach((button) => {
         const tier = Number(button.dataset.formTier) as FormTier;
         const definition = character.forms[tier];
-        button.textContent = `${tier + 1}. ${definition.name}${run.level < definition.level ? " · NV " + definition.level : ""}`;
+        button.textContent = `${tier + 1}. ${definition.name}${tier > run.formUnlocked ? " · " + formRequirement(run.character, tier) : ""}`;
         button.classList.toggle("active", run.form === tier);
         button.setAttribute("aria-pressed", String(run.form === tier));
         button.disabled =
           run.status !== "playing" ||
-          (tier > 0 &&
-            (run.level < definition.level ||
-              run.energy < 25 ||
-              run.formCooldown > 0));
+          (tier > 0 && (tier > run.formUnlocked || run.formCooldown > 0));
       });
     query("#innate-label").textContent = `Innato · ${character.innate}`;
     query("#nakama-label").textContent = run.nakama.length
@@ -265,6 +286,8 @@ export function startSession(
     const nextBuild = JSON.stringify([
       run.character,
       run.ranks,
+      run.activeWeapon,
+      run.linkedWeapons,
       run.weapons.map((slot) => slot.evolved),
     ]);
     if (nextBuild !== buildKey) {
@@ -275,7 +298,7 @@ export function startSession(
         run.weapons
           .map((slot) => {
             const definition = weaponById(slot.id);
-            return `<span class="loadout-chip ${slot.evolved ? "evolved" : ""}" title="${definition.description}">${slot.evolved ? "✦" : "⚔"} ${slot.evolved ? definition.evolution.title : definition.title} <b>${run.ranks[weaponKey(slot.id)]}/5</b></span>`;
+            return `<button data-active-weapon="${slot.id}" aria-pressed="${activeTechniques(run).includes(slot.id)}" class="loadout-chip ${slot.evolved ? "evolved" : ""}" title="${definition.description}">${run.linkedWeapons.includes(slot.id) ? "∞ " : ""}${slot.evolved ? "✦" : "⚔"} ${slot.evolved ? definition.evolution.title : definition.title} <b>${run.ranks[weaponKey(slot.id)]}/5</b></button>`;
           })
           .join("") +
         `<span class="loadout-empty">${run.weapons.length}/${contentLimits.weapons} TÉCNICAS</span>`;
@@ -296,6 +319,19 @@ export function startSession(
           ? affinityDescription(run)
           : "Afinidades: combina 2 técnicas o pasivos del mismo grupo";
     }
+    query("#rift-status").textContent = run.arena
+      ? `${bosses[run.enemies[0]?.boss?.kind ?? "buggy"].name} · ${Math.ceil(run.arena.remaining)} s · el reloj de la costa está detenido`
+      : run.rift
+        ? `Grieta · ${Math.ceil(run.rift.remaining)} s · ${Math.round(Math.hypot(run.rift.position.x - run.player.position.x, run.rift.position.y - run.player.position.y))} m`
+        : `Jefes vencidos: ${run.bossesDefeated} · Vínculo ${run.linkedWeapons.length}/4`;
+    query<HTMLButtonElement>("#enter-rift").hidden = !run.rift;
+    query<HTMLButtonElement>("#enter-rift").disabled =
+      run.status !== "playing" ||
+      !run.rift ||
+      Math.hypot(
+        run.rift.position.x - run.player.position.x,
+        run.rift.position.y - run.player.position.y,
+      ) > 200;
     query("#loot-stats").textContent =
       `฿ ${run.berries} · COFRES ${run.openedChests}${run.haste > 0 ? ` · IMPULSO ${Math.ceil(run.haste)}s` : ""}`;
   }
@@ -311,7 +347,7 @@ export function startSession(
     canvas.focus({ preventScroll: true });
   }
   function syncOverlay(): void {
-    const key = `${run.status}:${run.level}:${run.chestSerial}`;
+    const key = `${run.status}:${run.level}:${run.chestSerial}:${run.rewardSerial}`;
     if (key === overlayKey) return;
     overlayKey = key;
     controls.clear();
@@ -332,10 +368,20 @@ export function startSession(
         })
         .join("")}</div>`;
     } else if (run.status === "chest") {
-      const evolution = run.chestRewards.some(
-        (reward) => reward.kind === "evolution",
-      );
-      content = `<p class="eyebrow">COFRE ABIERTO · ${run.chestRewards.length} PREMIO${run.chestRewards.length > 1 ? "S" : ""}</p><h1>${evolution ? "Tu técnica evoluciona." : "El mar guarda tesoros."}</h1><div class="chest-rewards">${run.chestRewards.map((reward) => `<div class="chest-reward ${reward.kind === "evolution" ? "evolved" : ""}"><strong>${reward.kind === "evolution" ? "✦ " : ""}${reward.title}</strong><span>${reward.detail}</span></div>`).join("")}</div><div class="modal-actions"><button id="close-chest">Continuar la aventura</button></div>`;
+      content = `<p class="eyebrow">COFRE ABIERTO · ELIGE 1 DE 3</p><h1>El mar guarda tesoros.</h1><p class="modal-subtitle">El combate está detenido. Solo recibirás la opción elegida.</p><div class="upgrade-grid">${run.chestRewards.map((r, i) => `<button class="upgrade-card ${r.kind === "evolution" ? "evolved" : ""}" data-chest="${i}"><span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">ELEGIR · TECLA ${i + 1}</span></button>`).join("")}</div>`;
+    } else if (run.status === "bossReward") {
+      content = `<p class="eyebrow">JEFE DERROTADO · ELIGE UNA RECOMPENSA</p><h1>La tripulación crece.</h1><div class="upgrade-grid">${run.bossRewards.map((r, i) => `<button class="upgrade-card" data-boss-reward="${i}"><span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">TECLA ${i + 1}</span></button>`).join("")}</div>`;
+    } else if (run.status === "bond") {
+      content = `<p class="eyebrow">VÍNCULO · ${Math.max(2, run.linkedWeapons.length + 1)} TÉCNICAS JUNTAS</p><h1>Elige qué técnica vincular.</h1><p class="modal-subtitle">${run.linkedWeapons.length ? run.linkedWeapons.map((w) => weaponById(w).title).join(" + ") : weaponById(run.activeWeapon).title}. Los ataques ajenos los ejecuta su nakama.</p><div class="upgrade-grid">${bondCandidates(
+        run,
+      )
+        .map((id) => {
+          const w = weaponById(id);
+          return `<button class="upgrade-card" data-link="${id}"><span class="upgrade-name">${w.title}</span><span class="upgrade-description">${w.owner === run.character ? "Técnica propia" : "Llama a " + characterNames[w.owner]} · ${w.description}</span></button>`;
+        })
+        .join(
+          "",
+        )}</div><button id="back-rewards">Volver a recompensas</button>`;
     } else if (run.status === "paused") {
       content =
         '<p class="eyebrow">UN RESPIRO EN ALTA MAR</p><h1>A tu ritmo.</h1><p class="modal-subtitle">La partida está en pausa.</p><div class="modal-actions"><button id="resume">Continuar</button><button class="secondary" id="leave">Volver al puerto</button></div>';
@@ -348,7 +394,7 @@ export function startSession(
           .join(" · ") || "Sin mejoras adquiridas"
       }</div><p class="results-loot">฿ ${run.berries} berries · ${run.openedChests} cofres · ${run.evolvedCount} evoluciones</p><div class="modal-actions"><button id="restart">Otra partida ↗</button><button class="secondary" id="leave">Volver al puerto</button></div>`;
     }
-    overlay.innerHTML = `<div class="scrim"><section class="battle-modal" role="dialog" aria-modal="true" aria-label="${run.status === "upgrade" ? "Elige una mejora" : run.status === "paused" ? "Pausa" : run.status === "chest" ? "Botín del cofre" : "Resultados"}">${content}</section></div>`;
+    overlay.innerHTML = `<div class="scrim"><section class="battle-modal" role="dialog" aria-modal="true" aria-label="${run.status === "upgrade" ? "Elige una mejora" : run.status === "paused" ? "Pausa" : run.status === "chest" ? "Botín del cofre" : run.status === "bossReward" ? "Recompensa del jefe" : run.status === "bond" ? "Vincular técnicas" : "Resultados"}">${content}</section></div>`;
     overlay
       .querySelectorAll<HTMLButtonElement>("[data-upgrade]")
       .forEach((button) => {
@@ -363,8 +409,32 @@ export function startSession(
           }
         });
       });
-    overlay.querySelector("#close-chest")?.addEventListener("click", () => {
-      closeChest(run);
+    overlay.querySelectorAll<HTMLButtonElement>("[data-chest]").forEach((b) =>
+      b.addEventListener("click", () => {
+        chooseChestReward(run, Number(b.dataset.chest));
+        syncOverlay();
+        hud();
+      }),
+    );
+    overlay
+      .querySelectorAll<HTMLButtonElement>("[data-boss-reward]")
+      .forEach((b) =>
+        b.addEventListener("click", () => {
+          chooseBossReward(run, Number(b.dataset.bossReward));
+          syncOverlay();
+          hud();
+        }),
+      );
+    overlay.querySelectorAll<HTMLButtonElement>("[data-link]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const id = bondCandidates(run).find((id) => id === b.dataset.link);
+        if (id) linkTechnique(run, id);
+        syncOverlay();
+        hud();
+      }),
+    );
+    overlay.querySelector("#back-rewards")?.addEventListener("click", () => {
+      cancelBond(run);
       syncOverlay();
       hud();
     });
@@ -386,7 +456,22 @@ export function startSession(
           chooseUpgrade(run, id);
           syncOverlay();
           hud();
+          return;
         }
+      }
+      if (
+        !event.repeat &&
+        ["Digit1", "Digit2", "Digit3", "Digit4"].includes(event.code)
+      ) {
+        const index = Number(event.code.slice(-1)) - 1;
+        if (run.status === "chest") chooseChestReward(run, index);
+        else if (run.status === "bossReward") chooseBossReward(run, index);
+        else if (run.status === "playing") {
+          const slot = run.weapons[index];
+          if (slot) selectTechnique(run, slot.id);
+        }
+        syncOverlay();
+        hud();
       }
       if (event.code === "Tab" && run.status !== "playing") {
         const buttons = Array.from(
@@ -456,6 +541,10 @@ export function startSession(
         attacks: run.attacks.length,
         form: run.form,
         energy: run.energy,
+        linked: [...run.linkedWeapons],
+        boss: run.enemies.find((e) => e.boss)?.boss?.kind ?? null,
+        rift: Boolean(run.rift),
+        bossesDefeated: run.bossesDefeated,
         nakama: run.nakama.map((item) => ({
           character: item.character,
           x: item.position.x,
@@ -497,6 +586,7 @@ export function startSession(
         for (const item of weapons) run.ranks[weaponKey(item.id)] = 0;
         run.ranks[weaponKey(id)] = 1;
         run.weapons = [{ id, timer: 0, evolved: false }];
+        run.activeWeapon = id;
         run.enemies.push({
           id: run.nextId++,
           position: {
@@ -547,10 +637,38 @@ export function startSession(
         });
       },
       unlockForms: () => {
-        run.level = Math.max(run.level, 8);
+        const rule = formMilestones[run.character];
+        run.ranks[weaponKey(rule.first)] = 5;
+        if (rule.second) run.ranks[weaponKey(rule.second)] = 5;
+        else {
+          const slot = run.weapons.find((w) => w.id === rule.first);
+          if (slot) slot.evolved = true;
+        }
+        run.formUnlocked = 2;
         run.energy = 100;
         run.formCooldown = 0;
         hud();
+      },
+      openRift: () => {
+        spawnRift(run);
+        enterRift(run);
+        syncOverlay();
+        hud();
+      },
+      defeatBoss: () => {
+        const boss = run.enemies.find((e) => e.boss);
+        if (boss) {
+          boss.health.current = 0;
+          step(run, { x: 0, y: 0, dash: false }, 1 / 60);
+        }
+        syncOverlay();
+        hud();
+      },
+      chooseChest: (index) => {
+        const accepted = chooseChestReward(run, index);
+        syncOverlay();
+        hud();
+        return accepted;
       },
       form: (tier) => {
         const result = changeForm(run, tier);
@@ -608,6 +726,41 @@ export function startSession(
     query("#debug-vacuum").addEventListener(
       "click",
       () => window.__MAREA_DEBUG__?.dropPickup("vacuum"),
+      { signal },
+    );
+  }
+  query("#enter-rift").addEventListener(
+    "click",
+    () => {
+      enterRift(run);
+      hud();
+      canvas.focus();
+    },
+    { signal },
+  );
+  query("#weapon-loadout").addEventListener(
+    "click",
+    (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
+        "[data-active-weapon]",
+      );
+      const id = run.weapons.find(
+        (w) => w.id === button?.dataset.activeWeapon,
+      )?.id;
+      if (id) selectTechnique(run, id);
+      hud();
+    },
+    { signal },
+  );
+  if (debug) {
+    query("#debug-rift").addEventListener(
+      "click",
+      () => window.__MAREA_DEBUG__?.openRift(),
+      { signal },
+    );
+    query("#debug-boss").addEventListener(
+      "click",
+      () => window.__MAREA_DEBUG__?.defeatBoss(),
       { signal },
     );
   }

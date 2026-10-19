@@ -1,3 +1,4 @@
+import { formRequirement } from "../game/forms";
 import {
   characters,
   characterById,
@@ -46,7 +47,7 @@ export function openCrew(
               "",
             )}</select></label><label>Vista <select id="preview-direction" aria-label="Dirección de demostración">${(["right", "left", "down", "up"] as const).map((d, i) => `<option value="${d}" ${d === direction ? "selected" : ""}>${["Derecha", "Izquierda", "Frente", "Espalda"][i]}</option>`).join("")}</select></label>`
         : ""
-    }<p class="eyebrow">${chosen.role}</p><h3>${characterNames[chosen.id]}</h3><p class="innate"><b>Innato</b> · ${chosen.innate}</p><div class="form-tabs" role="group" aria-label="Vista de formas">${chosen.forms.map((item, index) => `<button data-form-preview="${index}" class="${preview === index ? "active" : ""}" aria-pressed="${preview === index}">${index + 1}. ${item.name}</button>`).join("")}</div><p class="form-description"><b>${form.name}</b> · ${form.description}<br>${preview === 0 ? "Estilo inicial · recupera energía" : "Disponible en nivel " + form.level + " · consume " + form.drain + " energía/s"}</p><p class="support-description">Como nakama: ${chosen.support}</p></aside></div><div class="crew-bottom"><div><b>Tripulación</b> · ${[selection.captain, ...selection.nakama].map((id) => characterNames[id]).join(" + ")}<p id="crew-synergies">${
+    }<p class="eyebrow">${chosen.role}</p><h3>${characterNames[chosen.id]}</h3><p class="innate"><b>Innato</b> · ${chosen.innate}</p><div class="form-tabs" role="group" aria-label="Vista de formas">${chosen.forms.map((item, index) => `<button data-form-preview="${index}" class="${preview === index ? "active" : ""}" aria-pressed="${preview === index}">${index + 1}. ${item.name}</button>`).join("")}</div><p class="form-description"><b>${form.name}</b> · ${form.description}<br>${formRequirement(chosen.id, preview)} · sin agotamiento</p><p class="support-description">Como nakama: ${chosen.support}</p></aside></div><div class="crew-bottom"><div><b>Tripulación</b> · ${[selection.captain, ...selection.nakama].map((id) => characterNames[id]).join(" + ")}<p id="crew-synergies">${
       activeSynergies(selection.captain, selection.nakama)
         .map((item) => `${item.name}: ${item.description}`)
         .join("<br>") || "Combina nakama para descubrir sinergias."

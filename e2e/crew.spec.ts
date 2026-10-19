@@ -51,7 +51,8 @@ test("elegir capitán, dos nakama y transformar sin mezclar sus identidades", as
     .poll(() => page.evaluate(() => window.__MAREA_DEBUG__!.snapshot().form))
     .toBe(2);
   state = await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot());
-  expect(state.energy).toBeLessThan(100);
+  expect(state.energy).toBe(100);
+  await expect(page.locator("#energy-text")).toHaveText("∞");
   expect(state.synergies).toHaveLength(3);
   await page.evaluate(() => {
     window.__MAREA_DEBUG__!.setHealth(0);

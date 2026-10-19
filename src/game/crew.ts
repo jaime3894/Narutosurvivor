@@ -1,28 +1,25 @@
-import {
-  activeSynergies,
-  characterById,
-  combinedSynergies,
-  type FormTier,
-} from "../data/crew";
+import { activeSynergies, characterById, type FormTier } from "../data/crew";
+import { masteredForm, syncForms } from "./forms";
 import type { CharacterId } from "../data/content";
 import type { Position } from "../core/entity";
 import type { Run } from "./types";
 export function casterPosition(run: Run, character: CharacterId): Position {
   if (character === run.character) return run.player.position;
-  const nakama = run.nakama.find((item) => item.character === character);
+  const nakama = [...run.nakama, ...run.assists].find(
+    (item) => item.character === character,
+  );
   if (!nakama)
     throw new Error("La técnica necesita un actor de su propietario.");
   return nakama.position;
 }
 export const casterForm = (run: Run, character: CharacterId): FormTier =>
-  character === run.character ? run.form : 0;
+  character === run.character ? run.form : masteredForm(run, character);
 export function changeForm(run: Run, form: FormTier): boolean {
   const definition = characterById(run.character).forms[form];
   if (
     run.status !== "playing" ||
     form === run.form ||
-    (form > 0 &&
-      (run.level < definition.level || run.energy < 25 || run.formCooldown > 0))
+    (form > 0 && (form > run.formUnlocked || run.formCooldown > 0))
   )
     return false;
   run.form = form;
@@ -31,48 +28,32 @@ export function changeForm(run: Run, form: FormTier): boolean {
   run.attacks = run.attacks.filter((attack) => attack.caster !== run.character);
   if (form > 0)
     run.player.invulnerable = Math.max(run.player.invulnerable, 0.15);
-  run.notice = `${definition.name}${form === 0 ? " · recuperando energía" : " · ¡a combatir!"}`;
+  run.notice = `${definition.name} · energía infinita`;
   run.noticeTime = 3;
   return true;
 }
 export function cycleForm(run: Run): boolean {
   const next: FormTier =
-    run.form === 0 ? 1 : run.form === 1 && run.level >= 8 ? 2 : 0;
+    run.form === 0 ? 1 : run.form === 1 && run.formUnlocked >= 2 ? 2 : 0;
   return changeForm(run, next);
 }
 export function updateCrew(run: Run, dt: number): void {
   run.formCooldown = Math.max(0, run.formCooldown - dt);
   run.transformTime = Math.max(0, run.transformTime - dt);
-  const form = characterById(run.character).forms[run.form];
-  if (run.form === 0)
-    run.energy = Math.min(
-      100,
-      run.energy +
-        (14 +
-          combinedSynergies(
-            run.character,
-            run.nakama.map((item) => item.character),
-          ).energyRegen) *
-          dt,
-    );
-  else {
-    run.energy = Math.max(0, run.energy - form.drain * dt);
-    if (run.energy === 0) {
-      run.form = 0;
-      run.transformTime = 0.4;
-      run.notice = "Sin energía · vuelves al estilo base";
-      run.noticeTime = 3;
-      run.attacks = run.attacks.filter(
-        (attack) => attack.caster !== run.character,
-      );
-    }
-  }
+  syncForms(run);
+  run.energy = 100;
   const facing = run.player.facing;
-  run.nakama.forEach((nakama, index) => {
-    const side = index === 0 ? -1 : 1;
+  [...run.nakama, ...run.assists].forEach((nakama, index) => {
+    const side = index % 2 === 0 ? -1 : 1;
     const target = {
-      x: run.player.position.x - facing.x * 42 - facing.y * side * 43,
-      y: run.player.position.y - facing.y * 42 + facing.x * side * 43,
+      x:
+        run.player.position.x -
+        facing.x * (42 + Math.floor(index / 2) * 38) -
+        facing.y * side * 43,
+      y:
+        run.player.position.y -
+        facing.y * (42 + Math.floor(index / 2) * 38) +
+        facing.x * side * 43,
     };
     const dx = target.x - nakama.position.x,
       dy = target.y - nakama.position.y;
@@ -85,7 +66,7 @@ export function updateCrew(run: Run, dt: number): void {
     }
     nakama.moving = distance > 5;
     nakama.supportTimer -= dt;
-    if (nakama.supportTimer <= 0) {
+    if (nakama.supportTimer <= 0 && run.nakama.includes(nakama)) {
       const heal =
         nakama.character === "chopper"
           ? 6

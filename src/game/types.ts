@@ -1,6 +1,7 @@
 import type { FormTier } from "../data/crew";
 import type { Position, Velocity, Health } from "../core/entity";
 import type { EnemyKind } from "../data/combat";
+import type { BossId, BoonId } from "../data/rifts";
 import type {
   CharacterId,
   PickupKind,
@@ -12,6 +13,8 @@ export type RunStatus =
   | "paused"
   | "upgrade"
   | "chest"
+  | "bossReward"
+  | "bond"
   | "won"
   | "lost";
 export interface Player {
@@ -35,6 +38,13 @@ export interface Enemy {
   slow?: number;
   burn?: number;
   burnTick?: number;
+  boss?: {
+    kind: BossId;
+    phase: "approach" | "windup" | "attack" | "recover";
+    time: number;
+    target: Position;
+    direction: Position;
+  };
 }
 export interface Projectile {
   id: number;
@@ -110,10 +120,40 @@ export interface Chest {
   position: Position;
 }
 export interface ChestReward {
-  kind: "evolution" | "upgrade" | "berries";
+  kind: "evolution" | "upgrade" | "berries" | "vitality" | "haste";
   title: string;
   detail: string;
   id?: UpgradeId;
+  amount?: number;
+}
+export interface Rift {
+  position: Position;
+  remaining: number;
+  boss: BossId;
+}
+export interface RiftArena {
+  center: Position;
+  remaining: number;
+  bossId: number;
+  returnPosition: Position;
+  enemies: Enemy[];
+  drops: Drop[];
+  chests: Chest[];
+}
+export interface Hazard {
+  id: number;
+  position: Position;
+  velocity: Velocity;
+  radius: number;
+  damage: number;
+  life: number;
+  kind: "knife" | "wave";
+}
+export interface BossReward {
+  kind: "bond" | "boon";
+  id: "bond" | BoonId;
+  title: string;
+  detail: string;
 }
 export interface Nakama {
   character: CharacterId;
@@ -127,11 +167,24 @@ export interface Run {
   status: RunStatus;
   character: CharacterId;
   form: FormTier;
+  formUnlocked: FormTier;
   energy: number;
   formCooldown: number;
   transformTime: number;
   reviveUsed: boolean;
   nakama: Nakama[];
+  assists: Nakama[];
+  activeWeapon: WeaponId;
+  linkedWeapons: WeaponId[];
+  rift: Rift | null;
+  arena: RiftArena | null;
+  nextRiftTime: number;
+  nextRiftKills: number;
+  bossesDefeated: number;
+  hazards: Hazard[];
+  bossRewards: BossReward[];
+  rewardSerial: number;
+  boons: Record<BoonId, number>;
   elapsed: number;
   player: Player;
   enemies: Enemy[];
