@@ -196,12 +196,12 @@ export class BattleRenderer {
         if (i === 0)
           ctx.moveTo(
             x + Math.cos(angle) * radius,
-            y - 12 + Math.sin(angle) * radius,
+            y - 45 + Math.sin(angle) * radius,
           );
         else
           ctx.lineTo(
             x + Math.cos(angle) * radius,
-            y - 12 + Math.sin(angle) * radius,
+            y - 45 + Math.sin(angle) * radius,
           );
       }
       ctx.closePath();
