@@ -1,3 +1,6 @@
+import { drawTechniques } from "./techniques";
+import { drawFighter } from "./fighter";
+import { drawLoot } from "./loot";
 import { combat, enemyTypes } from "../data/combat";
 import type { Position } from "../core/entity";
 import type { Run } from "../game/types";
@@ -105,25 +108,7 @@ export class BattleRenderer {
       ctx.fillStyle = "#c5c39d";
       ctx.fillRect(x + 3, y - 7, 18, 4);
     }
-    for (const drop of run.drops) {
-      const { x, y } = drop.position;
-      ctx.fillStyle = "#284e49";
-      ctx.beginPath();
-      ctx.ellipse(x, y + 4, 7, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = drop.kind === "heal" ? "#f79587" : "#8be3cf";
-      ctx.beginPath();
-      ctx.moveTo(x, y - 6);
-      ctx.lineTo(x + 5, y);
-      ctx.lineTo(x, y + 6);
-      ctx.lineTo(x - 5, y);
-      ctx.fill();
-      if (drop.kind === "heal") {
-        ctx.fillStyle = "#fff4d8";
-        ctx.fillRect(x - 1, y - 3, 2, 6);
-        ctx.fillRect(x - 3, y - 1, 6, 2);
-      }
-    }
+    drawLoot(ctx, run, this.reducedMotion);
     for (const enemy of [...run.enemies].sort(
       (a, b) => a.position.y - b.position.y,
     )) {
@@ -155,16 +140,13 @@ export class BattleRenderer {
         );
       }
     }
-    if (!(player.invulnerable > 0 && Math.floor(run.elapsed * 18) % 2 === 0)) {
-      this.sprite(
-        player.position,
-        "#e77851",
-        1,
-        run.elapsed,
-        true,
-        Math.hypot(player.velocity.x, player.velocity.y) > 0,
-      );
-    }
+    ctx.globalAlpha =
+      player.invulnerable > 0 && Math.floor(run.elapsed * 18) % 2 === 0
+        ? 0.65
+        : 1;
+    drawFighter(ctx, run, this.reducedMotion);
+    drawTechniques(ctx, run, this.reducedMotion);
+    ctx.globalAlpha = 1;
     if (player.dashTime > 0) {
       ctx.strokeStyle = "#b6f4e9";
       ctx.lineWidth = 3;
@@ -174,23 +156,37 @@ export class BattleRenderer {
     }
     for (const projectile of run.projectiles) {
       const { x, y } = projectile.position;
-      ctx.strokeStyle = "#fff1ae";
-      ctx.lineWidth = 5;
+      ctx.fillStyle = "#f1aa56";
+      ctx.strokeStyle = "#704238";
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(
-        x - projectile.velocity.x * 0.018,
-        y - projectile.velocity.y * 0.018,
-      );
+      for (let i = 0; i < 10; i++) {
+        const angle = (i * Math.PI) / 5;
+        const radius = i % 2 === 0 ? 8 : 3;
+        if (i === 0)
+          ctx.moveTo(
+            x + Math.cos(angle) * radius,
+            y - 12 + Math.sin(angle) * radius,
+          );
+        else
+          ctx.lineTo(
+            x + Math.cos(angle) * radius,
+            y - 12 + Math.sin(angle) * radius,
+          );
+      }
+      ctx.closePath();
+      ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = "#fffce4";
-      ctx.fillRect(x - 2, y - 2, 4, 4);
     }
     for (const effect of run.effects) {
       const progress = 1 - effect.life / effect.total;
       ctx.globalAlpha = 1 - progress;
       const { x, y } = effect.position;
-      if (effect.kind === "hit" || effect.kind === "kill") {
+      if (
+        effect.kind === "hit" ||
+        effect.kind === "critical" ||
+        effect.kind === "kill"
+      ) {
         ctx.strokeStyle = effect.kind === "kill" ? "#f4ce79" : "#fff4d8";
         ctx.lineWidth = 2;
         for (let i = 0; i < 5; i++) {
@@ -213,10 +209,28 @@ export class BattleRenderer {
         ctx.textAlign = "center";
         ctx.fillStyle = effect.kind === "hurt" ? "#ffb7a0" : "#fff6d8";
         ctx.fillText(
-          String(effect.value),
+          `${effect.kind === "critical" ? "✦ " : effect.kind === "heal" ? "+" : ""}${effect.value}`,
           x,
           y - 18 - progress * (this.reducedMotion ? 0 : 20),
         );
+      }
+      if (["level", "evolve", "explosion", "heal"].includes(effect.kind)) {
+        ctx.strokeStyle =
+          effect.kind === "heal"
+            ? "#b8edc4"
+            : effect.kind === "explosion"
+              ? "#f3ad78"
+              : "#f4d88b";
+        ctx.lineWidth = effect.kind === "explosion" ? 5 : 2;
+        ctx.beginPath();
+        ctx.arc(
+          x,
+          y,
+          14 + progress * (effect.kind === "explosion" ? 280 : 70),
+          0,
+          Math.PI * 2,
+        );
+        ctx.stroke();
       }
       if (effect.kind === "pickup") {
         ctx.strokeStyle = "#b5f2d9";
@@ -240,19 +254,21 @@ export class BattleRenderer {
       ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
     }
     // Brújula hacia la experiencia lejana más cercana.
-    const farDrop = run.drops
-      .filter((drop) => drop.kind === "xp")
-      .sort(
-        (a, b) =>
-          Math.hypot(
-            a.position.x - player.position.x,
-            a.position.y - player.position.y,
-          ) -
-          Math.hypot(
-            b.position.x - player.position.x,
-            b.position.y - player.position.y,
-          ),
-      )[0];
+    const farDrop =
+      run.chests[0] ??
+      run.drops
+        .filter((drop) => drop.kind === "xp")
+        .sort(
+          (a, b) =>
+            Math.hypot(
+              a.position.x - player.position.x,
+              a.position.y - player.position.y,
+            ) -
+            Math.hypot(
+              b.position.x - player.position.x,
+              b.position.y - player.position.y,
+            ),
+        )[0];
     if (
       farDrop &&
       Math.hypot(

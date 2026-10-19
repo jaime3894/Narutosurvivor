@@ -28,7 +28,7 @@ Contrato a implementar en fase 2 y consumir con los personajes en fase 3:
 
 Caso de referencia obligatorio: Luffy prepara el golpe, el brazo se estira desde el hombro hacia el punto de contacto, el puño impacta y el brazo se retrae. Zoro mueve las espadas durante el corte y Sanji ejecuta una patada visible. No basta con emitir partículas o proyectiles desde un personaje inmóvil. La lista de lenguajes visuales para los diez personajes está en el GDD.
 
-Estado actual: contrato documentado; todavía no existe el sistema de animaciones por técnica ni se consideran implementadas estas animaciones.
+Estado al finalizar fase 1: contrato documentado, aún sin sistema de animaciones. Para el estado actual, ver «Estado tras FASE 2» al final de este documento.
 
 ## Acabado visual exigido
 
@@ -42,3 +42,9 @@ Referencia: captura de PokéSurvivor aportada por el usuario en la conversación
 - Revisar a la escala real de partida, con fondos y enemigos, además de una vista ampliada. Un retrato detallado no sustituye un sprite jugable animado.
 
 Primer hito de arte en fase 3: Luffy como personaje piloto con hoja de poses y animación de golpe de goma. No producir ni aprobar el lote completo antes de revisar ese acabado. Los personajes rectangulares actuales son placeholders. Este documento fija el objetivo; todavía no se han creado ni integrado los sprites definitivos.
+
+## Estado tras FASE 2
+
+Implementado el contrato temporal en src/data/content.ts y src/game/techniques.ts: anticipación, fase activa, eventos de impacto y recuperación. Los renderizadores de src/render/techniques.ts mantienen brazos/piernas y armas conectados al actor; src/render/fighter.ts aporta la pose procedural provisional. La torsión de Rifle y el hinchado de Fusen también tienen representación propia. Todas las técnicas del catálogo son ejecutables en el banco ?debug con su propietario.
+
+Todavía no hay cargador de atlas ni sprites definitivos de los diez personajes o de sus formas. La sección anterior que describe ese objetivo continúa pendiente para fase 3; el contrato de combate sí existe desde fase 2. Las imágenes de docs/screenshots/ se han capturado del juego, dibujado íntegramente por nuestro código procedural, sin assets oficiales ni recursos descargados de PokéSurvivor.

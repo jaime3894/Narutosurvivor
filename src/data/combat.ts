@@ -40,50 +40,6 @@ export const enemyTypes = {
   },
 } as const;
 export type EnemyKind = keyof typeof enemyTypes;
-export const upgrades = [
-  {
-    id: "power",
-    title: "Golpe certero",
-    description: "+25% de daño base.",
-    symbol: "✦",
-    max: 8,
-  },
-  {
-    id: "tempo",
-    title: "Manos rápidas",
-    description: "Ataca un 12% más rápido.",
-    symbol: "»",
-    max: 6,
-  },
-  {
-    id: "multishot",
-    title: "Fuego cruzado",
-    description: "+1 proyectil por ataque.",
-    symbol: "⋔",
-    max: 4,
-  },
-  {
-    id: "stride",
-    title: "Pies ligeros",
-    description: "+10% de velocidad base.",
-    symbol: "➶",
-    max: 5,
-  },
-  {
-    id: "magnet",
-    title: "Brújula de botín",
-    description: "+45 de alcance para recoger experiencia.",
-    symbol: "◎",
-    max: 5,
-  },
-  {
-    id: "vitality",
-    title: "Segundo aliento",
-    description: "+20 de vida máxima y recupera 35 de vida.",
-    symbol: "♥",
-    max: 6,
-  },
-] as const;
-export type UpgradeId = (typeof upgrades)[number]["id"];
+export { upgrades, type UpgradeId } from "./content";
 export const xpForLevel = (level: number): number =>
   6 + level * 4 + Math.floor((level - 1) ** 2 * 1.1);

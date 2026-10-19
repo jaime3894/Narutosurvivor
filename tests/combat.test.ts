@@ -1,8 +1,9 @@
+import { grantUpgrade, closeChest } from "../src/game/progression";
+import { passives, weaponKey } from "../src/data/content";
 import { describe, expect, it } from "vitest";
 import {
   combat,
   enemyTypes,
-  upgrades,
   xpForLevel,
   type UpgradeId,
 } from "../src/data/combat";
@@ -43,7 +44,7 @@ describe("combate y controles", () => {
     advance(a, 20, { x: 1, y: 0, dash: false });
     expect(a.player.position.x).toBe(combat.world.width - combat.world.shore);
   });
-  it("dispara automáticamente, causa daño y deja experiencia", () => {
+  it("golpea automáticamente tras la preparación y deja experiencia", () => {
     const run = createRun(1);
     const target = enemy(run);
     advance(run, 1.2);
@@ -141,22 +142,36 @@ describe("experiencia, mejoras y fin de partida", () => {
     const choice = run.choices[0];
     expect(choice).toBeDefined();
     if (!choice) throw new Error("No se ofrecieron mejoras");
+    const previous = run.ranks[choice];
     expect(chooseUpgrade(run, choice)).toBe(true);
-    expect(run.ranks[choice]).toBe(1);
+    expect(run.ranks[choice]).toBe(previous + 1);
     expect(run.status).toBe("playing");
     expect(chooseUpgrade(run, choice)).toBe(false);
   });
   it("no ofrece rangos agotados y procesa experiencia acumulada", () => {
     const run = createRun(6);
-    for (const definition of upgrades)
-      run.ranks[definition.id] = definition.max;
-    run.ranks.vitality = 0;
+    for (const id of ["gatling", "bazooka", "whip"] as const)
+      grantUpgrade(run, weaponKey(id));
+    for (const slot of run.weapons) run.ranks[weaponKey(slot.id)] = 5;
+    for (const id of [
+      "power",
+      "tempo",
+      "multishot",
+      "stride",
+      "magnet",
+      "vitality",
+    ] as const) {
+      const definition = passives.find((item) => item.id === id);
+      if (definition) run.ranks[id] = definition.max;
+    }
+    run.ranks.vitality = 1;
+    run.player.health.maximum = 120;
     run.xp = 100;
     offerUpgrades(run);
     expect(run.choices).toEqual(["vitality"]);
     run.player.health.current = 50;
     chooseUpgrade(run, "vitality");
-    expect(run.player.health).toEqual({ current: 85, maximum: 120 });
+    expect(run.player.health).toEqual({ current: 85, maximum: 140 });
     expect(run.level).toBe(3);
     expect(run.status).toBe("upgrade");
     expect(run.choices).toEqual(["vitality"]);
@@ -242,6 +257,10 @@ function pilot(run: Run): Input {
 }
 function select(run: Run): void {
   const order: UpgradeId[] = [
+    "weapon:pistol",
+    "weapon:gatling",
+    "weapon:whip",
+    "weapon:bazooka",
     "multishot",
     "power",
     "tempo",
@@ -252,7 +271,7 @@ function select(run: Run): void {
   const id =
     run.player.health.current < 80 && run.choices.includes("vitality")
       ? "vitality"
-      : order.find((item) => run.choices.includes(item));
+      : (order.find((item) => run.choices.includes(item)) ?? run.choices[0]);
   if (!id || !chooseUpgrade(run, id)) throw new Error("Mejora inválida");
 }
 describe("partida representativa", () => {
@@ -265,7 +284,10 @@ describe("partida representativa", () => {
         frame < 18100 && !["won", "lost"].includes(run.status);
         frame++
       ) {
-        while (run.status === "upgrade") select(run);
+        while (run.status === "upgrade" || run.status === "chest") {
+          if (run.status === "chest") closeChest(run);
+          else select(run);
+        }
         step(run, pilot(run), 1 / 60);
         expect(run.enemies.length).toBeLessThanOrEqual(combat.maximumEnemies);
         expect(run.drops.length).toBeLessThanOrEqual(combat.maximumDrops);

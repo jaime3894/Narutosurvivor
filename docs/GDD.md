@@ -55,7 +55,7 @@ Los límites de 150 enemigos, 240 recogibles y 180 efectos acotan costes. La exp
 
 Estados explícitos: jugando, pausa, mejora, victoria y derrota. Pausa manual con P/Escape; pausa automática al perder foco o esconder pestaña. Las mejoras detienen el mundo y permiten elegir con 1/2/3. Los diálogos reciben foco y mantienen la navegación por Tab dentro de sus botones. Al morir o llegar a 05:00 aparecen duración, bajas, nivel, daño y build; se puede reintentar o volver al puerto. Reiniciar crea un estado nuevo sin conservar mejoras ni callbacks anteriores.
 
-?debug habilita +10 XP y window.**MAREA_DEBUG**: snapshot, advance, grantXp, setHealth y choose. No existe ese puente en modo normal. advance usa el mismo paso fijo; se detiene en elecciones y resultados. La prueba de victoria en navegador restaura salud mediante depuración para verificar la pantalla; no se usa como evidencia de balance. Los tres pilotos de simulación sí recorren cinco minutos sin alterar salud, enemigos ni reglas: recogen experiencia, priorizan curación si falta vida y evitan contactos.
+?debug habilita +10 XP y `window.__MAREA_DEBUG__`: snapshot, advance, grantXp, setHealth y choose. No existe ese puente en modo normal. advance usa el mismo paso fijo; se detiene en elecciones y resultados. La prueba de victoria en navegador restaura salud mediante depuración para verificar la pantalla; no se usa como evidencia de balance. Los tres pilotos de simulación sí recorren cinco minutos sin alterar salud, enemigos ni reglas: recogen experiencia, priorizan curación si falta vida y evitan contactos.
 
 ### Validación y límite del criterio de diversión
 
@@ -71,18 +71,18 @@ Aspectos útiles para las siguientes iteraciones: familias de ataques con compor
 
 Requisito del usuario: la identidad del personaje debe reconocerse tanto en la técnica como en su ejecución visual. PokéSurvivor inspira estructura y sensaciones; no determina nuestros poderes. Cada técnica debe declarar personajes y formas compatibles. El azar de mejoras, las afinidades y las evoluciones respetarán esa compatibilidad: Luffy no recibe ataques de agua; una técnica exclusiva no se convierte en un ataque universal por compartir estadísticas.
 
-| Personaje | Lenguaje visual de sus técnicas |
-| --- | --- |
-| Luffy | Postura de preparación, brazo conectado al hombro que se estira, puño que conecta y retracción elástica. Patadas y ráfagas usan sus extremidades y las particularidades de la forma desbloqueada. |
-| Zoro | Preparación con sus espadas, movimiento de las hojas y arcos de corte sincronizados; los cortes a distancia solo en técnicas que los justifiquen. |
-| Nami | Gesto con Clima-Tact, formación del fenómeno meteorológico y descarga; las nubes y rayos tienen origen y secuencia visibles. |
-| Usopp | Tensado del tirachinas, suelta y munición identificable; cada munición muestra su efecto propio al impactar. |
-| Sanji | Anticipación corporal, giro o extensión de pierna, impacto de patada y recuperación. El fuego requiere su técnica o forma correspondiente. |
-| Chopper | Cambio de silueta según la forma, preparación corporal y golpes coherentes con esa anatomía. |
-| Robin | Aparición reconocible de brazos o piernas, acción coordinada e impacto, seguida de desaparición; no proyectiles genéricos. |
-| Franky | Apertura o preparación del mecanismo, postura de disparo y cañón o rayo con origen visible; los efectos dependen de la técnica. |
-| Brook | Desenvaine o postura de esgrima, desplazamiento y corte; hielo o efectos de alma solo cuando estén habilitados. |
-| Jinbe | Posturas y golpes de karate gyojin; el agua, cuando corresponda, sigue el gesto y la técnica. |
+| Personaje | Lenguaje visual de sus técnicas                                                                                                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Luffy     | Postura de preparación, brazo conectado al hombro que se estira, puño que conecta y retracción elástica. Patadas y ráfagas usan sus extremidades y las particularidades de la forma desbloqueada. |
+| Zoro      | Preparación con sus espadas, movimiento de las hojas y arcos de corte sincronizados; los cortes a distancia solo en técnicas que los justifiquen.                                                 |
+| Nami      | Gesto con Clima-Tact, formación del fenómeno meteorológico y descarga; las nubes y rayos tienen origen y secuencia visibles.                                                                      |
+| Usopp     | Tensado del tirachinas, suelta y munición identificable; cada munición muestra su efecto propio al impactar.                                                                                      |
+| Sanji     | Anticipación corporal, giro o extensión de pierna, impacto de patada y recuperación. El fuego requiere su técnica o forma correspondiente.                                                        |
+| Chopper   | Cambio de silueta según la forma, preparación corporal y golpes coherentes con esa anatomía.                                                                                                      |
+| Robin     | Aparición reconocible de brazos o piernas, acción coordinada e impacto, seguida de desaparición; no proyectiles genéricos.                                                                        |
+| Franky    | Apertura o preparación del mecanismo, postura de disparo y cañón o rayo con origen visible; los efectos dependen de la técnica.                                                                   |
+| Brook     | Desenvaine o postura de esgrima, desplazamiento y corte; hielo o efectos de alma solo cuando estén habilitados.                                                                                   |
+| Jinbe     | Posturas y golpes de karate gyojin; el agua, cuando corresponda, sigue el gesto y la técnica.                                                                                                     |
 
 Esto define el lenguaje de animación, no desbloquea ahora personajes, formas o técnicas de fases posteriores. El catálogo exacto y sus restricciones se concretan en fase 2; personajes, formas y animaciones específicas se integran en fase 3, siguiendo el orden acordado. Fase 2 debe dejar listo el contrato de anticipación, fase activa, impacto y recuperación para que cada técnica tenga una representación propia. No se da por terminada una técnica de personaje si solo funciona su daño y su presentación sigue siendo una bola genérica.
 
@@ -109,3 +109,17 @@ La dirección mantiene figuras chibi expresivas, contornos selectivos, paletas c
 Se conserva 32×32 como punto de partida del contrato, no como límite que obligue a perder rasgos. Se permiten celdas mayores por personaje o forma con metadatos explícitos y un ancla común a los pies, sin estirar ni deformar la imagen. La resolución elegida debe verse bien a la escala real de juego, en movimiento y con varias entidades en pantalla. La ampliación del pixel art debe ser nítida y uniforme.
 
 Antes de producir todo el reparto en fase 3, crear y revisar un personaje piloto de Luffy en reposo, caminando y ejecutando un golpe de goma. Validar identidad, proporciones, perspectiva y continuidad del brazo tanto de cerca como dentro de una partida. Después aplicar el acabado al resto. La fase 2 prepara técnicas y compatibilidad; esta exigencia no adelanta la implementación de los diez personajes ni modifica el orden de fases. Recursos originales dibujados o generados para el proyecto y assets propios del usuario; sin extracción de sprites oficiales.
+
+## Fase 2 — contenido de combate implementado
+
+La fase 2 reemplaza las mejoras y los disparos provisionales de fase 1. Catálogo, números y recetas completos en [COMBATE.md](COMBATE.md); la fuente de verdad es src/data/content.ts. Se han implementado 18 técnicas para los diez propietarios y 14 pasivos, además de cofres, evoluciones, afinidades y seis clases de recogible. Los nombres y cifras son decisiones de diseño propias: el fragmento recibido no incluía un catálogo cerrado. Las evoluciones con sufijos descriptivos no se presentan como nuevas técnicas canónicas ni desbloquean transformaciones.
+
+En modo normal se mantiene Luffy como actor de desarrollo y solo puede adquirir sus cinco técnicas, con cuatro huecos disponibles para elegir build. El resto de propietarios tiene su ejecución y compatibilidad comprobables en el banco ?debug; no se anticipa la selección de personajes, formas, innatos ni nakama de fase 3. Luffy no recibe agua, fuego ni armas ajenas. Las afinidades agrupan técnicas/pasivos para aplicar estadísticas, sin cambiar poderes. La pólvora es un recogible ambiental identificado como barril, no una técnica elemental de Luffy.
+
+La simulación se separa en reglas, progresión, técnicas y botín. Cada técnica declara anticipación, fase activa y recuperación; los impactos se disparan en el paso fijo de simulación, una vez por evento. Los proyectiles reales solo se usan donde corresponden (munición de Usopp). Pistol y Gatling mantienen el brazo conectado al hombro y visible durante extensión y retracción; Muchi comprueba el barrido de la pierna en movimiento y evita repetir daño por fotograma. La cadencia tiene como mínimo la duración de la animación completa para conservar su lectura.
+
+Los cofres ofrecen 1/3/5 premios y pausan mientras se muestra el botín. Una evolución requiere rango 5 de técnica, rango 2 del pasivo vinculado y tiempo >=60 s; se aplica desde un premio del cofre y nunca se repite. El primer cofre llega a 35 s: permite una mejora temprana o reservarlo para evolucionar más tarde. La suerte aumenta la probabilidad de cofres de varios premios, sin tocar tiradas de gacha futuras. Las berries son de la partida; guardado y recompensa de cuenta permanecen en fase 5.
+
+Se conserva el render procedural original, ahora con poses y extremidades de ataque en vez de bolas genéricas para Luffy. Es una presentación funcional del combate, no la aprobación del arte final pedido por el usuario. Los atlas, modelos definitivos y variantes de forma siguen pendientes de fase 3. Las capturas de COMBATE.md se tomaron en depuración y no acreditan balance ni calidad final del reparto.
+
+Validación de esta entrega: 82 tests de lógica, incluidos ejecución y evolución de las 18 técnicas, los diez propietarios, límites de build, efectos de pasivos/recogibles, cofres y tres simulaciones de cinco minutos. Siete E2E comprueban el build, incluyendo el banco de 18 técnicas y una evolución recogiendo el cofre. La victoria E2E sigue usando restauración de salud para verificar la interfaz; las tres simulaciones de cinco minutos usan reglas normales. La aceptación subjetiva de diversión sigue requiriendo juego humano.

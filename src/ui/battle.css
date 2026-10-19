@@ -452,3 +452,255 @@ button:disabled {
     max-width: clamp(480px, calc((100dvh - 340px) * 1.6 + 48px), 1008px);
   }
 }
+.loadout {
+  margin-top: 13px;
+  border: 1px solid #35585c;
+  border-radius: 5px;
+  padding: 10px 12px;
+  background: #12343d;
+}
+.loadout-weapons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.loadout-chip {
+  font-size: 10px;
+  color: #e4dcc2;
+  border: 1px solid #49665d;
+  background: #234640;
+  padding: 5px 7px;
+  border-radius: 3px;
+}
+.loadout-chip b {
+  font: 9px monospace;
+  color: #d8bb7e;
+  margin-left: 5px;
+}
+.loadout-empty {
+  font-size: 8px;
+  color: #92ada9;
+  letter-spacing: 1px;
+  margin-left: auto;
+}
+.loadout-passives {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 8px;
+  color: #b3cac0;
+  font-size: 9px;
+  line-height: 1.6;
+}
+.loadout-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  color: #c6b88c;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.loadout-foot #loot-stats {
+  white-space: nowrap;
+}
+.evolved {
+  border-color: #d5ba70 !important;
+  color: #f5d890 !important;
+}
+.chest-rewards {
+  display: grid;
+  gap: 8px;
+  max-height: 210px;
+  overflow: auto;
+  margin-top: 20px;
+}
+.chest-reward {
+  padding: 13px 18px;
+  border: 1px solid #47665e;
+  background: #20443f;
+  border-radius: 4px;
+}
+.chest-reward strong {
+  display: block;
+  font-size: 15px;
+}
+.chest-reward span {
+  display: block;
+  font-size: 10px;
+  color: #b6c9bb;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.results-loot {
+  font-size: 12px;
+  color: #ebcc8f;
+  margin: 12px 0 0;
+}
+.debug-tools {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.debug-tools select {
+  background: #193b45;
+  color: #dce6cd;
+  padding: 7px;
+  border: 1px solid #4a6a64;
+  border-radius: 3px;
+  max-width: 260px;
+  font: 11px system-ui;
+}
+.battle-bottom {
+  margin-top: 12px;
+}
+.port-catalog {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 17px 18px;
+  font-size: 12px;
+}
+.catalog-dialog {
+  width: min(1020px, 94vw);
+  max-height: 88dvh;
+  padding: 28px;
+  color: #e4e9d6;
+  background: #102e39;
+  border: 1px solid #53706a;
+  border-radius: 10px;
+}
+.catalog-dialog::backdrop {
+  background: #061d25dd;
+}
+.catalog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.catalog-heading h2 {
+  font-size: 26px;
+  margin: 10px 0;
+}
+.catalog-heading button {
+  white-space: nowrap;
+}
+.catalog-intro {
+  font-size: 12px;
+  color: #b3c8bd;
+  line-height: 1.9;
+}
+.catalog-dialog h3 {
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin: 26px 0 16px;
+  color: #ebd199;
+}
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.catalog-card {
+  background: #1b3c43;
+  border: 1px solid #3a5b5b;
+  padding: 16px;
+  border-radius: 5px;
+}
+.catalog-owner {
+  color: #d8be82;
+  letter-spacing: 1px;
+  font-size: 9px;
+}
+.catalog-card h4 {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 10px 0;
+}
+.catalog-card p {
+  color: #bbcec0;
+  line-height: 1.8;
+  font-size: 11px;
+}
+.recipe {
+  color: #d7cba8;
+  font-size: 10px;
+  border-top: 1px solid #3c5b56;
+  padding-top: 10px;
+  line-height: 1.8;
+}
+.battle-modal .build-summary {
+  max-height: 90px;
+  overflow: auto;
+}
+.battle-modal .upgrade-description {
+  min-height: 55px;
+}
+.battle-modal .upgrade-name {
+  line-height: 1.5;
+}
+@media (min-width: 701px) {
+  .battle-main {
+    max-width: clamp(520px, calc((100dvh - 430px) * 1.6 + 48px), 1008px);
+  }
+}
+@media (max-width: 700px) {
+  .catalog-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .catalog-dialog {
+    padding: 16px;
+  }
+  .port-catalog {
+    margin-left: 0;
+    margin-top: 12px;
+  }
+  .loadout-chip {
+    font-size: 9px;
+  }
+  .loadout-foot {
+    font-size: 8px;
+  }
+  .loadout {
+    padding: 8px;
+  }
+  .battle-modal .upgrade-description {
+    min-height: 0;
+  }
+  .chest-rewards {
+    max-height: 190px;
+  }
+  .chest-reward {
+    padding: 10px;
+  }
+  .chest-reward strong {
+    font-size: 12px;
+  }
+}
+@media (max-width: 450px) {
+  .catalog-grid {
+    grid-template-columns: 1fr;
+  }
+  .catalog-heading h2 {
+    font-size: 20px;
+  }
+  .catalog-owner {
+    font-size: 9px;
+  }
+  .battle-modal .build-summary {
+    max-height: 55px;
+  }
+  .loadout-passives {
+    gap: 7px;
+  }
+  .loadout-foot {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .loadout-empty {
+    margin-left: 0;
+  }
+  .battle-modal .modal-subtitle {
+    font-size: 10px;
+  }
+}

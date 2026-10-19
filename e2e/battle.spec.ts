@@ -130,3 +130,69 @@ test("el modo normal no expone herramientas de depuración", async ({
   expect(await page.evaluate(() => window.__MAREA_DEBUG__)).toBeUndefined();
   await expect(page.locator(".debug-tools")).toHaveCount(0);
 });
+
+test("el cuaderno enumera 18 técnicas, 14 pasivos y recetas de evolución", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Cuaderno de combate" }).click();
+  const dialog = page.getByRole("dialog", { name: "Cuaderno de combate" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator(".catalog-card")).toHaveCount(32);
+  await expect(dialog).toContainText("Gomu Gomu no Pistol");
+  await expect(dialog).toContainText("Jinbe");
+  await expect(dialog).toContainText("Rango 5");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Cuaderno de combate" }),
+  ).toBeFocused();
+});
+
+test("las 18 técnicas se ejecutan sin errores de render en el banco de depuración", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/?debug");
+  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  const options = await page
+    .locator("#debug-technique option")
+    .evaluateAll((elements) =>
+      elements.map((element) => (element as HTMLOptionElement).value),
+    );
+  expect(options).toHaveLength(18);
+  for (const option of options) {
+    await page.locator("#debug-technique").selectOption(option);
+    await page.evaluate(() => window.__MAREA_DEBUG__?.advance(0.22));
+    const state = await page.evaluate(() => window.__MAREA_DEBUG__?.snapshot());
+    expect(state?.weapons[0]?.id).toBe(option);
+    expect(state?.attacks).toBeGreaterThan(0);
+    await expect(page.locator("#weapon-loadout")).not.toBeEmpty();
+  }
+  expect(errors).toEqual([]);
+});
+
+test("recoger un cofre evoluciona Rifle, pausa y permite continuar con la nueva build", async ({
+  page,
+}) => {
+  await page.goto("/?debug");
+  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Preparar evolución" }).click();
+  await expect(page.locator("#weapon-loadout")).toContainText("5/5");
+  await page.evaluate(() =>
+    window.__MAREA_DEBUG__?.advance(0.5, { x: 1, y: 0, dash: false }),
+  );
+  const dialog = page.getByRole("dialog", { name: "Botín del cofre" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("Gomu Gomu no Rifle");
+  const state = await page.evaluate(() => window.__MAREA_DEBUG__?.snapshot());
+  expect(state?.weapons[0]?.evolved).toBe(true);
+  await page.waitForTimeout(100);
+  expect(
+    await page.evaluate(() => window.__MAREA_DEBUG__?.snapshot().elapsed),
+  ).toBe(state?.elapsed);
+  await page.getByRole("button", { name: "Continuar la aventura" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("#weapon-loadout .evolved")).toContainText("Rifle");
+});
