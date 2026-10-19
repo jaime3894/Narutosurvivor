@@ -60,3 +60,9 @@ Estados explícitos: jugando, pausa, mejora, victoria y derrota. Pausa manual co
 ### Validación y límite del criterio de diversión
 
 Los tests verifican mecánicas y partidas completas, no sensaciones humanas. Tres semillas (3894, 42, 123) sobreviven con un piloto automático: 1267/1286/1221 bajas, niveles 18/18/17. El build real se comprueba en Chromium con movimiento, pausa, selección, derrota/reinicio, victoria asistida y vista móvil. Se ha inspeccionado visualmente la interfaz en escritorio y móvil. Falta una partida humana de cinco minutos para aceptar «es divertido»; no se da por cumplido ese criterio con automatización. Antes de ampliar contenido, revisar respuesta del movimiento, utilidad de embestir, claridad de amenazas, frecuencia de elecciones y deseo de repetir.
+
+## Referencia aportada por el usuario: PokéSurvivor
+
+Repositorio: https://github.com/JPTER78/pokesurvivor. Revisados README, GDD y los sistemas de combate y aparición de enemigos. Se usa como referencia de diseño; no se incorpora código ni assets. Nuestra implementación sigue en TypeScript estricto con recursos procedurales originales.
+
+Aspectos útiles para las siguientes iteraciones: familias de ataques con comportamientos distintos (fase 2), terreno e interacciones que dan motivos para explorar (fase 4) y cambios de ritmo mediante oleadas concentradas (director de fase 4). La densidad de enemigos debe servir a la legibilidad y al movimiento. La referencia no implica añadir ahora cuentas, multijugador ni su gacha, ni saltarse las fases previstas. Antes de ampliar contenido se mantiene la prioridad de pulir el núcleo de cinco minutos.
