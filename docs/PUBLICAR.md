@@ -2,11 +2,11 @@
 
 Se ha preparado `.github/workflows/pages.yml`: cada push a `main` instala dependencias, ejecuta tests de lógica, compila, prueba Chromium y sube `dist` a GitHub Pages. También permite ejecución manual. Solo se publica si todas las comprobaciones pasan. No requiere introducir tokens ni credenciales en el código: utiliza el token limitado que GitHub proporciona al workflow.
 
-Dirección prevista después del primer despliegue correcto:
+Juego publicado:
 
 https://jaime3894.github.io/One-piece-survivor/
 
-Esta URL no constituye prueba de que Pages esté habilitado o de que el despliegue haya terminado. Consultar la ejecución de Actions y comprobar la página antes de anunciarla como publicada.
+Publicación confirmada mediante la ejecución correcta del workflow y respuestas HTTPS 200 de la página y sus assets.
 
 ## Activación inicial, si aún no está habilitado Pages
 
@@ -26,12 +26,12 @@ Una vez activado, las siguientes fases se publican al subir a `main`. No hay que
 
 El test local de ruta no acredita que GitHub haya completado el despliegue remoto.
 
-## Estado verificado al continuar la publicación
+## Publicación verificada
 
-La API de GitHub ya es accesible. El repositorio informa `has_pages: false`. La ejecución [39219463652](https://github.com/jaime3894/One-piece-survivor/actions/runs/39219463652) completó correctamente instalación, tests, build, navegador y subida del sitio compilado. El job «Publicar» falla en «Configurar Pages» con «Get Pages site failed / Not Found»; el paso de despliegue no llega a ejecutarse.
+El propietario hizo público el repositorio y habilitó Pages con Source GitHub Actions. Después se lanzó el workflow existente. La ejecución [39228910746](https://github.com/jaime3894/One-piece-survivor/actions/runs/39228910746) terminó correctamente: validación, construcción, pruebas de navegador, subida del artefacto, configuración de Pages y despliegue.
 
-Se intentó activar Pages con la API oficial (`POST /repos/jaime3894/One-piece-survivor/pages`, `build_type: workflow`). GitHub respondió **403 Resource not accessible by integration**. El acceso general al repositorio y a Actions funciona; falta autorización específica de Pages en la integración. No es un fallo de compilación ni una aprobación pendiente del código.
+La página pública devuelve HTTP 200 y el título «Marea de aventuras». JavaScript y CSS publicados se descargaron con verificación TLS normal y coinciden byte por byte con el build local validado. No se aplicó ninguna excepción TLS. Chromium en el cloud no completó la navegación HTTPS directa por su almacén de certificados del proxy; esa comprobación no se da por aprobada. Las ocho pruebas E2E del build sí pasaron en GitHub y la disponibilidad de página y assets se verificó por HTTPS.
 
-La URL pública devuelve 404. Para desbloquear la publicación, el propietario debe habilitar Pages con origen **GitHub Actions** mediante los pasos anteriores. Después puede reejecutarse el workflow existente, sin instalar npm en el ordenador. No se debe cambiar la visibilidad del repositorio ni introducir tokens en el código para resolverlo.
+Los bloqueos anteriores están resueltos para publicar: primero faltaba acceso de red, después la visibilidad y activación de Pages. No se añadieron tokens al código. La integración continúa sin poder cambiar ajustes administrativos, pero el workflow ya puede desplegar con sus permisos de Pages.
 
-Los dominios `api.github.com` y `jaime3894.github.io`, antes bloqueados por el proxy, ya permiten completar estas comprobaciones desde la máquina actual. Esto no acredita por sí solo la publicación de una nueva versión del entorno cloud.
+Las próximas fases se actualizarán en la misma URL cuando su workflow complete las comprobaciones y el despliegue. El sitio contiene FASE 2, con modelos provisionales; los modelos definitivos y el resto del sistema de personajes siguen en FASE 3.

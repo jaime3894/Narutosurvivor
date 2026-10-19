@@ -2,7 +2,11 @@
 
 Survivor pirata web con arte procedural original. **Fase 2 implementada:** partidas de cinco minutos con técnicas de goma de Luffy, catálogo de 18 técnicas y 14 pasivos, cofres, evoluciones, afinidades, recogibles, pausa y resultados. Pendiente validar la diversión con una partida humana.
 
-## Iniciar
+## Jugar online
+
+[**Abrir Marea de aventuras**](https://jaime3894.github.io/One-piece-survivor/) y pulsar **Zarpar hacia East Blue**. No requiere instalar Node ni descargar el repositorio.
+
+## Iniciar en desarrollo
 
 Requiere Node.js 22.12+ (validado con Node 24) y npm.
 

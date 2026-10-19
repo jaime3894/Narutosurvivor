@@ -71,14 +71,12 @@ El usuario pide sprites de One Piece con el nivel de detalle, volumen y animaci�
 
 Los modelos y atlas definitivos, las tres formas, innatos, selección de los diez personajes y nakama siguen en fase 3. Para probar todas las técnicas antes de eso, el banco de depuración cambia también el propietario; no convierte a Luffy en usuario de ataques ajenos. Las evoluciones del catálogo no desbloquean Gears ni otras formas. Audio y ajustes completos siguen en fase 6; guardado de berries de cuenta en fase 5. La diversión humana sigue pendiente de evaluación. No se han descargado recursos oficiales.
 
-## Publicación web — GitHub Pages
+## Publicación web — completada
 
-Preparado workflow de Actions para validar y publicar cada push a main, rutas de assets relativas y prueba funcional bajo /One-piece-survivor/. La validación local pasa: 82 tests de lógica, build y ocho E2E. No cambia el alcance de FASE 2 ni adelanta FASE 3. Instrucciones en docs/PUBLICAR.md.
+Juego disponible en https://jaime3894.github.io/One-piece-survivor/ . El usuario hizo público el repositorio y seleccionó GitHub Actions como Source de Pages. La ejecución 39228910746 terminó correctamente en validación y despliegue. GitHub ejecutó tests, build y ocho E2E, incluida la prueba de la ruta /One-piece-survivor/.
 
-La API de GitHub y la web github.io están bloqueadas por el proxy de red del entorno (403 CONNECT). Activación remota de Pages y disponibilidad pública aún sin confirmar; no declarar el juego publicado solo por subir el workflow. Destinos requeridos añadidos al borrador de red, pendiente de aplicar desde ajustes. Si Pages no estaba habilitado, el propietario puede seleccionar GitHub Actions como Source en Settings → Pages y ejecutar el workflow ya preparado.
+Verificación pública: HTML HTTP 200 con título correcto; JS y CSS descargados con verificación TLS normal, idénticos al build local validado. Chromium del cloud no pudo completar la navegación HTTPS directa por el certificado del proxy; esa comprobación queda diferenciada de los E2E del build y de las peticiones HTTPS satisfactorias. No se deshabilitó la verificación TLS.
 
-GitHub ha comunicado el cambio de nombre del repositorio a jaime3894/One-piece-survivor. Identidad y commit verificados por Git; origin actualizado a la ubicación canónica. El checkout local conserva /workspace/Narutosurvivor. URL pública prevista actualizada en docs/PUBLICAR.md; la consulta web de Actions sin sesión también devolvió 404, por lo que no se confirma la ejecución remota.
+El workflow publica cada push a main después de pasar los checks. Instrucciones y enlace en README.md y docs/PUBLICAR.md. No cambia el alcance de FASE 2 ni adelanta FASE 3.
 
-## Seguimiento de publicación: permiso específico pendiente
-
-Ahora se puede consultar GitHub. La ejecución 39219463652 confirma que «Validar y construir» terminó correctamente, incluidos los tests de navegador y la subida del artefacto. «Configurar Pages» falla porque Pages no está habilitado (`has_pages: false`). Intento real de activación por API rechazado con 403 «Resource not accessible by integration». La web pública devuelve 404. Queda una acción externa: habilitar Pages con Source GitHub Actions desde Settings → Pages; después reejecutar el workflow. No se ha publicado la web ni cambiado la visibilidad del repositorio. Los apuntes anteriores sobre bloqueo de red corresponden al estado previo.
+Nombre actual del repositorio: jaime3894/One-piece-survivor. Origin actualizado y commits confirmados por Git. El checkout local conserva /workspace/Narutosurvivor. Los bloqueos previos de red, repositorio privado y activación de Pages ya se resolvieron para este despliegue; no queda una acción del usuario pendiente para abrir la web.
