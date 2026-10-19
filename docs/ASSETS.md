@@ -1,50 +1,47 @@
-# Recursos visuales
+# Recursos visuales — FASE 3
 
-La fase 0 dibuja su isla y su aventurero directamente con Canvas en src/render/island.ts. No descarga imágenes, fuentes, logotipos, audio ni sprites de terceros.
+El juego incluye cuerpos animados y enemigos dibujados con Canvas, más retratos y rostros de fan art original MIT. No necesita descargar imágenes durante la partida. Los sprites no proceden de juegos oficiales ni capturas del anime.
 
-## Contrato previsto para recursos propios
+## Procedencia y créditos
 
-Ubicación futura: public/assets/. No se requieren estos archivos para iniciar la fase 0.
+- Autor: **gshklovs**, proyecto [opshell](https://github.com/gshklovs/opshell).
+- Revisión fijada: `4f51b3530104f47f5efdd4874e3f3d8abe3a3271`.
+- Origen: `packs/onepiece/art/{id}.json`, paleta y `variants.common.rows` de los diez Sombrero de Paja. Retratos 28×28; no se copió código.
+- Licencia MIT, copyright 2026 gshklovs: [texto conservado](../public/licenses/opshell-MIT.txt), [registro de modificaciones](../public/licenses/README.txt). El README de origen declara que la licencia cubre código y fan art original, no arte extraído.
+- Uso: retratos en selector y caras recortadas/adaptadas en cuerpos propios. Ropa, sombreado corporal, piernas, brazos, orientaciones, armas, formas y enemigos se construyeron para este juego. Créditos y licencia accesibles desde el selector.
+- Los personajes y nombres pertenecen a sus titulares; la licencia de estas ilustraciones originales no transfiere derechos sobre la franquicia. No se presenta como producto oficial.
 
-- characters/<id>.png: atlas transparente, celdas 32×32; filas abajo, izquierda, derecha y arriba. Cada fila: seis cuadros de caminar y cuatro de reposo.
-- bosses/<id>.png: celdas 96×96; preparar un manifiesto de animaciones antes de integrar ataques y anticipaciones.
-- tiles/<island>.png: celdas 16×16 sin suavizado.
-- audio/: recursos originales o con licencia documentada.
+## Sustituir por tus propios atlas
 
-El cargador de atlas y su fallback procedural se implementarán con los personajes; esta fase solo incluye el render procedural. Al integrar cada recurso, registrar autor, licencia y origen. Los archivos deben ser propios o contar con derechos de uso. No usar recursos extraídos de juegos o del anime.
+Edita `public/assets/manifest.json`. Ejemplo:
 
-## Animaciones de combate por técnica — requisito para fases 2 y 3
+```json
+{
+  "hero:luffy:0": "assets/characters/luffy-base.png",
+  "hero:luffy:1": "assets/characters/luffy-gear-second.png",
+  "hero:luffy:2": "assets/characters/luffy-boundman.png",
+  "enemy:sailor": "assets/enemies/marine.png",
+  "enemy:runner": "assets/enemies/buggy-pirate.png",
+  "enemy:brute": "assets/enemies/alvida-pirate.png"
+}
+```
 
-El atlas inicial de reposo/caminar no basta para aprobar un personaje. Su presentación de combate debe incluir preparación, fase activa, impacto y recuperación, con dirección, ancla a los pies y puntos de unión para manos, hombros y armas. Los recursos de ataque pueden usar atlas separados y tamaños propios; no hay que comprimir un brazo extendido dentro de una celda corporal de 32×32.
+Los otros IDs son zoro/nami/usopp/sanji/chopper/robin/franky/brook/jinbe; cada uno admite 0/1/2. Solo se cargan PNG del mismo origen. Un archivo ausente, inválido o con dimensiones incorrectas conserva el sprite integrado. El manifiesto vacío funciona sin configuración. Las rutas son relativas a la base del despliegue, también bajo `/One-piece-survivor/`.
 
-Contrato a implementar en fase 2 y consumir con los personajes en fase 3:
+Contrato corporal: **960×320 PNG transparente**, celdas **64×80**, 15 columnas y 4 filas. Filas: abajo, izquierda, derecha, arriba. Columnas: reposo 0–3, caminar 4–9, ataque 10–12, daño 13–14. Ancla de pies `(32,74)` dentro de cada celda. Cuatro/seis/tres/dos fotogramas por estado; reproducción aproximada 3/10/12/10 FPS. Resolución ampliada respecto a los 32×32 propuestos inicialmente para conservar detalle y formas grandes. No estirar los cuerpos para llenar la celda.
 
-- Identidad: personaje, forma y técnica; compatibilidad explícita con sus poderes.
-- Secuencia: fotogramas o poses de cada fase, duración y modo de orientación.
-- Anclas: pies, hombros, manos y posición del arma cuando corresponda.
-- Eventos de simulación: inicio/fin del intervalo de golpe, impactos de multigolpe y final de recuperación. El render consume estos tiempos; no decide el daño según los FPS.
-- Capas: cuerpo, extremidades/arma y efectos. El alcance de una extremidad puede dibujarse con segmentos articulados entre anclas, manteniendo la unión al cuerpo.
-- Sustitución: un atlas propio reemplaza la presentación manteniendo las anclas y eventos de la técnica. El fallback procedural conserva su identidad y movimiento.
+Los atlas generados se cachean por personaje/forma en memoria. La orientación lateral adapta la pose, cabeza y extremidades; no equivale a cuatro ilustraciones independientes de autor. La revisión ampliada se conserva en [galería](screenshots/fase3-galeria.png). Es una primera versión jugable pendiente de valoración artística del usuario.
 
-Caso de referencia obligatorio: Luffy prepara el golpe, el brazo se estira desde el hombro hacia el punto de contacto, el puño impacta y el brazo se retrae. Zoro mueve las espadas durante el corte y Sanji ejecuta una patada visible. No basta con emitir partículas o proyectiles desde un personaje inmóvil. La lista de lenguajes visuales para los diez personajes está en el GDD.
+## Ataques y anclas
 
-Estado al finalizar fase 1: contrato documentado, aún sin sistema de animaciones. Para el estado actual, ver «Estado tras FASE 2» al final de este documento.
+El atlas es corporal: la extensión de un brazo no cabe en una celda. `src/render/techniques.ts` dibuja extremidades/armas conectadas desde el actor, con hombro visual a `(0,-31)` respecto a pies. `src/game/techniques.ts` controla anticipación, fase activa, impactos y recuperación con paso fijo; el render consume esos tiempos. Sustituir un atlas no cambia daño ni colisión. Luffy mantiene hombro–brazo–puño al estirar y retraer; Zoro mueve hojas; Sanji extiende/gira piernas. Franky utiliza cadena metálica y Boundman brazos oscuros de haki, con estilos separados.
 
-## Acabado visual exigido
+Cada personaje tiene idle, caminar, ataque y daño; las piernas alternan y las armas acompañan la pose. La reducción de movimiento conserva las señales funcionales y reduce vapor, temblores y partículas. Los enemigos tienen uniforme y gorra de la Marina, ropa de la banda de Buggy o cuerpo pesado/maza de los matones de Alvida. Son esbirros originales; jefes con nombre en fase 4.
 
-Referencia: captura de PokéSurvivor aportada por el usuario en la conversación. Se busca calidad comparable de silueta, detalle, sombreado y animación, representando a los personajes de One Piece con recursos originales.
+## Recursos de fases siguientes
 
-- Perspectiva cenital de tres cuartos, proporciones chibi consistentes y apariencia reconocible sin nombre encima.
-- Contornos definidos, paleta controlada, volumen en cara/cabello/ropa y sombra de contacto estable.
-- Vestuario, armas, accesorios y silueta específicos; las formas cambian lo que corresponde a su diseño, no solo el color.
-- Estados de reposo, caminar, atacar y recibir daño con poses propias. Cuerpo y técnica deben leerse como una misma acción.
-- Las celdas 32×32 del contrato inicial son una base. Si hace falta más detalle, registrar dimensiones por atlas y mantener el ancla a los pies; nunca deformar sprites para encajarlos.
-- Revisar a la escala real de partida, con fondos y enemigos, además de una vista ampliada. Un retrato detallado no sustituye un sprite jugable animado.
+- Jefes: celdas previstas 96×96; definir manifiesto de patrones y anticipaciones durante fase 4.
+- Suelos: mosaicos 16×16 sin suavizado, integración por isla en fase 4.
+- Audio: solo original o con licencia registrada; implementación en fase 6.
 
-Primer hito de arte en fase 3: Luffy como personaje piloto con hoja de poses y animación de golpe de goma. No producir ni aprobar el lote completo antes de revisar ese acabado. Los personajes rectangulares actuales son placeholders. Este documento fija el objetivo; todavía no se han creado ni integrado los sprites definitivos.
-
-## Estado tras FASE 2
-
-Implementado el contrato temporal en src/data/content.ts y src/game/techniques.ts: anticipación, fase activa, eventos de impacto y recuperación. Los renderizadores de src/render/techniques.ts mantienen brazos/piernas y armas conectados al actor; src/render/fighter.ts aporta la pose procedural provisional. La torsión de Rifle y el hinchado de Fusen también tienen representación propia. Todas las técnicas del catálogo son ejecutables en el banco ?debug con su propietario.
-
-Todavía no hay cargador de atlas ni sprites definitivos de los diez personajes o de sus formas. La sección anterior que describe ese objetivo continúa pendiente para fase 3; el contrato de combate sí existe desde fase 2. Las imágenes de docs/screenshots/ se han capturado del juego, dibujado íntegramente por nuestro código procedural, sin assets oficiales ni recursos descargados de PokéSurvivor.
+Registrar siempre autor, URL, licencia y modificaciones de cualquier nuevo recurso. El atlas corporal opcional ya funciona; los contratos de jefes, terreno y audio aún no son cargadores implementados.

@@ -77,3 +77,7 @@ Capturas del banco de prueba, no de una partida sin depuración:
 ![Puñetazo conectado de Luffy](screenshots/fase-2-pistol.png)
 
 ![Evolución a Rifle](screenshots/fase-2-evolucion.png)
+
+## Integración de FASE 3
+
+Los diez propietarios ya se pueden elegir en el puerto, con tres estilos e innatos definidos en `src/data/crew.ts`. Las evoluciones de esta tabla siguen siendo mejoras de técnica independientes de los estilos. Los nakama ejecutan su técnica inicial desde su posición; no añaden sus armas a las ofertas del capitán. Energía, apoyos y estilos se documentan en GDD. F o botones permiten transformar; `?debug` añade «Desbloquear formas» para probar sin subir ocho niveles.

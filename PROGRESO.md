@@ -27,13 +27,13 @@ Proyecto Vite/TypeScript estricto, scripts, lockfile, composición de entidades,
 ## Próximas fases
 
 - Fase 2: implementada; ver entrega más abajo. Catálogo propio documentado porque no figuraba en el fragmento recibido.
-- Fase 3: personajes, formas, innatos y nakama.
+- Fase 3: implementada; ver entrega más abajo.
 - Fase 4: islas, minijefes, jefes, director por datos y Buster Call. La arena actual no representa East Blue completa.
 - Fase 5: meta-progresión y guardado versionado; las partidas actuales no se guardan al recargar.
 - Fase 6: audio, i18n, controles táctiles definitivos/mando, PWA, accesibilidad completa y estrés.
 - Fase 7: gacha solo para depuración y tests de distribución.
 - Fase 8: frutas, diarios, Infinito y Nuevo Mundo.
-- Cargador de atlas propios con fallback al integrar personajes; contrato en docs/ASSETS.md.
+- Cargador de atlas propios con fallback: implementado en fase 3; contrato en docs/ASSETS.md.
 
 ## Entrega en GitHub
 
@@ -80,3 +80,19 @@ Verificación pública: HTML HTTP 200 con título correcto; JS y CSS descargados
 El workflow publica cada push a main después de pasar los checks. Instrucciones y enlace en README.md y docs/PUBLICAR.md. No cambia el alcance de FASE 2 ni adelanta FASE 3.
 
 Nombre actual del repositorio: jaime3894/One-piece-survivor. Origin actualizado y commits confirmados por Git. El checkout local conserva /workspace/Narutosurvivor. Los bloqueos previos de red, repositorio privado y activación de Pages ya se resolvieron para este despliegue; no queda una acción del usuario pendiente para abrir la web.
+
+## FASE 3 — personajes, formas y nakama
+
+- Diez capitanes seleccionables con innatos, técnica inicial propia y tres estilos cada uno. Desbloqueos a nivel 4/8, energía compartida entre estilos, agotamiento automático y cambios con F o botones.
+- Hasta dos nakama con seguimiento, ataques desde su posición, apoyo médico/cocina y diez sinergias por parejas. La selección sobrevive al reinicio de partida; persistencia entre recargas en fase 5.
+- Atlas de 30 estilos con cuatro orientaciones y estados idle/caminar/atacar/daño. Rostros y retratos de fan art original MIT de gshklovs/opshell; cuerpos, ropa, armas y animaciones adaptados para este juego. Licencia y procedencia incluidas. No se usan sprites oficiales extraídos.
+- Marines, piratas de la banda de Buggy y matones de Alvida sustituyen a las siluetas básicas: uniformes, pañuelos, parche, barba, sable y maza. Son esbirros; Alvida, Buggy y otros jefes con nombre pertenecen a fase 4.
+- Manifiesto opcional de atlas PNG propios con comprobación de dimensiones y fallback integrado. Contrato y créditos actualizados en docs/ASSETS.md.
+
+### Validación
+
+98 tests de lógica, build estricto y 12 E2E del build: selección de tripulación en escritorio/móvil, tres sinergias simultáneas, formas bloqueadas/desbloqueadas, reinicio conservando compañeros, diez capitanes y 30 previsualizaciones distintas, carga de atlas propio y regresiones de combate/Pages. Tres simulaciones de cinco minutos con reglas normales siguen pasando. Galería de los 30 estilos y enemigos, menú y combate inspeccionados en Chromium sin errores de render.
+
+### Límites concretos
+
+El arte incorporado mejora identidad, volumen y movimiento; es una primera versión jugable, no una aprobación del usuario del acabado definitivo. Las vistas laterales usan poses adaptadas, no ilustraciones independientes dibujadas a mano. Los nakama combaten en estilo base y no tienen barra de salud propia. Algunos personajes representan tres estilos de combate en vez de tres transformaciones anatómicas canónicas; decisión explicada en GDD. Prueba humana de diversión pendiente; audio, mando y pulido global siguen en fase 6. No se adelantan islas/jefes, guardado ni gacha.

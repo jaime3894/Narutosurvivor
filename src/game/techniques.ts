@@ -1,3 +1,6 @@
+import { characterById } from "../data/crew";
+import { casterPosition, casterForm } from "./crew";
+import type { CharacterId } from "../data/content";
 import { combat } from "../data/combat";
 import { weaponById, weaponKey, type WeaponDefinition } from "../data/content";
 import type { Position } from "../core/entity";
@@ -21,7 +24,7 @@ export function pointSegmentDistance(
   return Math.hypot(point.x - start.x - dx * t, point.y - start.y - dy * t);
 }
 export function attackEndpoint(run: Run, attack: Attack): Position {
-  const origin = run.player.position;
+  const origin = casterPosition(run, attack.caster);
   return {
     x: origin.x + attack.direction.x * attack.distance,
     y: origin.y + attack.direction.y * attack.distance,
@@ -52,9 +55,11 @@ function createAttack(
   run: Run,
   definition: WeaponDefinition,
   evolved: boolean,
+  caster: CharacterId = run.character,
 ): Attack | undefined {
-  const rank = run.ranks[weaponKey(definition.id)];
-  const attributes = stats(run);
+  const rank = Math.max(1, run.ranks[weaponKey(definition.id)]);
+  const attributes = stats(run, caster);
+  const origin = casterPosition(run, caster);
   const synergy = affinities(run)[definition.affinity] ?? 0;
   const range =
     definition.range *
@@ -65,27 +70,32 @@ function createAttack(
     .filter(
       (enemy) =>
         enemy.health.current > 0 &&
-        distanceSquared(enemy.position, run.player.position) < range ** 2,
+        distanceSquared(enemy.position, origin) < range ** 2,
     )
     .sort(
       (a, b) =>
-        distanceSquared(a.position, run.player.position) -
-        distanceSquared(b.position, run.player.position),
+        distanceSquared(a.position, origin) -
+        distanceSquared(b.position, origin),
     )[0];
   if (!target) return undefined;
-  const dx = target.position.x - run.player.position.x,
-    dy = target.position.y - run.player.position.y;
+  const dx = target.position.x - origin.x,
+    dy = target.position.y - origin.y;
   const length = Math.hypot(dx, dy) || 1;
   const count =
     definition.strikes > 1
-      ? definition.strikes + run.ranks.multishot + (evolved ? 2 : 0)
-      : 1;
+      ? definition.strikes +
+        run.ranks.multishot +
+        (evolved ? 2 : 0) +
+        attributes.strikes
+      : 1 + attributes.strikes;
   const active =
     definition.active * (definition.strikes > 1 ? attributes.duration : 1);
   const hitAt = definition.windup + Math.min(active * 0.25, 0.04);
   return {
     id: run.nextId++,
     weapon: definition.id,
+    caster,
+    form: casterForm(run, caster),
     age: 0,
     windup: definition.windup,
     active,
@@ -107,14 +117,15 @@ function createAttack(
       (synergy >= 2 ? 1.12 : 1) *
       (definition.strikes > 1
         ? attributes.duration
-        : 1 + run.ranks.multishot * 0.08),
+        : 1 + run.ranks.multishot * 0.08) *
+      (caster === run.character ? 1 : Math.min(0.85, 0.45 + run.level * 0.02)),
     width: definition.width * attributes.range,
     hitIds: [],
   };
 }
 function strike(run: Run, attack: Attack, index: number): void {
   const definition = weaponById(attack.weapon);
-  const origin = run.player.position;
+  const origin = casterPosition(run, attack.caster);
   const endpoint = attackEndpoint(run, attack);
   if (definition.shape === "projectile") {
     run.projectiles.push({
@@ -124,6 +135,9 @@ function strike(run: Run, attack: Attack, index: number): void {
       damage: attack.damage,
       life: attack.distance / 580 + 0.2,
       weapon: attack.weapon,
+      caster: attack.caster,
+      form: attack.form,
+      origin: { ...origin },
       evolved: attack.evolved,
     });
     return;
@@ -145,10 +159,17 @@ function strike(run: Run, attack: Attack, index: number): void {
       )
         continue;
       attack.hitIds.push(enemy.id);
-      hitEnemy(run, enemy, attack.damage, {
-        x: Math.cos(angle) * 240,
-        y: Math.sin(angle) * 240,
-      });
+      hitEnemy(
+        run,
+        enemy,
+        attack.damage,
+        {
+          x: Math.cos(angle) * 240,
+          y: Math.sin(angle) * 240,
+        },
+        true,
+        { character: attack.caster, form: attack.form, origin },
+      );
     }
     return;
   }
@@ -181,10 +202,17 @@ function strike(run: Run, attack: Attack, index: number): void {
           (dx * attack.direction.x + dy * attack.direction.y) / distance >
             Math.cos(Math.PI * 0.38));
     if (hit)
-      hitEnemy(run, enemy, attack.damage, {
-        x: attack.direction.x * 220,
-        y: attack.direction.y * 220,
-      });
+      hitEnemy(
+        run,
+        enemy,
+        attack.damage,
+        {
+          x: attack.direction.x * 220,
+          y: attack.direction.y * 220,
+        },
+        true,
+        { character: attack.caster, form: attack.form, origin },
+      );
   }
 }
 export function updateTechniques(run: Run, dt: number): void {
@@ -197,9 +225,25 @@ export function updateTechniques(run: Run, dt: number): void {
     run.attacks.push(attack);
     slot.timer = Math.max(
       attack.windup + attack.active + attack.recovery,
-      (definition.cooldown * 0.88 ** run.ranks.tempo) /
-        (run.haste > 0 ? 1.2 : 1),
+      (definition.cooldown * stats(run).attackPeriod) /
+        combat.player.attackPeriod,
     );
+  }
+  for (const nakama of run.nakama) {
+    nakama.timer = Math.max(0, nakama.timer - dt);
+    if (nakama.timer > 0 || run.attacks.length >= 16) continue;
+    const definition = weaponById(characterById(nakama.character).starter);
+    const attack = createAttack(run, definition, false, nakama.character);
+    if (attack) {
+      run.attacks.push(attack);
+      nakama.timer = Math.max(
+        attack.windup + attack.active + attack.recovery,
+        (definition.cooldown *
+          2.6 *
+          stats(run, nakama.character).attackPeriod) /
+          combat.player.attackPeriod,
+      );
+    }
   }
   for (const attack of run.attacks) {
     attack.age += dt;
@@ -233,17 +277,39 @@ export function updateTechniques(run: Run, dt: number): void {
           enemy.radius + 6
       )
         continue;
-      hitEnemy(run, enemy, projectile.damage, {
-        x: projectile.velocity.x * 0.3,
-        y: projectile.velocity.y * 0.3,
-      });
+      hitEnemy(
+        run,
+        enemy,
+        projectile.damage,
+        {
+          x: projectile.velocity.x * 0.3,
+          y: projectile.velocity.y * 0.3,
+        },
+        true,
+        {
+          character: projectile.caster,
+          form: projectile.form,
+          origin: projectile.origin,
+        },
+      );
       if (projectile.evolved) {
         for (const nearby of run.enemies)
           if (
             nearby.id !== enemy.id &&
             distanceSquared(nearby.position, enemy.position) < 80 ** 2
           )
-            hitEnemy(run, nearby, projectile.damage * 0.6, { x: 0, y: 0 });
+            hitEnemy(
+              run,
+              nearby,
+              projectile.damage * 0.6,
+              { x: 0, y: 0 },
+              true,
+              {
+                character: projectile.caster,
+                form: projectile.form,
+                origin: projectile.origin,
+              },
+            );
       }
       projectile.life = 0;
       break;

@@ -1,5 +1,12 @@
+import type { CharacterId } from "../data/content";
+import { drawSprite, getSpriteAtlas } from "./sprites";
 import { createRandom } from "../core/random";
-export function drawIsland(canvas: HTMLCanvasElement, seed: number): void {
+export function drawIsland(
+  canvas: HTMLCanvasElement,
+  seed: number,
+  captain: CharacterId = "luffy",
+  nakama: CharacterId[] = [],
+): void {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas 2D no disponible");
   const random = createRandom(seed);
@@ -48,9 +55,24 @@ export function drawIsland(canvas: HTMLCanvasElement, seed: number): void {
   }
   land("#ad7c52", 300, 272, 40, 64);
   for (let y = 276; y < 336; y += 12) land("#70533d", 300, y, 40, 2);
-  land("#19313e", 312, 184, 16, 20);
-  land("#e6a578", 312, 176, 16, 12);
-  land("#df7655", 308, 192, 24, 12);
-  land("#eac777", 304, 172, 32, 6);
-  land("#eac777", 312, 164, 16, 8);
+  drawSprite(
+    context,
+    getSpriteAtlas(captain, 0),
+    { x: 320, y: 205 },
+    "down",
+    "idle",
+    0,
+    0.8,
+  );
+  nakama.forEach((id, index) =>
+    drawSprite(
+      context,
+      getSpriteAtlas(id, 0),
+      { x: 290 + index * 60, y: 225 },
+      "down",
+      "idle",
+      0,
+      0.7,
+    ),
+  );
 }

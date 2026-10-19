@@ -1,3 +1,5 @@
+import { characterById, validateCrew } from "../data/crew";
+import { updateCrew, tryRevive } from "./crew";
 import { createRandom } from "../core/random";
 import { combat, enemyTypes, type EnemyKind } from "../data/combat";
 import {
@@ -19,8 +21,12 @@ export { chooseUpgrade, offerUpgrades } from "./progression";
 export function createRun(
   seed = Date.now(),
   character: CharacterId = "luffy",
+  nakama: CharacterId[] = [],
 ): Run {
-  const starter = weapons.find((item) => item.owner === character);
+  validateCrew({ captain: character, nakama });
+  const starter = weapons.find(
+    (item) => item.id === characterById(character).starter,
+  );
   if (!starter) throw new Error("Personaje sin técnica inicial");
   const ranks = Object.fromEntries(
     upgrades.map((item) => [item.id, 0]),
@@ -29,6 +35,19 @@ export function createRun(
   return {
     status: "playing",
     character,
+    form: 0,
+    energy: 100,
+    formCooldown: 0,
+    transformTime: 0,
+    reviveUsed: false,
+    nakama: nakama.map((id, index) => ({
+      character: id,
+      position: { x: 1200 + (index === 0 ? -43 : 43), y: 858 },
+      facing: { x: 0, y: 1 },
+      moving: false,
+      timer: 0,
+      supportTimer: 12,
+    })),
     elapsed: 0,
     player: {
       position: { x: 1200, y: 900 },
@@ -134,11 +153,12 @@ export function step(run: Run, input: Input, dt: number): void {
   if (!Number.isFinite(dt) || dt <= 0 || dt > 0.05)
     throw new RangeError("Usa pasos entre 0 y 50 ms");
   if (run.status !== "playing") return;
-  if (run.player.health.current <= 0) {
+  if (run.player.health.current <= 0 && !tryRevive(run)) {
     run.status = "lost";
     return;
   }
   run.elapsed = Math.min(combat.duration, run.elapsed + dt);
+  updateCrew(run, dt);
   run.noticeTime = Math.max(0, run.noticeTime - dt);
   run.haste = Math.max(0, run.haste - dt);
   const player = run.player;
@@ -147,7 +167,7 @@ export function step(run: Run, input: Input, dt: number): void {
   player.dashTime = Math.max(0, player.dashTime - dt);
   player.health.current = Math.min(
     player.health.maximum,
-    player.health.current + run.ranks.regen * 0.35 * dt,
+    player.health.current + stats(run).regen * dt,
   );
   const length = Math.hypot(input.x, input.y);
   const direction =
@@ -190,7 +210,24 @@ export function step(run: Run, input: Input, dt: number): void {
     const dx = player.position.x - enemy.position.x,
       dy = player.position.y - enemy.position.y;
     const distance = Math.hypot(dx, dy) || 1;
-    const speed = enemyTypes[enemy.kind].speed * (1 + run.elapsed / 1500);
+    enemy.slow = Math.max(0, (enemy.slow ?? 0) - dt);
+    if ((enemy.burn ?? 0) > 0) {
+      enemy.burn = Math.max(0, (enemy.burn ?? 0) - dt);
+      enemy.burnTick = (enemy.burnTick ?? 0) - dt;
+      if (enemy.burnTick <= 0) {
+        hitEnemy(run, enemy, 4, { x: 0, y: 0 }, false, {
+          character: "sanji",
+          form: 0,
+          origin: enemy.position,
+        });
+        enemy.burnTick = 0.5;
+      }
+      if (enemy.health.current <= 0) continue;
+    }
+    const speed =
+      enemyTypes[enemy.kind].speed *
+      (1 + run.elapsed / 1500) *
+      ((enemy.slow ?? 0) > 0 ? 0.6 : 1);
     enemy.position.x += ((dx / distance) * speed + enemy.velocity.x) * dt;
     enemy.position.y += ((dy / distance) * speed + enemy.velocity.y) * dt;
     enemy.velocity.x *= Math.exp(-12 * dt);
@@ -227,7 +264,7 @@ export function step(run: Run, input: Input, dt: number): void {
   run.enemies = run.enemies.filter((enemy) => enemy.health.current > 0);
   for (const item of run.effects) item.life -= dt;
   run.effects = run.effects.filter((item) => item.life > 0);
-  if (player.health.current <= 0) run.status = "lost";
+  if (player.health.current <= 0 && !tryRevive(run)) run.status = "lost";
   else if (run.elapsed >= combat.duration) run.status = "won";
   else offerUpgrades(run);
 }

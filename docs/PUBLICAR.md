@@ -19,9 +19,9 @@ Una vez activado, las siguientes fases se publican al subir a `main`. No hay que
 
 ## Validación local realizada
 
-- `npm test`: 82 tests aprobados.
+- `npm test`: 98 tests aprobados.
 - `npm run build`: tipos y build aprobados.
-- `npm run test:e2e`: ocho pruebas aprobadas, incluida una que sirve `dist` bajo `/One-piece-survivor/`, carga el juego e inicia una partida.
+- `npm run test:e2e`: doce pruebas aprobadas, incluida una que sirve `dist` bajo `/One-piece-survivor/`, carga el juego e inicia una partida.
 - `vite.config.ts` usa rutas relativas para que los assets funcionen en la subcarpeta del repositorio.
 
 El test local de ruta no acredita que GitHub haya completado el despliegue remoto.
@@ -34,4 +34,4 @@ La página pública devuelve HTTP 200 y el título «Marea de aventuras». JavaS
 
 Los bloqueos anteriores están resueltos para publicar: primero faltaba acceso de red, después la visibilidad y activación de Pages. No se añadieron tokens al código. La integración continúa sin poder cambiar ajustes administrativos, pero el workflow ya puede desplegar con sus permisos de Pages.
 
-Las próximas fases se actualizarán en la misma URL cuando su workflow complete las comprobaciones y el despliegue. El sitio contiene FASE 2, con modelos provisionales; los modelos definitivos y el resto del sistema de personajes siguen en FASE 3.
+Las próximas fases se actualizarán en la misma URL cuando su workflow complete las comprobaciones y el despliegue. La entrega de FASE 3 añade diez capitanes, 30 estilos, nakama y arte integrado; cada despliegue se valida antes de publicar. El historial anterior de esta página corresponde al primer despliegue de FASE 2.

@@ -15,6 +15,7 @@ export const combat = {
 } as const;
 export const enemyTypes = {
   sailor: {
+    name: "Marinero de la Marina",
     health: 28,
     speed: 76,
     radius: 12,
@@ -23,6 +24,7 @@ export const enemyTypes = {
     color: "#8faec3",
   },
   runner: {
+    name: "Pirata de la banda de Buggy",
     health: 20,
     speed: 130,
     radius: 9,
@@ -31,6 +33,7 @@ export const enemyTypes = {
     color: "#e9a263",
   },
   brute: {
+    name: "Matón de Alvida",
     health: 110,
     speed: 55,
     radius: 19,

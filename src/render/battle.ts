@@ -1,7 +1,8 @@
+import { getEnemyAtlas, drawSprite, facingDirection } from "./sprites";
 import { drawTechniques } from "./techniques";
 import { drawFighter } from "./fighter";
 import { drawLoot } from "./loot";
-import { combat, enemyTypes } from "../data/combat";
+import { combat } from "../data/combat";
 import type { Position } from "../core/entity";
 import type { Run } from "../game/types";
 
@@ -119,22 +120,51 @@ export class BattleRenderer {
         enemy.position.y > camY + VIEW_HEIGHT + 40
       )
         continue;
-      const color = enemy.flash > 0 ? "#fff6da" : enemyTypes[enemy.kind].color;
-      this.sprite(
-        enemy.position,
-        color,
-        enemy.kind === "brute" ? 1.45 : enemy.kind === "runner" ? 0.85 : 1,
-        run.elapsed,
-        false,
-        false,
+      ctx.fillStyle = "#284b42";
+      ctx.beginPath();
+      ctx.ellipse(
+        enemy.position.x,
+        enemy.position.y + 4,
+        enemy.kind === "brute" ? 19 : 12,
+        5,
+        0,
+        0,
+        Math.PI * 2,
       );
+      ctx.fill();
+      const direction = facingDirection(
+        player.position.x - enemy.position.x,
+        player.position.y - enemy.position.y,
+      );
+      drawSprite(
+        ctx,
+        getEnemyAtlas(enemy.kind),
+        enemy.position,
+        direction,
+        enemy.flash > 0 ? "hurt" : "walk",
+        this.reducedMotion ? 0 : run.elapsed,
+        enemy.kind === "brute" ? 1.08 : 0.88,
+      );
+      if (enemy.flash > 0) {
+        ctx.fillStyle = "rgba(255,245,208,.5)";
+        ctx.fillRect(enemy.position.x - 8, enemy.position.y - 35, 16, 13);
+      }
+      if ((enemy.burn ?? 0) > 0) {
+        ctx.fillStyle = "#e5a25f";
+        ctx.fillRect(enemy.position.x - 7, enemy.position.y - 20, 3, 8);
+        ctx.fillRect(enemy.position.x + 5, enemy.position.y - 14, 3, 6);
+      }
+      if ((enemy.slow ?? 0) > 0) {
+        ctx.strokeStyle = "#abe2e9";
+        ctx.strokeRect(enemy.position.x - 13, enemy.position.y - 6, 26, 10);
+      }
       if (enemy.health.current < enemy.health.maximum) {
         ctx.fillStyle = "#29423e";
-        ctx.fillRect(enemy.position.x - 12, enemy.position.y - 29, 24, 3);
+        ctx.fillRect(enemy.position.x - 12, enemy.position.y - 60, 24, 3);
         ctx.fillStyle = "#f0b185";
         ctx.fillRect(
           enemy.position.x - 12,
-          enemy.position.y - 29,
+          enemy.position.y - 60,
           (24 * enemy.health.current) / enemy.health.maximum,
           3,
         );
@@ -297,43 +327,5 @@ export class BattleRenderer {
   }
   destroy(): void {
     this.resizeObserver.disconnect();
-  }
-  private sprite(
-    position: Position,
-    color: string,
-    scale: number,
-    time: number,
-    player: boolean,
-    moving = true,
-  ): void {
-    const ctx = this.context;
-    const bob =
-      moving && !this.reducedMotion ? Math.floor(Math.sin(time * 15) * 1.5) : 0;
-    ctx.save();
-    ctx.translate(Math.round(position.x), Math.round(position.y));
-    ctx.scale(scale, scale);
-    ctx.fillStyle = "#294b46";
-    ctx.beginPath();
-    ctx.ellipse(0, 6, 13, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.translate(0, bob);
-    ctx.fillStyle = "#253b44";
-    ctx.fillRect(-8, -2, 6, 10);
-    ctx.fillRect(3, -2, 6, 10);
-    ctx.fillStyle = color;
-    ctx.fillRect(-10, -14, 20, 16);
-    ctx.fillStyle = "#e5b38c";
-    ctx.fillRect(-7, -25, 14, 13);
-    ctx.fillRect(-14, -12, 4, 10);
-    ctx.fillRect(10, -12, 4, 10);
-    ctx.fillStyle = "#253b44";
-    ctx.fillRect(-3, -20, 2, 2);
-    ctx.fillRect(4, -20, 2, 2);
-    ctx.fillStyle = player ? "#e9c97a" : "#d0d5c3";
-    ctx.fillRect(-13, -29, 26, 5);
-    ctx.fillRect(-8, -35, 16, 7);
-    ctx.fillStyle = player ? "#c5684f" : "#526e86";
-    ctx.fillRect(-8, -28, 16, 3);
-    ctx.restore();
   }
 }

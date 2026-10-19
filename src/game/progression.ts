@@ -9,7 +9,7 @@ import {
   type WeaponId,
 } from "../data/content";
 import type { Run, Chest } from "./types";
-import { effect, notify } from "./rules";
+import { effect, notify, stats } from "./rules";
 export function eligibleUpgrades(run: Run): UpgradeId[] {
   const passiveCount = passives.filter((item) => run.ranks[item.id] > 0).length;
   return upgrades
@@ -147,7 +147,7 @@ export function openChest(run: Run, id: number): boolean {
           id: choice,
         });
       } else {
-        const berries = Math.round(75 * (1 + run.ranks.greed * 0.2));
+        const berries = Math.round(75 * stats(run).currency);
         run.berries += berries;
         run.chestRewards.push({
           kind: "berries",

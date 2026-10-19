@@ -6,7 +6,11 @@ export class Controls {
     | { id: number; startX: number; startY: number; x: number; y: number }
     | undefined;
   private readonly abort = new AbortController();
-  constructor(canvas: HTMLCanvasElement, onPause: () => void) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    onPause: () => void,
+    onForm: () => void = () => {},
+  ) {
     const signal = this.abort.signal;
     window.addEventListener(
       "keydown",
@@ -20,6 +24,7 @@ export class Controls {
         if (event.code === "Escape" || event.code === "KeyP") {
           if (!event.repeat) onPause();
         }
+        if (event.code === "KeyF" && !event.repeat) onForm();
         if (event.code === "Space" && !event.repeat) this.dashQueued = true;
         this.keys.add(event.code);
       },

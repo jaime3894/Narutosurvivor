@@ -1,3 +1,10 @@
+import {
+  activeSynergies,
+  characterById,
+  combinedSynergies,
+  type FormTier,
+} from "../data/crew";
+import type { CharacterId } from "../data/content";
 import { combat, enemyTypes } from "../data/combat";
 import {
   affinityNames,
@@ -20,25 +27,70 @@ export function affinities(run: Run): Partial<Record<Affinity, number>> {
       counts[passive.affinity] = (counts[passive.affinity] ?? 0) + 1;
   return counts;
 }
-export const stats = (run: Run) => ({
-  damage:
-    combat.player.damage *
-    (1 + run.ranks.power * 0.25 + run.ranks.spirit * 0.05),
-  attackPeriod:
-    (combat.player.attackPeriod * 0.88 ** run.ranks.tempo) /
-    (run.haste > 0 ? 1.2 : 1),
-  speed:
-    combat.player.speed *
-    (1 + run.ranks.stride * 0.1) *
-    (run.haste > 0 ? 1.25 : 1),
-  projectiles: 1 + run.ranks.multishot,
-  magnet: 68 + run.ranks.magnet * 45,
-  range: 1 + run.ranks.reach * 0.12,
-  duration: 1 + run.ranks.duration * 0.15,
-  armor: run.ranks.armor * 2,
-  criticalChance: run.ranks.crit * 0.06,
-  dashCooldown: combat.dash.cooldown * 0.92 ** run.ranks.spirit,
-});
+export function stats(run: Run, caster: CharacterId = run.character) {
+  const isCaptain = caster === run.character;
+  const form = characterById(caster).forms[isCaptain ? run.form : 0].modifiers;
+  const synergy = combinedSynergies(
+    run.character,
+    run.nakama.map((item) => item.character),
+  );
+  const magnet = activeSynergies(
+    run.character,
+    run.nakama.map((item) => item.character),
+  ).reduce((sum, item) => sum + (item.magnet ?? 0), 0);
+  return {
+    damage:
+      combat.player.damage *
+      (1 + run.ranks.power * 0.25 + run.ranks.spirit * 0.05) *
+      form.damage *
+      synergy.damage,
+    attackPeriod:
+      ((combat.player.attackPeriod * 0.88 ** run.ranks.tempo) /
+        (run.haste > 0 ? 1.2 : 1)) *
+      form.cooldown *
+      synergy.cooldown,
+    speed:
+      combat.player.speed *
+      (1 + run.ranks.stride * 0.1) *
+      (run.haste > 0 ? 1.25 : 1) *
+      form.speed *
+      synergy.speed,
+    projectiles: 1 + run.ranks.multishot,
+    magnet: 68 + run.ranks.magnet * 45 + magnet,
+    range:
+      (1 + run.ranks.reach * 0.12) *
+      form.range *
+      synergy.range *
+      (caster === "luffy" ? 1.1 : 1),
+    duration: 1 + run.ranks.duration * 0.15,
+    armor:
+      run.ranks.armor * 2 +
+      form.armor +
+      synergy.armor +
+      (isCaptain && caster === "franky" ? 2 : 0),
+    criticalChance: Math.min(
+      0.85,
+      run.ranks.crit * 0.06 + form.critical + synergy.critical,
+    ),
+    dashCooldown:
+      combat.dash.cooldown *
+      0.92 ** run.ranks.spirit *
+      form.dash *
+      synergy.dash *
+      (isCaptain && caster === "jinbe" ? 0.8 : 1),
+    regen:
+      run.ranks.regen * 0.35 +
+      form.regen +
+      synergy.regen +
+      (isCaptain && caster === "chopper" ? 0.3 : 0),
+    food: form.food * synergy.food,
+    currency:
+      (1 + run.ranks.greed * 0.2) *
+      (isCaptain && caster === "nami" ? 1.25 : 1) *
+      synergy.currency,
+    strikes: form.strikes + synergy.strikes,
+  };
+}
 export function effect(
   run: Run,
   position: Position,
@@ -83,11 +135,30 @@ export function hitEnemy(
   damage: number,
   impulse: Position,
   canCrit = true,
+  source?: { character: CharacterId; form: FormTier; origin: Position },
 ): void {
   if (enemy.health.current <= 0) return;
-  const critical =
-    canCrit && run.ranks.crit > 0 && run.random() < stats(run).criticalChance;
-  const amount = damage * (critical ? 1.7 : 1);
+  const caster = source?.character ?? run.character;
+  const form = source?.form ?? (caster === run.character ? run.form : 0);
+  const origin = source?.origin ?? run.player.position;
+  const chance = Math.min(
+    0.85,
+    stats(run, caster).criticalChance +
+      (caster === "usopp" && distanceSquared(origin, enemy.position) > 180 ** 2
+        ? 0.18
+        : 0),
+  );
+  const critical = canCrit && chance > 0 && run.random() < chance;
+  const firstCut =
+    caster === "zoro" && enemy.health.current > enemy.health.maximum * 0.7
+      ? 1.15
+      : 1;
+  const amount = damage * (critical ? 1.7 : 1) * firstCut;
+  if (source && caster === "brook" && form > 0) enemy.slow = 1.2;
+  if (source && caster === "sanji" && form > 0) {
+    enemy.burn = 2;
+    enemy.burnTick = 0.5;
+  }
   run.damageDealt += Math.min(enemy.health.current, amount);
   enemy.health.current -= amount;
   enemy.flash = critical ? 0.18 : 0.1;
@@ -102,6 +173,12 @@ export function hitEnemy(
   if (critical) run.hitStop = Math.max(run.hitStop, 0.025);
   if (enemy.health.current > 0) return;
   run.kills++;
+  if (run.character === "sanji" && run.kills % 20 === 0)
+    run.player.health.current = Math.min(
+      run.player.health.maximum,
+      run.player.health.current + 8,
+    );
+  if (run.character === "robin" && run.kills % 15 === 0) run.xp += 3;
   effect(run, enemy.position, "kill");
   addDrop(run, {
     position: { ...enemy.position },

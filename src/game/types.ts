@@ -1,3 +1,4 @@
+import type { FormTier } from "../data/crew";
 import type { Position, Velocity, Health } from "../core/entity";
 import type { EnemyKind } from "../data/combat";
 import type {
@@ -7,7 +8,12 @@ import type {
   WeaponId,
 } from "../data/content";
 export type RunStatus =
-  "playing" | "paused" | "upgrade" | "chest" | "won" | "lost";
+  | "playing"
+  | "paused"
+  | "upgrade"
+  | "chest"
+  | "won"
+  | "lost";
 export interface Player {
   position: Position;
   velocity: Velocity;
@@ -26,6 +32,9 @@ export interface Enemy {
   kind: EnemyKind;
   radius: number;
   flash: number;
+  slow?: number;
+  burn?: number;
+  burnTick?: number;
 }
 export interface Projectile {
   id: number;
@@ -34,6 +43,9 @@ export interface Projectile {
   damage: number;
   life: number;
   weapon: WeaponId;
+  caster: CharacterId;
+  form: FormTier;
+  origin: Position;
   evolved: boolean;
 }
 export interface Drop {
@@ -77,6 +89,8 @@ export interface Strike {
 export interface Attack {
   id: number;
   weapon: WeaponId;
+  caster: CharacterId;
+  form: FormTier;
   age: number;
   windup: number;
   active: number;
@@ -101,9 +115,23 @@ export interface ChestReward {
   detail: string;
   id?: UpgradeId;
 }
+export interface Nakama {
+  character: CharacterId;
+  position: Position;
+  facing: Position;
+  moving: boolean;
+  timer: number;
+  supportTimer: number;
+}
 export interface Run {
   status: RunStatus;
   character: CharacterId;
+  form: FormTier;
+  energy: number;
+  formCooldown: number;
+  transformTime: number;
+  reviveUsed: boolean;
+  nakama: Nakama[];
   elapsed: number;
   player: Player;
   enemies: Enemy[];

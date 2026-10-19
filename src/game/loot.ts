@@ -36,12 +36,12 @@ export function updateLoot(run: Run, dt: number): void {
       case "heal":
         run.player.health.current = Math.min(
           run.player.health.maximum,
-          run.player.health.current + drop.value,
+          run.player.health.current + drop.value * stats(run).food,
         );
         effect(run, run.player.position, "heal", drop.value);
         break;
       case "coin":
-        run.berries += Math.round(drop.value * (1 + run.ranks.greed * 0.2));
+        run.berries += Math.round(drop.value * stats(run).currency);
         break;
       case "vacuum":
         for (const other of run.drops)

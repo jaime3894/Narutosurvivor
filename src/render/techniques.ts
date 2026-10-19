@@ -1,3 +1,4 @@
+import { casterPosition } from "../game/crew";
 import type { Position } from "../core/entity";
 import { affinityColors, weaponById } from "../data/content";
 import type { Run } from "../game/types";
@@ -10,6 +11,7 @@ function limb(
   twist = false,
   mechanical = false,
   ending: "fist" | "foot" | "hoof" = "fist",
+  haki = false,
 ): void {
   ctx.lineCap = "round";
   ctx.strokeStyle = "#473e37";
@@ -18,10 +20,10 @@ function limb(
   ctx.moveTo(start.x, start.y);
   ctx.lineTo(end.x, end.y);
   ctx.stroke();
-  ctx.strokeStyle = mechanical ? "#9ab3b7" : "#e7af83";
+  ctx.strokeStyle = haki ? "#342c40" : mechanical ? "#9ab3b7" : "#e7af83";
   ctx.lineWidth = mechanical ? 7 : 6;
   ctx.stroke();
-  ctx.strokeStyle = mechanical ? "#e7eeee" : "#ffd4a2";
+  ctx.strokeStyle = haki ? "#a74850" : mechanical ? "#e7eeee" : "#ffd4a2";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(start.x - 1, start.y - 2);
@@ -53,9 +55,9 @@ function limb(
   }
   ctx.fillStyle = "#473e37";
   ctx.fillRect(end.x - 6, end.y - 6, 13, 12);
-  ctx.fillStyle = mechanical ? "#a9c4c8" : "#efbd91";
+  ctx.fillStyle = haki ? "#292a39" : mechanical ? "#a9c4c8" : "#efbd91";
   ctx.fillRect(end.x - 4, end.y - 5, 9, 8);
-  ctx.fillStyle = mechanical ? "#e1eddd" : "#ffe0ae";
+  ctx.fillStyle = haki ? "#b45259" : mechanical ? "#e1eddd" : "#ffe0ae";
   ctx.fillRect(end.x - 3, end.y - 5, 7, 2);
   ctx.fillStyle = "#a77758";
   ctx.fillRect(end.x - 3, end.y + 1, 1, 2);
@@ -69,9 +71,10 @@ export function drawTechniques(
   for (const attack of run.attacks) {
     const definition = weaponById(attack.weapon);
     const progress = animationProgress(attack);
-    const origin = { x: run.player.position.x, y: run.player.position.y - 15 };
+    const caster = casterPosition(run, attack.caster);
+    const origin = { x: caster.x, y: caster.y - 31 };
     const point = attackEndpoint(run, attack);
-    const target = { x: attack.target.x, y: attack.target.y - 12 };
+    const target = { x: attack.target.x, y: attack.target.y - 31 };
     const angle = Math.atan2(attack.direction.y, attack.direction.x);
     const phase = (attack.age - attack.windup) / attack.active;
     const active = progress.phase === "active";
@@ -118,7 +121,7 @@ export function drawTechniques(
               attack.direction.y * spread,
             y:
               shoulder.y +
-              (point.y - 15 - origin.y) * extension * oscillation +
+              (point.y - 31 - origin.y) * extension * oscillation +
               attack.direction.x * spread,
           };
           limb(
@@ -127,6 +130,8 @@ export function drawTechniques(
             end,
             attack.evolved && attack.weapon === "pistol",
             definition.animation === "chain",
+            "fist",
+            attack.caster === "luffy" && attack.form === 2,
           );
         }
         break;
@@ -157,7 +162,14 @@ export function drawTechniques(
           definition.animation === "hoof" ? "hoof" : "foot",
         );
         if (active) {
-          ctx.strokeStyle = attack.evolved ? "#ffe4a0" : "#ebd8ae";
+          ctx.strokeStyle =
+            attack.caster === "sanji" && attack.form > 0
+              ? attack.form === 2
+                ? "#71ddf6"
+                : "#f2a34f"
+              : attack.evolved
+                ? "#ffe4a0"
+                : "#ebd8ae";
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(
@@ -172,36 +184,6 @@ export function drawTechniques(
         break;
       }
       case "inflate": {
-        const radius = 18 + 30 * Math.max(0, extension);
-        ctx.fillStyle = "#543d33";
-        ctx.beginPath();
-        ctx.ellipse(
-          origin.x,
-          origin.y + 4,
-          radius + 2,
-          radius * 0.85 + 2,
-          0,
-          0,
-          Math.PI * 2,
-        );
-        ctx.fill();
-        ctx.fillStyle = "#e5aa7b";
-        ctx.beginPath();
-        ctx.ellipse(
-          origin.x,
-          origin.y + 2,
-          radius,
-          radius * 0.85,
-          0,
-          0,
-          Math.PI * 2,
-        );
-        ctx.fill();
-        ctx.strokeStyle = "#ad6a50";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(origin.x, origin.y + 7, radius * 0.5, 0.2, 2.6);
-        ctx.stroke();
         if (active) {
           ctx.strokeStyle = "#e5e2b5";
           ctx.globalAlpha = 0.45;
@@ -236,7 +218,8 @@ export function drawTechniques(
         ctx.lineWidth = 3;
         ctx.stroke();
         if (active) {
-          ctx.strokeStyle = color;
+          ctx.strokeStyle =
+            attack.caster === "brook" && attack.form > 0 ? "#a6e0f2" : color;
           ctx.lineWidth = attack.evolved ? 7 : 4;
           ctx.beginPath();
           ctx.arc(
@@ -360,7 +343,7 @@ export function drawTechniques(
           for (const side of [-1, 1]) {
             const start = { x: target.x + side * 29, y: target.y + 12 };
             const end = { x: target.x + side * 5, y: target.y - 13 };
-            ctx.strokeStyle = "#dba77f";
+            ctx.strokeStyle = attack.form === 2 ? "#795568" : "#dba77f";
             ctx.lineWidth = 7;
             ctx.beginPath();
             ctx.moveTo(start.x, start.y);

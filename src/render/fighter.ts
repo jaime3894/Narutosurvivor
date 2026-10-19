@@ -1,123 +1,176 @@
-import { weaponById } from "../data/content";
-import { animationProgress } from "../game/techniques";
+import { characterNames } from "../data/content";
+import type { CharacterId } from "../data/content";
+import type { FormTier } from "../data/crew";
+import type { Position } from "../core/entity";
 import type { Run } from "../game/types";
-/** Actor provisional articulado; los atlas definitivos se integran en fase 3. */
+import { animationProgress } from "../game/techniques";
+import {
+  drawSprite,
+  getSpriteAtlas,
+  facingDirection,
+  spriteFrame,
+} from "./sprites";
+function actor(
+  ctx: CanvasRenderingContext2D,
+  run: Run,
+  id: CharacterId,
+  position: Position,
+  facing: Position,
+  moving: boolean,
+  form: FormTier,
+  reducedMotion: boolean,
+  support: boolean,
+): void {
+  const attacks = run.attacks.filter((item) => item.caster === id);
+  const attack = attacks[0];
+  const direction = attack
+    ? facingDirection(attack.direction.x, attack.direction.y)
+    : facingDirection(facing.x, facing.y);
+  const hurt = !support && run.player.invulnerable > 0;
+  const state = hurt ? "hurt" : attack ? "attack" : moving ? "walk" : "idle";
+  const atlas = getSpriteAtlas(id, form);
+  const time = reducedMotion ? 0 : run.elapsed;
+  ctx.save();
+  ctx.fillStyle = support ? "#2c514b" : "#294c43";
+  ctx.beginPath();
+  ctx.ellipse(
+    position.x,
+    position.y + 4,
+    form === 2 && ["luffy", "chopper", "franky"].includes(id) ? 21 : 14,
+    5,
+    0,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
+  if (support) {
+    ctx.strokeStyle = "#a1c6bd";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(position.x, position.y + 4, 16, 7, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  const inflate = attacks.find((item) => item.weapon === "balloon");
+  if (inflate) {
+    const extension = Math.max(0, animationProgress(inflate).extension),
+      radius = 22 + extension * 24;
+    ctx.fillStyle = "#a66c56";
+    ctx.beginPath();
+    ctx.ellipse(
+      position.x,
+      position.y - 22,
+      radius + 2,
+      radius * 0.82 + 2,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.fillStyle = "#e0ad82";
+    ctx.beginPath();
+    ctx.ellipse(
+      position.x - 2,
+      position.y - 24,
+      radius,
+      radius * 0.82,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    const row = ["down", "left", "right", "up"].indexOf(direction);
+    const frame = spriteFrame(state, time);
+    ctx.drawImage(
+      atlas,
+      frame * 64,
+      row * 80,
+      64,
+      38,
+      position.x - 32,
+      position.y - 74 - extension * 14,
+      64,
+      38,
+    );
+  } else drawSprite(ctx, atlas, position, direction, state, time);
+  if (id === "luffy" && form > 0 && !reducedMotion) {
+    ctx.strokeStyle = "#e9e6da";
+    ctx.globalAlpha = 0.6;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      const drift = (time * 0.8 + i * 0.33) % 1;
+      ctx.beginPath();
+      ctx.arc(
+        position.x - 21 + i * 20,
+        position.y - 24 - drift * 35,
+        4 + drift * 4,
+        Math.PI,
+        Math.PI * 2.3,
+      );
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  if (id === "brook" && form > 0) {
+    ctx.strokeStyle = "#a9dfef";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(position.x, position.y - 28, 31, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (!support && run.transformTime > 0) {
+    ctx.globalAlpha = Math.min(1, run.transformTime * 2);
+    ctx.strokeStyle = "#f5d897";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(
+      position.x,
+      position.y - 15,
+      24 + (0.7 - run.transformTime) * 55,
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  if (support) {
+    ctx.font = "8px monospace";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#d1e3c4";
+    ctx.fillText(characterNames[id], position.x, position.y + 17);
+  }
+  ctx.restore();
+}
 export function drawFighter(
   ctx: CanvasRenderingContext2D,
   run: Run,
   reducedMotion: boolean,
 ): void {
-  const { player } = run;
-  const moving = Math.hypot(player.velocity.x, player.velocity.y) > 0;
-  const swing = moving && !reducedMotion ? Math.sin(run.elapsed * 16) * 2 : 0;
-  const attack = run.attacks[0];
-  const pose = attack ? animationProgress(attack) : undefined;
-  const inflate = run.attacks.find((item) => item.weapon === "balloon");
-  const lift = inflate
-    ? Math.max(0, animationProgress(inflate).extension) * 24
-    : 0;
-  const lean = attack
-    ? attack.direction.x * Math.max(0, pose?.extension ?? 0) * 3
-    : 0;
-  ctx.save();
-  ctx.translate(Math.round(player.position.x), Math.round(player.position.y));
-  ctx.fillStyle = "#294b46";
-  ctx.beginPath();
-  ctx.ellipse(0, 7, 15 + lift * 0.2, 5, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.translate(lean, -Math.abs(swing) * 0.5);
-  const luffy = run.character === "luffy";
-  const legInUse = run.attacks.some((item) =>
-    ["sweep", "kick", "stomp"].includes(weaponById(item.weapon).animation),
-  );
-  if (!inflate) {
-    ctx.fillStyle = "#523c32";
-    ctx.fillRect(-10, -3 + swing, 8, 12);
-    if (!legInUse) ctx.fillRect(3, -3 - swing, 8, 12);
-    ctx.fillStyle = "#dfa175";
-    ctx.fillRect(-9, -3 + swing, 6, 10);
-    if (!legInUse) ctx.fillRect(4, -3 - swing, 6, 10);
-    ctx.fillStyle = "#9c7350";
-    ctx.fillRect(-11, 6 + swing, 10, 4);
-    if (!legInUse) ctx.fillRect(2, 6 - swing, 10, 4);
-    ctx.fillStyle = "#3b4243";
-    ctx.fillRect(-8, 6 + swing, 2, 3);
-    if (!legInUse) ctx.fillRect(5, 6 - swing, 2, 3);
-    ctx.fillStyle = "#233e50";
-    ctx.fillRect(-11, -8, 23, 9);
-    ctx.fillStyle = "#54849a";
-    ctx.fillRect(-9, -7, 8, 6);
-    ctx.fillRect(3, -7, 7, 6);
-    ctx.fillStyle = "#dce1c4";
-    ctx.fillRect(-11, -1, 10, 3);
-    ctx.fillRect(2, -1, 10, 3);
-    ctx.fillStyle = "#e8ac7c";
-    ctx.fillRect(-8, -24, 17, 17);
-    ctx.fillStyle = luffy ? "#a94638" : "#365b65";
-    ctx.fillRect(-12, -24, 9, 18);
-    ctx.fillRect(4, -24, 9, 18);
-    ctx.fillStyle = luffy ? "#e4714b" : "#7dabb2";
-    ctx.fillRect(-10, -23, 6, 15);
-    ctx.fillRect(5, -23, 6, 15);
-    ctx.fillStyle = "#f3cb78";
-    ctx.fillRect(-6, -8, 15, 2);
-    const armActions = run.attacks.map(
-      (item) => weaponById(item.weapon).animation,
+  const actors = run.nakama.map((item) => ({
+    id: item.character,
+    position: item.position,
+    facing: item.facing,
+    moving: item.moving,
+    form: 0 as FormTier,
+    support: true,
+  }));
+  actors.push({
+    id: run.character,
+    position: run.player.position,
+    facing: run.player.facing,
+    moving: Math.hypot(run.player.velocity.x, run.player.velocity.y) > 0,
+    form: run.form,
+    support: false,
+  });
+  for (const item of actors.sort((a, b) => a.position.y - b.position.y))
+    actor(
+      ctx,
+      run,
+      item.id,
+      item.position,
+      item.facing,
+      item.moving,
+      item.form,
+      reducedMotion,
+      item.support,
     );
-    if (
-      !armActions.some((kind) =>
-        ["stretch", "chain", "barrage", "double"].includes(kind),
-      )
-    ) {
-      ctx.fillStyle = "#bc805e";
-      ctx.fillRect(-15, -21 + swing, 5, 17);
-      ctx.fillStyle = "#edb98a";
-      ctx.fillRect(-14, -21 + swing, 4, 14);
-    }
-    if (!armActions.some((kind) => ["barrage", "double"].includes(kind))) {
-      ctx.fillStyle = "#bc805e";
-      ctx.fillRect(11, -21 - swing, 5, 17);
-      ctx.fillStyle = "#edb98a";
-      ctx.fillRect(11, -21 - swing, 4, 14);
-    }
-  }
-  ctx.translate(0, -lift);
-  ctx.fillStyle = "#263334";
-  ctx.fillRect(-10, -37, 21, 13);
-  ctx.fillRect(-12, -32, 24, 6);
-  ctx.fillStyle = "#bc805c";
-  ctx.fillRect(-8, -35, 17, 13);
-  ctx.fillStyle = "#efbd8b";
-  ctx.fillRect(-7, -35, 15, 11);
-  ctx.fillStyle = "#ffdaa3";
-  ctx.fillRect(-5, -34, 10, 5);
-  ctx.fillStyle = "#283337";
-  ctx.fillRect(-5, -31, 2, 3);
-  ctx.fillRect(4, -31, 2, 3);
-  ctx.fillStyle = "#a1644f";
-  ctx.fillRect(3, -26, 5, 1);
-  ctx.fillRect(5, -27, 1, 3);
-  ctx.fillStyle = "#774b3c";
-  ctx.fillRect(-3, -25, 6, 1);
-  if (luffy) {
-    ctx.fillStyle = "#574633";
-    ctx.fillRect(-18, -39, 36, 6);
-    ctx.fillRect(-12, -48, 24, 10);
-    ctx.fillStyle = "#d5aa5c";
-    ctx.fillRect(-17, -40, 34, 5);
-    ctx.fillRect(-11, -47, 22, 9);
-    ctx.fillStyle = "#efcf85";
-    ctx.fillRect(-9, -47, 18, 3);
-    ctx.fillRect(-15, -40, 29, 2);
-    ctx.fillStyle = "#b9523c";
-    ctx.fillRect(-11, -41, 22, 4);
-    ctx.fillStyle = "#f3d795";
-    ctx.fillRect(-8, -46, 2, 3);
-    ctx.fillRect(0, -46, 2, 3);
-    ctx.fillRect(7, -45, 2, 3);
-    ctx.fillStyle = "#283337";
-    ctx.fillRect(-11, -34, 3, 7);
-    ctx.fillRect(8, -34, 3, 6);
-  }
-  ctx.restore();
 }

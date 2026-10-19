@@ -1,4 +1,11 @@
 import {
+  characterById,
+  activeSynergies,
+  type CrewSelection,
+  type FormTier,
+} from "../data/crew";
+import { cycleForm, changeForm } from "../game/crew";
+import {
   characterNames,
   contentLimits,
   passives,
@@ -46,6 +53,11 @@ export interface DebugBridge {
     rewards: string[];
     berries: number;
     attacks: number;
+    form: FormTier;
+    energy: number;
+    nakama: { character: CharacterId; x: number; y: number }[];
+    synergies: string[];
+    casters: CharacterId[];
   };
   advance: (seconds: number, input?: Input) => void;
   grantXp: (amount: number) => void;
@@ -56,6 +68,8 @@ export interface DebugBridge {
   dropPickup: (kind: PickupKind) => void;
   spawnChest: () => void;
   closeChest: () => void;
+  unlockForms: () => void;
+  form: (tier: FormTier) => boolean;
 }
 declare global {
   interface Window {
@@ -67,8 +81,9 @@ export function startSession(
   root: HTMLElement,
   onExit: () => void,
   debug: boolean,
+  selection: CrewSelection = { captain: "luffy", nakama: [] },
 ): () => void {
-  let run = createRun();
+  let run = createRun(Date.now(), selection.captain, selection.nakama);
   let stopped = false;
   let frame = 0;
   let previous = performance.now();
@@ -89,9 +104,10 @@ export function startSession(
         <div class="arena"><canvas id="battle" tabindex="0" aria-label="Campo de combate. Muévete con WASD o flechas. Espacio para embestir, Escape para pausar."></canvas><div id="overlay"></div><div class="arena-corner"><span id="fighter-name">LUFFY</span> / EAST BLUE <span>✦</span></div><div id="wave-note" class="wave-note">Encuentra tu ritmo. Recoge los cristales.</div></div>
         <div class="xp-row"><span id="level">NIVEL 1</span><div class="meter xp-meter" role="progressbar" aria-label="Experiencia" aria-valuemin="0"><i id="xp-bar"></i></div><span id="xp-text"></span></div>
         <div class="loadout"><div id="weapon-loadout" class="loadout-weapons"></div><div id="passive-loadout" class="loadout-passives"></div><div class="loadout-foot"><span id="affinities"></span><span id="loot-stats">฿ 0 · COFRES 0</span></div></div>
+        <div class="crew-hud"><div class="form-controls" role="group" aria-label="Cambiar forma">${[0, 1, 2].map((tier) => `<button data-form-tier="${tier}"></button>`).join("")}</div><div class="energy-row"><span>ENERGÍA <b id="energy-text">100</b></span><div class="meter energy-meter" role="progressbar" aria-label="Energía de forma" aria-valuemin="0" aria-valuemax="100"><i id="energy-bar"></i></div></div><p id="innate-label"></p><p id="nakama-label"></p><p id="synergy-label"></p></div>
         <div class="battle-bottom"><div><span class="keycap">W A S D</span> o flechas · movimiento <span class="keycap">ESPACIO</span> embestida</div><button class="dash-button" id="dash">➶ Embestir <span id="dash-state">LISTO</span></button></div>
-        <p class="battle-tip">Técnicas automáticas · Recoge cofres para evolucionar · Arrastra en la arena para moverte</p>
-        ${debug ? `<div class="debug-tools"><span>BANCO DE TÉCNICAS · modelos provisionales</span><button id="debug-xp">+10 XP</button><select id="debug-technique" aria-label="Técnica de depuración">${weapons.map((item) => `<option value="${item.id}">${characterNames[item.owner]} · ${item.title}</option>`).join("")}</select><button id="debug-evolution">Preparar evolución</button><button id="debug-chest">Cofre</button><button id="debug-vacuum">Imán</button></div>` : ""}
+        <p class="battle-tip">F: cambiar forma · Técnicas automáticas · Recoge cofres para evolucionar · Arrastra en la arena para moverte</p>
+        ${debug ? `<div class="debug-tools"><span>BANCO DE TÉCNICAS Y FORMAS</span><button id="debug-xp">+10 XP</button><button id="debug-forms">Desbloquear formas</button><select id="debug-technique" aria-label="Técnica de depuración">${weapons.map((item) => `<option value="${item.id}">${characterNames[item.owner]} · ${item.title}</option>`).join("")}</select><button id="debug-evolution">Preparar evolución</button><button id="debug-chest">Cofre</button><button id="debug-vacuum">Imán</button></div>` : ""}
       </main>
     </div>`;
   const query = <T extends HTMLElement>(selector: string): T => {
@@ -105,7 +121,10 @@ export function startSession(
     canvas,
     window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
-  const controls = new Controls(canvas, pause);
+  const controls = new Controls(canvas, pause, () => {
+    cycleForm(run);
+    hud();
+  });
   const hpText = query("#hp-text"),
     hpBar = query("#hp-bar"),
     hpMeter = query(".health-meter");
@@ -160,7 +179,53 @@ export function startSession(
     { signal },
   );
 
+  root
+    .querySelectorAll<HTMLButtonElement>("[data-form-tier]")
+    .forEach((button) =>
+      button.addEventListener(
+        "click",
+        () => {
+          const tier = Number(button.dataset.formTier);
+          if (tier === 0 || tier === 1 || tier === 2) changeForm(run, tier);
+          hud();
+          canvas.focus({ preventScroll: true });
+        },
+        { signal },
+      ),
+    );
   function hud(): void {
+    const character = characterById(run.character);
+    query("#energy-text").textContent = String(Math.floor(run.energy));
+    query("#energy-bar").style.width = `${run.energy}%`;
+    query(".energy-meter").setAttribute(
+      "aria-valuenow",
+      String(Math.floor(run.energy)),
+    );
+    root
+      .querySelectorAll<HTMLButtonElement>("[data-form-tier]")
+      .forEach((button) => {
+        const tier = Number(button.dataset.formTier) as FormTier;
+        const definition = character.forms[tier];
+        button.textContent = `${tier + 1}. ${definition.name}${run.level < definition.level ? " · NV " + definition.level : ""}`;
+        button.classList.toggle("active", run.form === tier);
+        button.setAttribute("aria-pressed", String(run.form === tier));
+        button.disabled =
+          run.status !== "playing" ||
+          (tier > 0 &&
+            (run.level < definition.level ||
+              run.energy < 25 ||
+              run.formCooldown > 0));
+      });
+    query("#innate-label").textContent = `Innato · ${character.innate}`;
+    query("#nakama-label").textContent = run.nakama.length
+      ? `Nakama · ${run.nakama.map((item) => characterNames[item.character]).join(" + ")}`
+      : "Sin nakama · elige compañeros en el puerto";
+    query("#synergy-label").textContent = activeSynergies(
+      run.character,
+      run.nakama.map((item) => item.character),
+    )
+      .map((item) => `${item.name}: ${item.description}`)
+      .join(" / ");
     hpText.textContent = `${Math.ceil(run.player.health.current)} / ${run.player.health.maximum}`;
     hpBar.style.width = `${(run.player.health.current / run.player.health.maximum) * 100}%`;
     hpMeter.setAttribute(
@@ -235,7 +300,7 @@ export function startSession(
       `฿ ${run.berries} · COFRES ${run.openedChests}${run.haste > 0 ? ` · IMPULSO ${Math.ceil(run.haste)}s` : ""}`;
   }
   function restart(): void {
-    run = createRun();
+    run = createRun(Date.now(), selection.captain, selection.nakama);
     controls.clear();
     accumulator = 0;
     previous = performance.now();
@@ -389,6 +454,18 @@ export function startSession(
         rewards: run.chestRewards.map((reward) => reward.title),
         berries: run.berries,
         attacks: run.attacks.length,
+        form: run.form,
+        energy: run.energy,
+        nakama: run.nakama.map((item) => ({
+          character: item.character,
+          x: item.position.x,
+          y: item.position.y,
+        })),
+        synergies: activeSynergies(
+          run.character,
+          run.nakama.map((item) => item.character),
+        ).map((item) => item.id),
+        casters: run.attacks.map((item) => item.caster),
       }),
       advance: (seconds, input = { x: 0, y: 0, dash: false }) => {
         for (
@@ -469,6 +546,18 @@ export function startSession(
           y: run.player.position.y,
         });
       },
+      unlockForms: () => {
+        run.level = Math.max(run.level, 8);
+        run.energy = 100;
+        run.formCooldown = 0;
+        hud();
+      },
+      form: (tier) => {
+        const result = changeForm(run, tier);
+        hud();
+        renderer.draw(run, 0.016);
+        return result;
+      },
       closeChest: () => {
         closeChest(run);
         syncOverlay();
@@ -488,6 +577,11 @@ export function startSession(
     );
   }
   if (debug) {
+    query("#debug-forms").addEventListener(
+      "click",
+      () => window.__MAREA_DEBUG__?.unlockForms(),
+      { signal },
+    );
     query<HTMLSelectElement>("#debug-technique").addEventListener(
       "change",
       (event) => {
