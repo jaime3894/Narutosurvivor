@@ -238,7 +238,15 @@ function pilot(run: Run): Input {
       Math.hypot(b.position.x - player.x, b.position.y - player.y),
   )[0];
   const phase = run.elapsed * 0.065;
-  const goal = run.rift?.position ??
+  const arenaTime = run.arena ? 75 - run.arena.remaining : 0;
+  const arenaGoal = run.arena
+    ? {
+        x: run.arena.center.x + Math.cos(arenaTime * 0.9) * 195,
+        y: run.arena.center.y + Math.sin(arenaTime * 0.9) * 195,
+      }
+    : undefined;
+  const goal = arenaGoal ??
+    run.rift?.position ??
     nearestDrop?.position ?? {
       x: 1200 + Math.cos(phase) * 370,
       y: 900 + Math.sin(phase) * 320,
@@ -260,7 +268,16 @@ function pilot(run: Run): Input {
     }
     if (d < 70) close++;
   }
-  return { x, y, dash: close >= 2 };
+  return {
+    x,
+    y,
+    dash:
+      close >= 2 ||
+      run.hazards.some(
+        (h) =>
+          Math.hypot(h.position.x - player.x, h.position.y - player.y) < 65,
+      ),
+  };
 }
 function select(run: Run): void {
   const order: UpgradeId[] = [
@@ -290,7 +307,7 @@ describe("partida representativa", () => {
       const run = createRun(seed);
       for (
         let frame = 0;
-        frame < 33000 && !["won", "lost"].includes(run.status);
+        frame < 72000 && !["won", "lost"].includes(run.status);
         frame++
       ) {
         while (

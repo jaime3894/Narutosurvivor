@@ -108,3 +108,28 @@ node scripts/optimize-png.mjs public/assets/bosses/*.png
 ```
 
 Carga local en `boss-assets.ts`, comprobación de dimensiones y respaldo visible si falta una hoja. Tres atlas suman menos de 250 KB; todo el arte precargado sigue bajo el presupuesto de 8 MB. No hay marcha de seis dibujos ni ataques de espalda independientes en estos jefes: se utilizan poses clave y dirección adaptada. El balance/área física está en `src/data/rifts.ts`, separado del arte.
+
+
+## Puerto, escenarios, iconos y marchas v7
+
+Arte original creado con asistencia de IA para el proyecto; sin sprites oficiales ni logos extraídos. Fuentes conservadas en `docs/art-source/{terrain,props,icons,buggy-walk,kuro-walk,arlong-walk}-v7.png`. Solo los atlas exportados se publican para jugar; las fuentes no entran en `dist`.
+
+| Recurso | Contrato |
+| --- | --- |
+| `assets/world/terrain-v7.png` | 512×256, cuatro columnas/dos filas, ocho materiales de 128×128 |
+| `assets/world/props-v7.png` | 512×384, cuatro columnas/tres filas, objetos 128×128, ancla inferior (64,120) |
+| `assets/icons/icons-v7.png` | 384×384, seis columnas/seis filas, iconos de 64×64 con márgenes; orden de `src/ui/icons.ts` |
+| `assets/bosses/{buggy,kuro,arlong}-walk-v7.png` | 1152×256, seis columnas/dos filas, celda 192×128, ancla (96,118), frontal/posterior |
+
+Exportación reproducible, cortes de filas de props medidos en configuración y extracción por componentes para cuerpos de marcha:
+
+```sh
+node scripts/compile-v7-art.mjs scripts/art-v7.json
+node scripts/optimize-png.mjs public/assets/world/*.png public/assets/icons/*.png public/assets/bosses/*-walk-v7.png
+```
+
+El cargador valida dimensiones y conserva respaldo si falta una hoja. Marcha y ataque comparten propietario/ropa, pero las poses de ataque v6 se reutilizan para los tres patrones nuevos; no hay un atlas exclusivo por cada técnica del jefe. Los materiales repiten textura y los objetos son decorativos transitables. Iconos: cinco técnicas de goma, dos de Zoro/Sanji/Nami/Usopp y una de los otros cinco; después atributos y utilidades. Los colores azules en motivos de golpe representan estela gráfica, no concesión de agua a Luffy.
+
+Tipografía: [Pixelify Sans, Google Fonts](https://github.com/google/fonts/tree/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/pixelifysans), SIL OFL 1.1, copyright 2021 The Pixelify Sans Project Authors. Archivo local `assets/fonts/PixelifySans.ttf` y texto íntegro en `public/licenses/PixelifySans-OFL.txt`; se distribuye sin modificar. Consultas a Google y a las páginas de Kenney bloqueadas por el proxy (403); no se han descargado assets de esas páginas.
+
+El test de presupuesto de PNG suma el arte anterior, los nuevos jefes, sus marchas, suelo, decoración e iconos y exige menos de 9 MB. La fuente se aloja localmente para evitar peticiones a Google Fonts al jugar. Los recursos funcionan bajo la subruta de GitHub Pages.

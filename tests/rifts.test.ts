@@ -1,3 +1,4 @@
+import { bossMoves } from "../src/data/boss-moves";
 import { describe, expect, it } from "vitest";
 import { createRun, step, stats, togglePause } from "../src/game/simulation";
 import {
@@ -21,7 +22,7 @@ import {
   grantUpgrade,
 } from "../src/game/progression";
 import { updateTechniques } from "../src/game/techniques";
-import { casterPosition, updateCrew } from "../src/game/crew";
+import { updateCrew } from "../src/game/crew";
 import { bosses, riftRules, type BossId } from "../src/data/rifts";
 import { weaponKey, weaponById } from "../src/data/content";
 import type { Run } from "../src/game/types";
@@ -172,7 +173,7 @@ describe("grieta y arena", () => {
       const aim = { ...boss.boss!.direction };
       const life = run.player.health.current;
       run.player.position.x += 20;
-      updateBoss(run, boss, bosses[kind].windup + 0.01);
+      updateBoss(run, boss, bossMoves[boss.boss!.move].windup + 0.01);
       expect(boss.boss!.phase).toBe("attack");
       expect(boss.boss!.direction).toEqual(aim);
       if (kind === "buggy") expect(run.hazards).toHaveLength(7);
@@ -237,7 +238,7 @@ describe("recompensas y vínculos", () => {
   it("vincula 2, 3 y 4 técnicas; conserva propietarios, elenco y permite cambiar al ataque suelto", () => {
     const run = createRun(42, "luffy", ["chopper"]);
     for (const [index, id] of (
-      ["onigiri", "sharkbrick", "thunder"] as const
+      ["gatling", "bazooka", "whip"] as const
     ).entries()) {
       victory(run);
       bond(run, id);
@@ -247,11 +248,7 @@ describe("recompensas y vínculos", () => {
       expect(run.nakama).toHaveLength(1);
       expect(grantUpgrade(run, weaponKey(id))).toBe(true);
     }
-    expect(run.assists.map((n) => n.character)).toEqual([
-      "zoro",
-      "jinbe",
-      "nami",
-    ]);
+    expect(run.assists).toHaveLength(0);
     run.enemies = [
       {
         id: 777,
@@ -269,8 +266,7 @@ describe("recompensas y vínculos", () => {
     expect(own).toHaveLength(4);
     for (const a of own) {
       expect(a.caster).toBe(weaponById(a.weapon).owner);
-      if (a.caster !== run.character)
-        expect(casterPosition(run, a.caster)).not.toEqual(run.player.position);
+      expect(a.caster).toBe(run.character);
     }
     expect(new Set(run.weapons.map((w) => w.timer)).size).toBe(1);
     victory(run);

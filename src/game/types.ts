@@ -1,3 +1,5 @@
+import type { BossMoveId } from "../data/boss-moves";
+import type { Preparation } from "../data/training";
 import type { FormTier } from "../data/crew";
 import type { Position, Velocity, Health } from "../core/entity";
 import type { EnemyKind } from "../data/combat";
@@ -33,6 +35,7 @@ export interface Enemy {
   velocity: Velocity;
   health: Health;
   kind: EnemyKind;
+  elite?: boolean;
   radius: number;
   flash: number;
   slow?: number;
@@ -40,6 +43,11 @@ export interface Enemy {
   burnTick?: number;
   boss?: {
     kind: BossId;
+    move: BossMoveId;
+    cycle: number;
+    walkTime: number;
+    moving: boolean;
+    burst: number;
     phase: "approach" | "windup" | "attack" | "recover";
     time: number;
     target: Position;
@@ -147,7 +155,7 @@ export interface Hazard {
   radius: number;
   damage: number;
   life: number;
-  kind: "knife" | "wave";
+  kind: "knife" | "wave" | "bomb" | "claw";
 }
 export interface BossReward {
   kind: "bond" | "boon";
@@ -164,6 +172,9 @@ export interface Nakama {
   supportTimer: number;
 }
 export interface Run {
+  id: string;
+  preparation: Preparation;
+  rerollsLeft: number;
   status: RunStatus;
   character: CharacterId;
   form: FormTier;

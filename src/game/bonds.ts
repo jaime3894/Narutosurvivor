@@ -8,21 +8,30 @@ export function activeTechniques(run: Run): WeaponId[] {
     : run.weapons[0]?.id;
   return active
     ? run.linkedWeapons.includes(active)
-      ? run.linkedWeapons
-      : [active]
+      ? run.linkedWeapons.filter((id) => weaponById(id).owner === run.character)
+      : weaponById(active).owner === run.character
+        ? [active]
+        : []
     : [];
 }
 export function selectTechnique(run: Run, id: WeaponId): boolean {
-  if (run.status !== "playing" || !run.weapons.some((w) => w.id === id))
+  if (
+    run.status !== "playing" ||
+    weaponById(id).owner !== run.character ||
+    !run.weapons.some((w) => w.id === id)
+  )
     return false;
   run.activeWeapon = id;
   return true;
 }
+export const bondLimit = (run: Run): number =>
+  Math.min(4, weapons.filter((w) => w.owner === run.character).length);
 export function bondCandidates(run: Run): WeaponId[] {
-  if (run.linkedWeapons.length >= 4) return [];
+  if (run.linkedWeapons.length >= bondLimit(run)) return [];
   return weapons
     .filter(
       (w) =>
+        w.owner === run.character &&
         !run.linkedWeapons.includes(w.id) &&
         (run.linkedWeapons.length > 0 || w.id !== run.activeWeapon) &&
         (run.weapons.some((s) => s.id === w.id) || run.weapons.length < 4),
@@ -36,7 +45,7 @@ export function offerBossRewards(run: Run): void {
       kind: "bond",
       id: "bond",
       title: `Vincular ${Math.max(2, run.linkedWeapons.length + 1)} técnicas`,
-      detail: "Lanzarlas juntas · cada nakama conserva sus propios poderes",
+      detail: "Lanzarlas juntas · solo técnicas de tu capitán",
     });
   const available = Object.entries(boons).filter(
     ([id, b]) => run.boons[id as keyof typeof boons] < b.max,
@@ -100,23 +109,10 @@ export function linkTechnique(run: Run, id: WeaponId): boolean {
     run.weapons.push({ id, timer: 0, evolved: false });
     run.ranks[weaponKey(id)] = 1;
   }
-  const owner = weaponById(id).owner;
-  if (
-    owner !== run.character &&
-    ![...run.nakama, ...run.assists].some((n) => n.character === owner)
-  )
-    run.assists.push({
-      character: owner,
-      position: { ...run.player.position },
-      facing: { ...run.player.facing },
-      moving: false,
-      timer: 0,
-      supportTimer: 12,
-    });
   run.linkedWeapons.push(id);
   run.activeWeapon = run.linkedWeapons[0] ?? id;
   for (const slot of run.weapons) slot.timer = 0;
-  run.notice = `Vínculo ${run.linkedWeapons.length}/4 · ${run.linkedWeapons.map((w) => weaponById(w).title).join(" + ")}`;
+  run.notice = `Vínculo ${run.linkedWeapons.length}/${bondLimit(run)} · ${run.linkedWeapons.map((w) => weaponById(w).title).join(" + ")}`;
   run.noticeTime = 4;
   finishReward(run);
   return true;

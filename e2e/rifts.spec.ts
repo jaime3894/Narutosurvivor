@@ -6,9 +6,7 @@ test("tres jefes permiten elegir vínculos de dos, tres y cuatro técnicas por l
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?debug");
   await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
-  for (const [i, id] of (
-    ["gatling", "onigiri", "sharkbrick"] as const
-  ).entries()) {
+  for (const [i, id] of (["gatling", "bazooka", "whip"] as const).entries()) {
     await page.getByRole("button", { name: "Grieta", exact: true }).click();
     const before = await page.evaluate(() =>
       window.__MAREA_DEBUG__!.snapshot(),

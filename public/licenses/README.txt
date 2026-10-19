@@ -16,3 +16,6 @@ Luffy v4: atlas base con seis poses de carrera y capas de torso/brazos creadas p
 Técnicas v5: ocho hojas *-combat-v5.png y piezas de Franky/Luffy *-v5.png creadas para el proyecto con asistencia de IA de imagen, a partir de las referencias originales anteriores. Exportación a atlas, separación de filas, normalización de escala y compresión PNG sin pérdida. Sin sprites oficiales ni imágenes extraídas de juegos. Véase docs/ASSETS.md para contratos y límites.
 
 Jefes de grieta v6: public/assets/bosses/*-v6.png. Ilustración original creada para este proyecto con asistencia de IA de imagen, no extraída de juegos ni del anime. Fuente y adaptación a cuatro poses documentadas en docs/ASSETS.md. Nombres y personajes de One Piece pertenecen a sus titulares; proyecto fan no oficial.
+
+Revisión v7: escenarios y props assets/world/*-v7.png, iconos assets/icons/icons-v7.png y marchas de jefe assets/bosses/*-walk-v7.png. Ilustraciones creadas para el proyecto con asistencia de IA, no extraídas de juegos/anime. Fuente y adaptación en docs/ASSETS.md.
+Tipografía Pixelify Sans: Google Fonts, SIL Open Font License 1.1. Texto íntegro en PixelifySans-OFL.txt; distribuida sin modificar. Referencia de origen fijada en docs/ASSETS.md.

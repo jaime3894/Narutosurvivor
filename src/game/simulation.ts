@@ -1,3 +1,5 @@
+import { voyageStage } from "../data/voyage";
+import { emptyPreparation, type Preparation } from "../data/training";
 import { riftRules } from "../data/rifts";
 import { updateRifts, updateBoss, finishArena, clampArena } from "./rifts";
 import { characterById, validateCrew } from "../data/crew";
@@ -24,17 +26,37 @@ export function createRun(
   seed = Date.now(),
   character: CharacterId = "luffy",
   nakama: CharacterId[] = [],
+  preparation: Preparation = emptyPreparation(),
 ): Run {
   validateCrew({ captain: character, nakama });
-  const starter = weapons.find(
-    (item) => item.id === characterById(character).starter,
-  );
+  const own = weapons.filter((w) => w.owner === character);
+  const selected =
+    preparation.levels.starter && own.some((w) => w.id === preparation.starter)
+      ? preparation.starter
+      : characterById(character).starter;
+  const starter = weapons.find((item) => item.id === selected);
   if (!starter) throw new Error("Personaje sin técnica inicial");
   const ranks = Object.fromEntries(
     upgrades.map((item) => [item.id, 0]),
   ) as Record<UpgradeId, number>;
   ranks[weaponKey(starter.id)] = 1;
+  const initialWeapons = [{ id: starter.id, timer: 0, evolved: false }];
+  const extra = own.find(
+    (w) => w.id !== starter.id && !preparation.banned.includes(w.id),
+  );
+  if (preparation.levels.repertoire && extra) {
+    initialWeapons.push({ id: extra.id, timer: 0, evolved: false });
+    ranks[weaponKey(extra.id)] = 1;
+  }
+  const health = combat.player.health + preparation.levels.health * 8;
   return {
+    id: crypto.randomUUID(),
+    preparation: {
+      ...preparation,
+      levels: { ...preparation.levels },
+      banned: [...preparation.banned],
+    },
+    rerollsLeft: preparation.levels.rerolls,
     status: "playing",
     character,
     form: 0,
@@ -67,7 +89,7 @@ export function createRun(
     player: {
       position: { x: 1200, y: 900 },
       velocity: { x: 0, y: 0 },
-      health: { current: combat.player.health, maximum: combat.player.health },
+      health: { current: health, maximum: health },
       radius: combat.player.radius,
       facing: { x: 0, y: 1 },
       invulnerable: 0,
@@ -79,7 +101,7 @@ export function createRun(
     attacks: [],
     drops: [],
     effects: [],
-    weapons: [{ id: starter.id, timer: 0, evolved: false }],
+    weapons: initialWeapons,
     chests: [],
     chestRewards: [],
     chestSerial: 0,
@@ -119,15 +141,21 @@ function clampPlayer(run: Run): void {
 function spawn(run: Run): void {
   let angle = run.random() * Math.PI * 2;
   const radius = 610 + run.random() * 90;
-  const roll = run.random();
+  const roll = run.random(),
+    stage = voyageStage(run.elapsed);
   const kind: EnemyKind =
-    run.elapsed > 75 && roll < 0.17
+    run.elapsed > 75 && roll < stage.brutes
       ? "brute"
       : run.elapsed > 25 && roll < 0.43
         ? "runner"
         : "sailor";
   const definition = enemyTypes[kind];
-  const health = definition.health * (1 + run.elapsed / 600);
+  const elite = run.elapsed >= 240 && run.random() < 0.22;
+  const health =
+    definition.health *
+    (1 + run.elapsed / 600) *
+    stage.health *
+    (elite ? 1.5 : 1);
   let position: Position = { x: 0, y: 0 };
   for (let attempt = 0; attempt < 8; attempt++) {
     position = {
@@ -152,6 +180,7 @@ function spawn(run: Run): void {
   run.enemies.push({
     id: run.nextId++,
     kind,
+    elite,
     position,
     velocity: { x: 0, y: 0 },
     health: { current: health, maximum: health },
@@ -172,7 +201,13 @@ export function step(run: Run, input: Input, dt: number): void {
     run.status = "lost";
     return;
   }
+  const previousStage = voyageStage(run.elapsed);
   if (!run.arena) run.elapsed = Math.min(combat.duration, run.elapsed + dt);
+  const stage = voyageStage(run.elapsed);
+  if (stage.id !== previousStage.id) {
+    run.notice = `${stage.name} · ${stage.subtitle}`;
+    run.noticeTime = 6;
+  }
   updateCrew(run, dt);
   run.noticeTime = Math.max(0, run.noticeTime - dt);
   run.haste = Math.max(0, run.haste - dt);
@@ -218,7 +253,10 @@ export function step(run: Run, input: Input, dt: number): void {
       i++
     )
       spawn(run);
-    run.spawnTimer += Math.max(0.24, 0.85 - run.elapsed * 0.0018);
+    run.spawnTimer += Math.max(
+      0.19,
+      (0.85 - run.elapsed * 0.0018) * stage.spawn,
+    );
   }
   for (const enemy of run.enemies) {
     if (enemy.health.current <= 0) continue;
@@ -246,6 +284,8 @@ export function step(run: Run, input: Input, dt: number): void {
     }
     const speed =
       enemyTypes[enemy.kind].speed *
+      stage.speed *
+      (enemy.elite ? 1.08 : 1) *
       (1 + run.elapsed / 1500) *
       ((enemy.slow ?? 0) > 0 ? 0.6 : 1);
     enemy.position.x += ((dx / distance) * speed + enemy.velocity.x) * dt;
@@ -264,7 +304,10 @@ export function step(run: Run, input: Input, dt: number): void {
       else if (player.invulnerable === 0) {
         const damage = Math.max(
           1,
-          enemyTypes[enemy.kind].damage - stats(run).armor,
+          enemyTypes[enemy.kind].damage *
+            stage.damage *
+            (enemy.elite ? 1.2 : 1) -
+            stats(run).armor,
         );
         player.health.current = Math.max(0, player.health.current - damage);
         run.damageTaken += damage;

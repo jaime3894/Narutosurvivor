@@ -31,7 +31,12 @@ export function updateLoot(run: Run, dt: number): void {
     if (distance >= 20) continue;
     switch (drop.kind) {
       case "xp":
-        run.xp += drop.value;
+        run.xp =
+          Math.round(
+            (run.xp +
+              drop.value * (1 + run.preparation.levels.experience * 0.05)) *
+              100,
+          ) / 100;
         break;
       case "heal":
         run.player.health.current = Math.min(

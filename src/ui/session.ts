@@ -1,7 +1,14 @@
+import { voyageStage } from "../data/voyage";
+import { bossMoves } from "../data/boss-moves";
+import { prepareSailor, settleRun } from "../game/profile";
+import { profile, saveProfile } from "./profile-store";
+import { iconMarkup, upgradeIcon } from "./icons";
+import { canReroll, rerollUpgrades } from "../game/progression";
 import { formRequirement } from "../game/forms";
 import { formMilestones } from "../data/form-progression";
 import {
   activeTechniques,
+  bondLimit,
   bondCandidates,
   chooseBossReward,
   linkTechnique,
@@ -76,6 +83,7 @@ export interface DebugBridge {
     boss: string | null;
     rift: boolean;
     bossesDefeated: number;
+    stage: string;
     nakama: { character: CharacterId; x: number; y: number }[];
     synergies: string[];
     casters: CharacterId[];
@@ -90,6 +98,7 @@ export interface DebugBridge {
   spawnChest: () => void;
   closeChest: () => void;
   unlockForms: () => void;
+  setTime: (seconds: number) => void;
   openRift: () => void;
   defeatBoss: () => void;
   chooseChest: (index: number) => boolean;
@@ -107,7 +116,15 @@ export function startSession(
   debug: boolean,
   selection: CrewSelection = { captain: "luffy", nakama: [] },
 ): () => void {
-  let run = createRun(Date.now(), selection.captain, selection.nakama);
+  const makeRun = () =>
+    createRun(
+      Date.now(),
+      selection.captain,
+      selection.nakama,
+      prepareSailor(profile, selection.captain),
+    );
+  let run = makeRun();
+  let accountReward = 0;
   let stopped = false;
   let frame = 0;
   let previous = performance.now();
@@ -218,6 +235,9 @@ export function startSession(
       ),
     );
   function hud(): void {
+    query(".battle-location").textContent = voyageStage(
+      run.elapsed,
+    ).name.toUpperCase();
     const character = characterById(run.character);
     query("#energy-text").textContent = "∞";
     query("#energy-bar").style.width = `${run.energy}%`;
@@ -257,7 +277,7 @@ export function startSession(
     time.textContent = formatTime(run.elapsed);
     kills.textContent = String(run.kills);
     level.textContent = `NIVEL ${run.level}`;
-    xpText.textContent = `${run.xp} / ${xpForLevel(run.level)}`;
+    xpText.textContent = `${Math.round(run.xp * 100) / 100} / ${xpForLevel(run.level)}`;
     xpBar.style.width = `${Math.min(100, (run.xp / xpForLevel(run.level)) * 100)}%`;
     xpMeter.setAttribute("aria-valuenow", String(run.xp));
     xpMeter.setAttribute("aria-valuemax", String(xpForLevel(run.level)));
@@ -298,7 +318,7 @@ export function startSession(
         run.weapons
           .map((slot) => {
             const definition = weaponById(slot.id);
-            return `<button data-active-weapon="${slot.id}" aria-pressed="${activeTechniques(run).includes(slot.id)}" class="loadout-chip ${slot.evolved ? "evolved" : ""}" title="${definition.description}">${run.linkedWeapons.includes(slot.id) ? "∞ " : ""}${slot.evolved ? "✦" : "⚔"} ${slot.evolved ? definition.evolution.title : definition.title} <b>${run.ranks[weaponKey(slot.id)]}/5</b></button>`;
+            return `<button data-active-weapon="${slot.id}" aria-pressed="${activeTechniques(run).includes(slot.id)}" class="loadout-chip ${slot.evolved ? "evolved" : ""}" title="${definition.description}">${run.linkedWeapons.includes(slot.id) ? "∞ " : ""}${iconMarkup(slot.id)} ${slot.evolved ? definition.evolution.title : definition.title} <b>${run.ranks[weaponKey(slot.id)]}/5</b></button>`;
           })
           .join("") +
         `<span class="loadout-empty">${run.weapons.length}/${contentLimits.weapons} TÉCNICAS</span>`;
@@ -307,7 +327,7 @@ export function startSession(
           .filter((item) => run.ranks[item.id] > 0)
           .map(
             (item) =>
-              `<span title="${item.title}: ${item.description}">${item.symbol} ${item.title} ${run.ranks[item.id]}</span>`,
+              `<span title="${item.title}: ${item.description}">${iconMarkup(item.id)} ${item.title} ${run.ranks[item.id]}</span>`,
           )
           .join("") ||
         "<span>Recoge cristales para elegir técnicas y pasivos.</span>";
@@ -320,10 +340,10 @@ export function startSession(
           : "Afinidades: combina 2 técnicas o pasivos del mismo grupo";
     }
     query("#rift-status").textContent = run.arena
-      ? `${bosses[run.enemies[0]?.boss?.kind ?? "buggy"].name} · ${Math.ceil(run.arena.remaining)} s · el reloj de la costa está detenido`
+      ? `${bosses[run.enemies[0]?.boss?.kind ?? "buggy"].name} · ${bossMoves[run.enemies[0]?.boss?.move ?? "knifeFan"].name} · ${Math.ceil(run.arena.remaining)} s`
       : run.rift
         ? `Grieta · ${Math.ceil(run.rift.remaining)} s · ${Math.round(Math.hypot(run.rift.position.x - run.player.position.x, run.rift.position.y - run.player.position.y))} m`
-        : `Jefes vencidos: ${run.bossesDefeated} · Vínculo ${run.linkedWeapons.length}/4`;
+        : `Jefes vencidos: ${run.bossesDefeated} · Vínculo ${run.linkedWeapons.length}/${bondLimit(run)}`;
     query<HTMLButtonElement>("#enter-rift").hidden = !run.rift;
     query<HTMLButtonElement>("#enter-rift").disabled =
       run.status !== "playing" ||
@@ -336,7 +356,8 @@ export function startSession(
       `฿ ${run.berries} · COFRES ${run.openedChests}${run.haste > 0 ? ` · IMPULSO ${Math.ceil(run.haste)}s` : ""}`;
   }
   function restart(): void {
-    run = createRun(Date.now(), selection.captain, selection.nakama);
+    run = makeRun();
+    accountReward = 0;
     controls.clear();
     accumulator = 0;
     previous = performance.now();
@@ -363,21 +384,23 @@ export function startSession(
         .map((id, index) => {
           const upgrade = upgrades.find((item) => item.id === id);
           return upgrade
-            ? `<button class="upgrade-card" data-upgrade="${id}"><span class="upgrade-icon">${upgrade.symbol}</span><span class="upgrade-name">${upgrade.title}</span><span class="upgrade-description">${upgrade.description}</span><span class="upgrade-rank">RANGO ${run.ranks[id] + 1} / ${upgrade.max} · TECLA ${index + 1}</span></button>`
+            ? `<button class="upgrade-card" data-upgrade="${id}">${upgradeIcon(id)}<span class="card-kind">${id.startsWith("weapon:") ? "TÉCNICA · " + characterNames[run.character] : "BONUS DE COMBATE"}</span><span class="upgrade-name">${upgrade.title}</span><span class="upgrade-description">${upgrade.description}</span><span class="upgrade-rank">RANGO ${run.ranks[id] + 1} / ${upgrade.max} · TECLA ${index + 1}</span></button>`
             : "";
         })
-        .join("")}</div>`;
+        .join(
+          "",
+        )}</div><div class="modal-actions"><button id="reroll-upgrades" class="secondary" ${canReroll(run) ? "" : "disabled"}>Cambiar cartas · ${run.rerollsLeft} restantes</button></div>`;
     } else if (run.status === "chest") {
-      content = `<p class="eyebrow">COFRE ABIERTO · ELIGE 1 DE 3</p><h1>El mar guarda tesoros.</h1><p class="modal-subtitle">El combate está detenido. Solo recibirás la opción elegida.</p><div class="upgrade-grid">${run.chestRewards.map((r, i) => `<button class="upgrade-card ${r.kind === "evolution" ? "evolved" : ""}" data-chest="${i}"><span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">ELEGIR · TECLA ${i + 1}</span></button>`).join("")}</div>`;
+      content = `<p class="eyebrow">COFRE ABIERTO · ELIGE 1 DE 3</p><h1>El mar guarda tesoros.</h1><p class="modal-subtitle">El combate está detenido. Solo recibirás la opción elegida.</p><div class="upgrade-grid">${run.chestRewards.map((r, i) => `<button class="upgrade-card ${r.kind === "evolution" ? "evolved" : ""}" data-chest="${i}">${iconMarkup(r.id ?? (r.kind === "berries" ? "greed" : r.kind === "haste" ? "stride" : r.kind === "vitality" ? "vitality" : "chest"), "upgrade-icon")}<span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">ELEGIR · TECLA ${i + 1}</span></button>`).join("")}</div>`;
     } else if (run.status === "bossReward") {
-      content = `<p class="eyebrow">JEFE DERROTADO · ELIGE UNA RECOMPENSA</p><h1>La tripulación crece.</h1><div class="upgrade-grid">${run.bossRewards.map((r, i) => `<button class="upgrade-card" data-boss-reward="${i}"><span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">TECLA ${i + 1}</span></button>`).join("")}</div>`;
+      content = `<p class="eyebrow">JEFE DERROTADO · ELIGE UNA RECOMPENSA</p><h1>La tripulación crece.</h1><div class="upgrade-grid">${run.bossRewards.map((r, i) => `<button class="upgrade-card" data-boss-reward="${i}">${iconMarkup(r.id === "bond" ? "multishot" : r.id === "damage" ? "power" : r.id === "health" ? "vitality" : r.id === "speed" ? "stride" : r.id, "upgrade-icon")}<span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">TECLA ${i + 1}</span></button>`).join("")}</div>`;
     } else if (run.status === "bond") {
-      content = `<p class="eyebrow">VÍNCULO · ${Math.max(2, run.linkedWeapons.length + 1)} TÉCNICAS JUNTAS</p><h1>Elige qué técnica vincular.</h1><p class="modal-subtitle">${run.linkedWeapons.length ? run.linkedWeapons.map((w) => weaponById(w).title).join(" + ") : weaponById(run.activeWeapon).title}. Los ataques ajenos los ejecuta su nakama.</p><div class="upgrade-grid">${bondCandidates(
+      content = `<p class="eyebrow">VÍNCULO · ${Math.max(2, run.linkedWeapons.length + 1)} TÉCNICAS JUNTAS</p><h1>Elige qué técnica vincular.</h1><p class="modal-subtitle">${run.linkedWeapons.length ? run.linkedWeapons.map((w) => weaponById(w).title).join(" + ") : weaponById(run.activeWeapon).title}. Solo aparecen técnicas de ${characterNames[run.character]}.</p><div class="upgrade-grid">${bondCandidates(
         run,
       )
         .map((id) => {
           const w = weaponById(id);
-          return `<button class="upgrade-card" data-link="${id}"><span class="upgrade-name">${w.title}</span><span class="upgrade-description">${w.owner === run.character ? "Técnica propia" : "Llama a " + characterNames[w.owner]} · ${w.description}</span></button>`;
+          return `<button class="upgrade-card" data-link="${id}">${iconMarkup(id, "upgrade-icon")}<span class="upgrade-name">${w.title}</span><span class="upgrade-description">Técnica de ${characterNames[run.character]} · ${w.description}</span></button>`;
         })
         .join(
           "",
@@ -386,13 +409,15 @@ export function startSession(
       content =
         '<p class="eyebrow">UN RESPIRO EN ALTA MAR</p><h1>A tu ritmo.</h1><p class="modal-subtitle">La partida está en pausa.</p><div class="modal-actions"><button id="resume">Continuar</button><button class="secondary" id="leave">Volver al puerto</button></div>';
     } else {
+      accountReward = settleRun(profile, run);
+      saveProfile();
       const won = run.status === "won";
       content = `<p class="eyebrow">${won ? "TRAVESÍA COMPLETADA" : "EL MAR VOLVERÁ A LLAMARTE"}</p><h1>${won ? "La costa es tuya." : "Una ola más."}</h1><p class="modal-subtitle">${won ? "Cinco minutos. Una pequeña leyenda." : "Cada intento deja una historia. Vuelve a intentarlo."}</p><div class="results-grid"><div><strong>${formatTime(run.elapsed)}</strong><span>RESISTIDO</span></div><div><strong>${run.kills}</strong><span>DERROTADOS</span></div><div><strong>${run.level}</strong><span>NIVEL</span></div><div><strong>${Math.round(run.damageDealt)}</strong><span>DAÑO CAUSADO</span></div></div><div class="build-summary">${
         upgrades
           .filter((item) => run.ranks[item.id] > 0)
           .map((item) => `${item.title} ${run.ranks[item.id]}`)
           .join(" · ") || "Sin mejoras adquiridas"
-      }</div><p class="results-loot">฿ ${run.berries} berries · ${run.openedChests} cofres · ${run.evolvedCount} evoluciones</p><div class="modal-actions"><button id="restart">Otra partida ↗</button><button class="secondary" id="leave">Volver al puerto</button></div>`;
+      }</div><p class="results-account">${iconMarkup("greed")} +${accountReward} berries para ${characterNames[run.character]} · Bolsa: ${profile.sailors[run.character].berries}</p><p class="results-loot">฿ ${run.berries} berries · ${run.openedChests} cofres · ${run.evolvedCount} evoluciones</p><div class="modal-actions"><button id="restart">Otra partida ↗</button><button class="secondary" id="leave">Volver al puerto</button></div>`;
     }
     overlay.innerHTML = `<div class="scrim"><section class="battle-modal" role="dialog" aria-modal="true" aria-label="${run.status === "upgrade" ? "Elige una mejora" : run.status === "paused" ? "Pausa" : run.status === "chest" ? "Botín del cofre" : run.status === "bossReward" ? "Recompensa del jefe" : run.status === "bond" ? "Vincular técnicas" : "Resultados"}">${content}</section></div>`;
     overlay
@@ -438,9 +463,18 @@ export function startSession(
       syncOverlay();
       hud();
     });
+    overlay.querySelector("#reroll-upgrades")?.addEventListener("click", () => {
+      rerollUpgrades(run);
+      syncOverlay();
+      hud();
+    });
     overlay.querySelector("#resume")?.addEventListener("click", pause);
     overlay.querySelector("#restart")?.addEventListener("click", restart);
-    overlay.querySelector("#leave")?.addEventListener("click", onExit);
+    overlay.querySelector("#leave")?.addEventListener("click", () => {
+      settleRun(profile, run);
+      saveProfile();
+      onExit();
+    });
     overlay.querySelector<HTMLButtonElement>("button")?.focus();
   }
   window.addEventListener(
@@ -545,6 +579,7 @@ export function startSession(
         boss: run.enemies.find((e) => e.boss)?.boss?.kind ?? null,
         rift: Boolean(run.rift),
         bossesDefeated: run.bossesDefeated,
+        stage: voyageStage(run.elapsed).id,
         nakama: run.nakama.map((item) => ({
           character: item.character,
           x: item.position.x,
@@ -648,6 +683,11 @@ export function startSession(
         run.energy = 100;
         run.formCooldown = 0;
         hud();
+      },
+      setTime: (seconds) => {
+        run.elapsed = Math.max(0, Math.min(299, seconds));
+        hud();
+        renderer.draw(run, 0.016);
       },
       openRift: () => {
         spawnRift(run);

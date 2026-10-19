@@ -20,7 +20,9 @@ export function eligibleUpgrades(run: Run): UpgradeId[] {
       if (item.id.startsWith("weapon:")) {
         const definition = weaponById(item.id.slice(7) as WeaponId);
         return (
-          (definition.owner === run.character || Boolean(weapon)) &&
+          definition.owner === run.character &&
+          (!run.preparation.banned.includes(definition.id) ||
+            Boolean(weapon)) &&
           (!weapon || !weapon.evolved) &&
           (Boolean(weapon) || run.weapons.length < contentLimits.weapons)
         );
@@ -202,4 +204,31 @@ export function chooseChestReward(run: Run, index: number): boolean {
 // Compatibilidad con herramientas de simulación: equivale a elegir la primera tarjeta.
 export function closeChest(run: Run): void {
   chooseChestReward(run, 0);
+}
+
+export function canReroll(run: Run): boolean {
+  return (
+    run.status === "upgrade" &&
+    run.rerollsLeft > 0 &&
+    eligibleUpgrades(run).some((id) => !run.choices.includes(id))
+  );
+}
+export function rerollUpgrades(run: Run): boolean {
+  if (!canReroll(run)) return false;
+  const available = eligibleUpgrades(run),
+    fresh = available.filter((id) => !run.choices.includes(id)),
+    first = fresh[Math.floor(run.random() * fresh.length)];
+  if (!first) return false;
+  run.choices = [first];
+  available.splice(available.indexOf(first), 1);
+  while (available.length && run.choices.length < 3) {
+    const [id] = available.splice(
+      Math.floor(run.random() * available.length),
+      1,
+    );
+    if (id) run.choices.push(id);
+  }
+  run.rerollsLeft--;
+  run.rewardSerial++;
+  return true;
 }

@@ -1,3 +1,4 @@
+import { loadWorldAssets } from "./world-assets";
 import { loadBossAtlases } from "./boss-assets";
 import { loadLuffyLayers } from "./luffy-assets";
 import { loadCombatAtlases } from "./combat-assets";
@@ -13,6 +14,7 @@ export async function loadCustomAtlases(): Promise<void> {
   try {
     const root = new URL(import.meta.env.BASE_URL, location.href);
     await Promise.all([
+      loadWorldAssets(root),
       loadBossAtlases(root),
       loadLuffyLayers(root),
       loadCombatAtlases(root),

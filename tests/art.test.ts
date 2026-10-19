@@ -60,7 +60,7 @@ describe("poses corporales de combate", () => {
     // Hasta 36 poses anchas; el presupuesto conjunto incluye también el arte anterior.
     expect(png.length).toBeLessThan(500_000);
   });
-  it("toda la precarga artística permanece dentro de 8 MB", () => {
+  it("toda la precarga artística permanece dentro de 9 MB", () => {
     const base = expected.reduce(
       (sum, key) => sum + statSync(`public/${manifest[key]}`).size,
       0,
@@ -83,6 +83,19 @@ describe("poses corporales de combate", () => {
       base +
         poses +
         bossOrder.reduce(
+          (sum, id) =>
+            sum + statSync(`public/assets/bosses/${id}-walk-v7.png`).size,
+          0,
+        ) +
+        [
+          "world/terrain-v7.png",
+          "world/props-v7.png",
+          "icons/icons-v7.png",
+        ].reduce(
+          (sum, path) => sum + statSync(`public/assets/${path}`).size,
+          0,
+        ) +
+        bossOrder.reduce(
           (sum, id) => sum + statSync(`public/assets/bosses/${id}-v6.png`).size,
           0,
         ) +
@@ -91,7 +104,7 @@ describe("poses corporales de combate", () => {
             sum + statSync(`public/assets/characters/${path}`).size,
           0,
         ),
-    ).toBeLessThan(8_000_000);
+    ).toBeLessThan(9_000_000);
   });
   it.each([
     ["luffy-kick-bodies-v5.png", 288, 320],
@@ -128,4 +141,21 @@ describe("arte de jefes", () => {
     expect(png.readUInt32BE(20)).toBe(128);
     expect(statSync(path).size).toBeLessThan(100_000);
   });
+});
+
+describe("recursos del puerto y escenarios v7", () => {
+  it.each([
+    ["world/terrain-v7.png", 512, 256],
+    ["world/props-v7.png", 512, 384],
+    ["icons/icons-v7.png", 384, 384],
+    ...bossOrder.map((id) => [`bosses/${id}-walk-v7.png`, 1152, 256]),
+  ])(
+    "%s publica un atlas completo con contrato estable",
+    (path, width, height) => {
+      const png = readFileSync(`public/assets/${path}`);
+      expect(png.readUInt32BE(16)).toBe(width);
+      expect(png.readUInt32BE(20)).toBe(height);
+      expect(png.length).toBeLessThan(500_000);
+    },
+  );
 });

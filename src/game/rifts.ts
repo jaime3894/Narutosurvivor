@@ -1,3 +1,4 @@
+import { bossMoves, bossRepertoire } from "../data/boss-moves";
 import { bosses, bossOrder, riftRules } from "../data/rifts";
 import { combat } from "../data/combat";
 import type { Enemy, Run } from "./types";
@@ -26,10 +27,11 @@ export function spawnRift(run: Run): boolean {
     remaining: riftRules.ttl,
     boss: bossOrder[run.bossesDefeated % bossOrder.length] ?? "buggy",
   };
-  notify(
-    run,
-    "¡Una grieta! Entra para desafiar al jefe y ganar un vínculo o atributo.",
-  );
+  if (run.noticeTime < 4)
+    notify(
+      run,
+      "¡Una grieta! Entra para desafiar al jefe y ganar un vínculo o atributo.",
+    );
   return true;
 }
 function schedule(run: Run): void {
@@ -53,7 +55,8 @@ export function enterRift(run: Run): boolean {
   };
   const id = run.nextId++,
     definition = bosses[rift.boss],
-    health = definition.health * (1 + Math.floor(run.bossesDefeated / 3) * 0.4);
+    health =
+      definition.health * (1 + run.elapsed / 450 + run.bossesDefeated * 0.18);
   run.arena = {
     center,
     remaining: riftRules.arenaTime,
@@ -74,6 +77,11 @@ export function enterRift(run: Run): boolean {
       flash: 0,
       boss: {
         kind: rift.boss,
+        move: bossRepertoire[rift.boss][0],
+        cycle: 0,
+        walkTime: 0,
+        moving: false,
+        burst: 0,
         phase: "approach",
         time: 0.8,
         target: { ...run.player.position },
@@ -141,79 +149,150 @@ export function hurtPlayer(run: Run, amount: number): void {
   player.invulnerable = 0.75;
   effect(run, player.position, "hurt", damage);
 }
+function clampBoss(run: Run, enemy: Enemy): void {
+  if (!run.arena) return;
+  const c = run.arena.center,
+    dx = enemy.position.x - c.x,
+    dy = enemy.position.y - c.y,
+    len = Math.hypot(dx, dy);
+  if (len > 255) {
+    enemy.position.x = c.x + (dx / len) * 255;
+    enemy.position.y = c.y + (dy / len) * 255;
+  }
+}
+function emitFan(
+  run: Run,
+  enemy: Enemy,
+  count: number,
+  speed: number,
+  spread: number,
+  kind: "knife" | "wave",
+  radial = false,
+): void {
+  const state = enemy.boss;
+  if (!state) return;
+  const angle = Math.atan2(state.direction.y, state.direction.x),
+    damage = bosses[state.kind].damage * bossMoves[state.move].damage;
+  for (let i = 0; i < count; i++) {
+    const a = radial
+      ? angle + (i * Math.PI * 2) / count
+      : angle + (i - (count - 1) / 2) * spread;
+    run.hazards.push({
+      id: run.nextId++,
+      position: {
+        x: enemy.position.x + Math.cos(a) * 30,
+        y: enemy.position.y + Math.sin(a) * 30,
+      },
+      velocity: { x: Math.cos(a) * speed, y: Math.sin(a) * speed },
+      radius: kind === "wave" ? 14 : 7,
+      damage,
+      life: 3,
+      kind,
+    });
+  }
+}
 export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
   const state = enemy.boss;
   if (!state) return;
   const d = bosses[state.kind],
-    p = run.player.position;
+    p = run.player.position,
+    move = bossMoves[state.move],
+    enraged = enemy.health.current < enemy.health.maximum * 0.5;
   state.time -= dt;
+  state.moving = false;
   if (state.phase === "approach") {
     const dx = p.x - enemy.position.x,
       dy = p.y - enemy.position.y,
-      length = Math.hypot(dx, dy) || 1;
-    if (length > 100) {
-      enemy.position.x +=
-        (dx / length) * d.speed * ((enemy.slow ?? 0) > 0 ? 0.7 : 1) * dt;
-      enemy.position.y +=
-        (dy / length) * d.speed * ((enemy.slow ?? 0) > 0 ? 0.7 : 1) * dt;
+      len = Math.hypot(dx, dy) || 1;
+    const desired =
+      state.move === "bomb" || state.move === "knifeRing" ? 155 : 90;
+    if (len > desired) {
+      const speed =
+        d.speed * ((enemy.slow ?? 0) > 0 ? 0.7 : 1) * (enraged ? 1.15 : 1);
+      enemy.position.x += (dx / len) * speed * dt;
+      enemy.position.y += (dy / len) * speed * dt;
+      state.moving = true;
+      state.walkTime += dt;
     }
     if (state.time <= 0) {
       state.phase = "windup";
-      state.time = d.windup;
+      state.time = move.windup * (enraged ? 0.82 : 1);
       state.target = { ...p };
-      state.direction = { x: dx / length, y: dy / length };
+      state.direction = { x: dx / len, y: dy / len };
+      state.burst = 0;
     }
   } else if (state.phase === "windup" && state.time <= 0) {
     state.phase = "attack";
-    state.time = d.active;
-    if (d.pattern === "knives") {
-      const base = Math.atan2(state.direction.y, state.direction.x);
-      for (let i = -3; i <= 3; i++)
-        run.hazards.push({
-          id: run.nextId++,
-          position: { ...enemy.position },
-          velocity: {
-            x: Math.cos(base + i * 0.18) * 250,
-            y: Math.sin(base + i * 0.18) * 250,
-          },
-          radius: 7,
-          damage: d.damage,
-          life: 2.6,
-          kind: "knife",
-        });
-    } else if (
-      d.pattern === "slam" &&
-      distanceSquared(p, enemy.position) < (d.range + run.player.radius) ** 2
+    state.time = move.active;
+    if (state.move === "knifeFan")
+      emitFan(run, enemy, enraged ? 9 : 7, 280, 0.15, "knife");
+    else if (state.move === "knifeRing")
+      emitFan(run, enemy, enraged ? 16 : 12, 220, 0, "knife", true);
+    else if (state.move === "sharkWave")
+      emitFan(run, enemy, enraged ? 5 : 3, 220, 0.27, "wave");
+    else if (state.move === "bomb")
+      run.hazards.push({
+        id: run.nextId++,
+        position: { ...state.target },
+        velocity: { x: 0, y: 0 },
+        radius: move.range,
+        damage: d.damage * move.damage,
+        life: 0.35,
+        kind: "bomb",
+      });
+    else if (
+      state.move === "slam" &&
+      distanceSquared(p, enemy.position) < (move.range + run.player.radius) ** 2
     )
-      hurtPlayer(run, d.damage);
+      hurtPlayer(run, d.damage * move.damage);
+    else if (state.move === "claw") {
+      const dx = p.x - enemy.position.x,
+        dy = p.y - enemy.position.y,
+        len = Math.hypot(dx, dy) || 1;
+      if (
+        len < move.range + run.player.radius &&
+        (dx * state.direction.x + dy * state.direction.y) / len > 0.45
+      )
+        hurtPlayer(run, d.damage * move.damage);
+    }
   } else if (state.phase === "attack") {
-    if (d.pattern === "dash") {
-      enemy.position.x += state.direction.x * 640 * dt;
-      enemy.position.y += state.direction.y * 640 * dt;
-      if (run.arena) {
-        const c = run.arena.center,
-          dx = enemy.position.x - c.x,
-          dy = enemy.position.y - c.y,
-          len = Math.hypot(dx, dy);
-        if (len > 250) {
-          enemy.position.x = c.x + (dx / len) * 250;
-          enemy.position.y = c.y + (dy / len) * 250;
-        }
+    if (["dash", "crossDash", "charge"].includes(state.move)) {
+      if (
+        state.move === "crossDash" &&
+        state.time <= move.active * 0.45 &&
+        state.burst === 0
+      ) {
+        state.direction = { x: -state.direction.y, y: state.direction.x };
+        state.burst = 1;
       }
+      const speed = state.move === "charge" ? 470 : 660;
+      enemy.position.x += state.direction.x * speed * dt;
+      enemy.position.y += state.direction.y * speed * dt;
     }
     if (state.time <= 0) {
       state.phase = "recover";
-      state.time = d.recovery;
+      state.time = move.recovery * (enraged ? 0.75 : 1);
     }
   } else if (state.phase === "recover" && state.time <= 0) {
+    state.cycle++;
+    const repertoire = bossRepertoire[state.kind];
+    state.move = repertoire[state.cycle % repertoire.length] ?? repertoire[0];
     state.phase = "approach";
-    state.time = 0.6;
+    state.time = enraged ? 0.25 : 0.45;
   }
+  clampBoss(run, enemy);
   if (
     distanceSquared(p, enemy.position) <
     (enemy.radius + run.player.radius) ** 2
   )
-    hurtPlayer(run, d.damage);
+    hurtPlayer(
+      run,
+      d.damage *
+        (["dash", "crossDash", "charge"].includes(state.move) &&
+        state.phase === "attack"
+          ? 1.3
+          : 1),
+    );
 }
 export function updateRifts(run: Run, dt: number): void {
   if (run.arena) {

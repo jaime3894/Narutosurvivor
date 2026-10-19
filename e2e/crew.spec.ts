@@ -131,7 +131,8 @@ test("la selección móvil permite confirmar sin desbordar la pantalla", async (
     .getByRole("checkbox", { name: "Reclutar a Usopp como nakama" })
     .check();
   await page.getByRole("button", { name: "Confirmar tripulación" }).click();
-  await expect(page.locator(".crew-selected")).toContainText("Nami + Usopp");
+  await expect(page.locator(".captain-pedestal h2")).toHaveText("Nami");
+  await expect(page.locator(".captain-pedestal p")).toContainText("Usopp");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -162,17 +163,19 @@ test("un atlas PNG local sustituye al personaje sin cambiar el código del juego
     }),
   );
   await page.reload();
-  await expect(page.locator(".map canvas")).toBeVisible();
+  await expect(page.locator("#port-captain")).toBeVisible();
   expect(
-    await page.locator(".map canvas").evaluate((canvas: HTMLCanvasElement) => {
-      const data = canvas
-        .getContext("2d")!
-        .getImageData(0, 0, canvas.width, canvas.height).data;
-      for (let i = 0; i < data.length; i += 4)
-        if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 250)
-          return true;
-      return false;
-    }),
+    await page
+      .locator("#port-captain")
+      .evaluate((canvas: HTMLCanvasElement) => {
+        const data = canvas
+          .getContext("2d")!
+          .getImageData(0, 0, canvas.width, canvas.height).data;
+        for (let i = 0; i < data.length; i += 4)
+          if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 250)
+            return true;
+        return false;
+      }),
   ).toBe(true);
   await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
   await expect(page.locator("#battle")).toBeVisible();

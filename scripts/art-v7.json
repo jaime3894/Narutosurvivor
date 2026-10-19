@@ -1,0 +1,30 @@
+[
+  {
+    "kind": "terrain",
+    "source": "docs/art-source/terrain-v7.png"
+  },
+  {
+    "kind": "icons",
+    "source": "docs/art-source/icons-v7.png"
+  },
+  {
+    "kind": "props",
+    "source": "docs/art-source/props-v7.png",
+    "rowCuts": [0, 415, 742, 1086]
+  },
+  {
+    "kind": "walk",
+    "id": "buggy",
+    "source": "docs/art-source/buggy-walk-v7.png"
+  },
+  {
+    "kind": "walk",
+    "id": "kuro",
+    "source": "docs/art-source/kuro-walk-v7.png"
+  },
+  {
+    "kind": "walk",
+    "id": "arlong",
+    "source": "docs/art-source/arlong-walk-v7.png"
+  }
+]

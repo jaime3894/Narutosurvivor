@@ -30,6 +30,7 @@ export function affinities(run: Run): Partial<Record<Affinity, number>> {
 }
 export function stats(run: Run, caster: CharacterId = run.character) {
   const isCaptain = caster === run.character;
+  const meta = run.preparation.levels;
   const form =
     characterById(caster).forms[
       isCaptain ? run.form : masteredForm(run, caster)
@@ -49,6 +50,7 @@ export function stats(run: Run, caster: CharacterId = run.character) {
         run.ranks.power * 0.25 +
         run.ranks.spirit * 0.05 +
         run.boons.damage * 0.15) *
+      (isCaptain ? 1 + meta.damage * 0.04 : 1) *
       form.damage *
       synergy.damage,
     attackPeriod:
@@ -56,16 +58,18 @@ export function stats(run: Run, caster: CharacterId = run.character) {
         0.88 ** run.ranks.tempo *
         (1 / 1.1) ** run.boons.tempo) /
         (run.haste > 0 ? 1.2 : 1)) *
+      (isCaptain ? 0.97 ** meta.cooldown : 1) *
       form.cooldown *
       synergy.cooldown,
     speed:
       combat.player.speed *
       (1 + run.ranks.stride * 0.1 + run.boons.speed * 0.1) *
       (run.haste > 0 ? 1.25 : 1) *
+      (isCaptain ? 1 + meta.speed * 0.03 : 1) *
       form.speed *
       synergy.speed,
     projectiles: 1 + run.ranks.multishot,
-    magnet: 68 + run.ranks.magnet * 45 + magnet,
+    magnet: (68 + run.ranks.magnet * 45 + magnet) * (1 + meta.magnet * 0.1),
     range:
       (1 + run.ranks.reach * 0.12) *
       form.range *
@@ -73,6 +77,7 @@ export function stats(run: Run, caster: CharacterId = run.character) {
       (caster === "luffy" ? 1.1 : 1),
     duration: 1 + run.ranks.duration * 0.15,
     armor:
+      (isCaptain ? meta.armor : 0) +
       run.ranks.armor * 2 +
       run.boons.armor * 2 +
       form.armor +
@@ -80,7 +85,10 @@ export function stats(run: Run, caster: CharacterId = run.character) {
       (isCaptain && caster === "franky" ? 2 : 0),
     criticalChance: Math.min(
       0.85,
-      run.ranks.crit * 0.06 + form.critical + synergy.critical,
+      (isCaptain ? meta.critical * 0.02 : 0) +
+        run.ranks.crit * 0.06 +
+        form.critical +
+        synergy.critical,
     ),
     dashCooldown:
       combat.dash.cooldown *
@@ -89,6 +97,7 @@ export function stats(run: Run, caster: CharacterId = run.character) {
       synergy.dash *
       (isCaptain && caster === "jinbe" ? 0.8 : 1),
     regen:
+      (isCaptain ? meta.regen * 0.15 : 0) +
       run.ranks.regen * 0.35 +
       run.boons.regen * 0.5 +
       form.regen +
@@ -96,6 +105,7 @@ export function stats(run: Run, caster: CharacterId = run.character) {
       (isCaptain && caster === "chopper" ? 0.3 : 0),
     food: form.food * synergy.food,
     currency:
+      (1 + meta.currency * 0.08) *
       (1 + run.ranks.greed * 0.2) *
       (isCaptain && caster === "nami" ? 1.25 : 1) *
       synergy.currency,

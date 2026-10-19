@@ -1,3 +1,4 @@
+import { drawWorld } from "./world";
 import { drawBoss } from "./boss-assets";
 import { drawRifts, drawBossTelegraph } from "./rifts";
 import { drawProjectile } from "./projectile";
@@ -57,61 +58,11 @@ export class BattleRenderer {
         ? (Math.sin(hurt.life * 110) * 4 * hurt.life) / hurt.total
         : 0;
     ctx.translate(-camX + shake, -camY);
-    ctx.fillStyle = "#cbb980";
-    ctx.fillRect(20, 20, combat.world.width - 40, combat.world.height - 40);
-    ctx.fillStyle = "#719363";
-    ctx.fillRect(64, 64, combat.world.width - 128, combat.world.height - 128);
-    for (
-      let x = Math.floor(camX / 64) * 64;
-      x < camX + VIEW_WIDTH + 64;
-      x += 64
-    ) {
-      for (
-        let y = Math.floor(camY / 64) * 64;
-        y < camY + VIEW_HEIGHT + 64;
-        y += 64
-      ) {
-        if (
-          x < 80 ||
-          y < 80 ||
-          x > combat.world.width - 100 ||
-          y > combat.world.height - 100
-        )
-          continue;
-        const hash = Math.abs(Math.imul(x + 31, y + 13));
-        ctx.fillStyle = hash % 3 === 0 ? "#789c68" : "#67895d";
-        ctx.fillRect(x + (hash % 39), y + (hash % 29), 4, 3);
-        ctx.fillRect(x + 14, y + 36, 2, 5);
-        if (hash % 13 === 0) {
-          ctx.fillStyle = "#dbc986";
-          ctx.fillRect(x + 38, y + 12, 3, 3);
-        }
-      }
-    }
-    // Anillos y ruinas solo decorativos: ningún obstáculo invisible.
-    ctx.strokeStyle = "#9aa577";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(1200, 900, 104, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.strokeStyle = "#84986a";
-    ctx.beginPath();
-    ctx.arc(1200, 900, 114, 0, Math.PI * 2);
-    ctx.stroke();
-    for (const [x, y] of [
-      [700, 550],
-      [1700, 1250],
-      [1800, 480],
-      [600, 1350],
-    ]) {
-      if (x === undefined || y === undefined) continue;
-      ctx.fillStyle = "#536950";
-      ctx.fillRect(x, y, 28, 20);
-      ctx.fillStyle = "#b2b18c";
-      ctx.fillRect(x, y - 4, 24, 16);
-      ctx.fillStyle = "#c5c39d";
-      ctx.fillRect(x + 3, y - 7, 18, 4);
-    }
+    drawWorld(
+      ctx,
+      { x: camX, y: camY, width: VIEW_WIDTH, height: VIEW_HEIGHT },
+      run.elapsed,
+    );
     drawRifts(ctx, run, this.reducedMotion);
     drawLoot(ctx, run, this.reducedMotion);
     for (const enemy of [...run.enemies].sort(
@@ -125,6 +76,21 @@ export class BattleRenderer {
       )
         continue;
       drawBossTelegraph(ctx, enemy);
+      if (enemy.elite) {
+        ctx.strokeStyle = "#f2c66b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(
+          enemy.position.x,
+          enemy.position.y + 4,
+          enemy.radius + 5,
+          7,
+          0,
+          0,
+          Math.PI * 2,
+        );
+        ctx.stroke();
+      }
       ctx.fillStyle = "#284b42";
       ctx.beginPath();
       ctx.ellipse(
