@@ -70,3 +70,9 @@ El usuario pide sprites de One Piece con el nivel de detalle, volumen y animaci�
 ### Límites y siguientes fases
 
 Los modelos y atlas definitivos, las tres formas, innatos, selección de los diez personajes y nakama siguen en fase 3. Para probar todas las técnicas antes de eso, el banco de depuración cambia también el propietario; no convierte a Luffy en usuario de ataques ajenos. Las evoluciones del catálogo no desbloquean Gears ni otras formas. Audio y ajustes completos siguen en fase 6; guardado de berries de cuenta en fase 5. La diversión humana sigue pendiente de evaluación. No se han descargado recursos oficiales.
+
+## Publicación web — GitHub Pages
+
+Preparado workflow de Actions para validar y publicar cada push a main, rutas de assets relativas y prueba funcional bajo /Narutosurvivor/. La validación local pasa: 82 tests de lógica, build y ocho E2E. No cambia el alcance de FASE 2 ni adelanta FASE 3. Instrucciones en docs/PUBLICAR.md.
+
+La API de GitHub y la web github.io están bloqueadas por el proxy de red del entorno (403 CONNECT). Activación remota de Pages y disponibilidad pública aún sin confirmar; no declarar el juego publicado solo por subir el workflow. Destinos requeridos añadidos al borrador de red, pendiente de aplicar desde ajustes. Si Pages no estaba habilitado, el propietario puede seleccionar GitHub Actions como Source en Settings → Pages y ejecutar el workflow ya preparado.

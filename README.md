@@ -30,7 +30,7 @@ npm run build
 npm run test:e2e
 ```
 
-Los 82 tests de lógica incluyen ejecución y evolución de las 18 técnicas, compatibilidades y tres simulaciones completas de cinco minutos sin trucos. Las siete pruebas E2E usan el build de producción en el puerto 4173 y verifican controles, pausa, mejoras, resultados, diseño móvil, catálogo, las 18 técnicas en el banco y la evolución desde un cofre. La victoria E2E usa salud restaurada en depuración; verifica interfaz, no dificultad.
+Los 82 tests de lógica incluyen ejecución y evolución de las 18 técnicas, compatibilidades y tres simulaciones completas de cinco minutos sin trucos. Las ocho pruebas E2E usan el build de producción en el puerto 4173 y verifican controles, pausa, mejoras, resultados, diseño móvil, catálogo, las 18 técnicas en el banco la evolución desde un cofre y la ruta de GitHub Pages. La victoria E2E usa salud restaurada en depuración; verifica interfaz, no dificultad.
 
 El entorno cloud ya tiene Chromium en `/usr/bin/chromium`. Fuera de él puedes usar `CHROMIUM_PATH=/ruta/al/navegador npm run test:e2e` o instalar el navegador de Playwright con `npx playwright install chromium`. No requiere ese navegador para jugar, compilar ni ejecutar los tests de lógica.
 
@@ -42,5 +42,6 @@ El entorno cloud ya tiene Chromium en `/usr/bin/chromium`. Fuera de él puedes u
 - [Progreso y pendientes](PROGRESO.md)
 - [Catálogo y recetas de combate](docs/COMBATE.md)
 - [Contrato de recursos](docs/ASSETS.md)
+- [Publicación en GitHub Pages](docs/PUBLICAR.md)
 
 No incluye assets oficiales, backend ni credenciales. Los cambios se entregan por fases en GitHub después de pasar build y tests.
