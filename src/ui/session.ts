@@ -1,14 +1,19 @@
+import { controlIcon } from "./control-icons";
+import { openSettings, toggleFullscreen } from "./settings";
+import {
+  preferences,
+  renderPreferences,
+  qualityMonitor,
+} from "./settings-store";
 import { voyageStage } from "../data/voyage";
 import { bossMoves } from "../data/boss-moves";
 import { prepareSailor, settleRun } from "../game/profile";
 import { profile, saveProfile } from "./profile-store";
 import { iconMarkup, upgradeIcon } from "./icons";
 import { canReroll, rerollUpgrades } from "../game/progression";
-import { formRequirement } from "../game/forms";
 import { formMilestones } from "../data/form-progression";
 import {
   activeTechniques,
-  bondLimit,
   bondCandidates,
   chooseBossReward,
   linkTechnique,
@@ -18,7 +23,6 @@ import {
 import { spawnRift, enterRift } from "../game/rifts";
 import { bosses } from "../data/rifts";
 import {
-  characterById,
   activeSynergies,
   type CrewSelection,
   type FormTier,
@@ -26,8 +30,6 @@ import {
 import { cycleForm, changeForm } from "../game/crew";
 import {
   characterNames,
-  contentLimits,
-  passives,
   weapons,
   weaponById,
   weaponKey,
@@ -35,7 +37,7 @@ import {
   type PickupKind,
   type WeaponId,
 } from "../data/content";
-import { addDrop, affinities, affinityDescription } from "../game/rules";
+import { addDrop } from "../game/rules";
 import {
   closeChest,
   chooseChestReward,
@@ -139,17 +141,19 @@ export function startSession(
   const signal = abort.signal;
   root.innerHTML = `
     <div class="battle-shell">
-      <header class="battle-header"><a class="brand" href="./">MAREA<span> / SURVIVOR</span></a><span class="battle-location">EAST BLUE · EL PRIMER DESEMBARCO</span><button class="small-button" id="pause" aria-label="Pausar partida">Ⅱ Pausa</button></header>
-      <main class="battle-main">
-        <div class="hud"><div class="health-block"><span class="hud-label">VITALIDAD <b id="hp-text"></b></span><div class="meter health-meter" role="progressbar" aria-label="Vida" aria-valuemin="0"><i id="hp-bar"></i></div></div><div class="clock"><strong id="time">00:00</strong><span>RESISTE 05:00</span></div><div class="kill-block"><strong id="kills">0</strong><span>DERROTADOS</span></div></div>
-        <div class="arena"><canvas id="battle" tabindex="0" aria-label="Campo de combate. Muévete con WASD o flechas. Espacio para embestir, Escape para pausar."></canvas><div id="overlay"></div><div class="arena-corner"><span id="fighter-name">LUFFY</span> / EAST BLUE <span>✦</span></div><div id="wave-note" class="wave-note">Encuentra tu ritmo. Recoge los cristales.</div></div>
-        <div class="xp-row"><span id="level">NIVEL 1</span><div class="meter xp-meter" role="progressbar" aria-label="Experiencia" aria-valuemin="0"><i id="xp-bar"></i></div><span id="xp-text"></span></div>
-        <div class="loadout"><div id="weapon-loadout" class="loadout-weapons"></div><div id="passive-loadout" class="loadout-passives"></div><div class="loadout-foot"><span id="affinities"></span><span id="loot-stats">฿ 0 · COFRES 0</span></div></div>
-        <div class="crew-hud"><div class="form-controls" role="group" aria-label="Cambiar forma">${[0, 1, 2].map((tier) => `<button data-form-tier="${tier}"></button>`).join("")}</div><div class="energy-row"><span>ENERGÍA <b id="energy-text">∞</b></span><div class="meter energy-meter" role="progressbar" aria-label="Energía de forma infinita" aria-valuetext="Infinita" aria-valuemin="0" aria-valuemax="100"><i id="energy-bar"></i></div></div><p id="innate-label"></p><p id="nakama-label"></p><p id="synergy-label"></p></div>
-        <div class="battle-bottom"><div><span class="keycap">W A S D</span> o flechas · movimiento <span class="keycap">ESPACIO</span> embestida</div><button class="dash-button" id="dash">➶ Embestir <span id="dash-state">LISTO</span></button></div>
-        <button class="small-button" id="enter-rift" hidden>Entrar en la grieta</button><p id="rift-status" role="status"></p><p class="battle-tip">F: cambiar forma · 1–4: técnica o vínculo · Técnicas automáticas · Recoge cofres para evolucionar · Arrastra en la arena para moverte</p>
+      <main class="battle-main"><div class="arena">
+        <canvas id="battle" tabindex="0" aria-label="Campo de combate. WASD o flechas para moverte. Espacio para embestir, Escape para pausar."></canvas>
+        <div class="field-hud"><div class="health-block"><strong id="fighter-name"></strong> <span id="level"></span><div class="meter health-meter" role="progressbar" aria-label="Vida" aria-valuemin="0"><i id="hp-bar"></i><b id="hp-text"></b></div></div>
+        <div class="field-clock"><strong id="time">00:00</strong><small><span class="battle-location"></span> · <span id="kills">0</span> DERROTADOS</small></div>
+        <nav class="field-actions" aria-label="Controles de partida"><button id="fullscreen" aria-label="Pantalla completa">${controlIcon("fullscreen")}</button><button id="settings" aria-label="Ajustes">${controlIcon("settings")}</button><button id="pause" aria-label="Pausar partida">${controlIcon("pause")}</button></nav>
+        <span id="fps-text" hidden></span><div id="wave-note" class="wave-note"></div>
+        <div id="weapon-loadout" class="loadout-weapons"></div>
+        <button class="dash-button" id="dash" aria-label="Embestir">${controlIcon("dash")}<span id="dash-state">LISTO</span></button>
+        <div class="rift-hud"><button class="small-button" id="enter-rift" hidden>Entrar en la grieta</button><p id="rift-status" role="status"></p></div>
+        <div class="meter xp-meter" role="progressbar" aria-label="Experiencia" aria-valuemin="0"><i id="xp-bar"></i></div></div>
+        <div id="overlay"></div>
         ${debug ? `<div class="debug-tools"><span>BANCO DE TÉCNICAS Y FORMAS</span><button id="debug-xp">+10 XP</button><button id="debug-forms">Desbloquear formas</button><select id="debug-technique" aria-label="Técnica de depuración">${weapons.map((item) => `<option value="${item.id}">${characterNames[item.owner]} · ${item.title}</option>`).join("")}</select><button id="debug-evolution">Preparar evolución</button><button id="debug-chest">Cofre</button><button id="debug-vacuum">Imán</button><button id="debug-rift">Grieta</button><button id="debug-boss">Derrotar jefe</button></div>` : ""}
-      </main>
+      </div></main>
     </div>`;
   const query = <T extends HTMLElement>(selector: string): T => {
     const element = root.querySelector<T>(selector);
@@ -158,10 +162,7 @@ export function startSession(
   };
   const canvas = query<HTMLCanvasElement>("#battle");
   const overlay = query("#overlay");
-  const renderer = new BattleRenderer(
-    canvas,
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  const renderer = new BattleRenderer(canvas, reducedMotion, renderPreferences);
   const controls = new Controls(canvas, pause, () => {
     cycleForm(run);
     hud();
@@ -169,8 +170,7 @@ export function startSession(
   const hpText = query("#hp-text"),
     hpBar = query("#hp-bar"),
     hpMeter = query(".health-meter");
-  const xpText = query("#xp-text"),
-    xpBar = query("#xp-bar"),
+  const xpBar = query("#xp-bar"),
     xpMeter = query(".xp-meter");
   const time = query("#time"),
     kills = query("#kills"),
@@ -194,11 +194,26 @@ export function startSession(
     },
     { signal },
   );
-  query(".brand").addEventListener(
+  function settings(): void {
+    const resume = run.status === "playing";
+    if (resume) pause();
+    openSettings(() => {
+      previous = performance.now();
+      accumulator = 0;
+      controls.clear();
+      if (resume && run.status === "paused") pause();
+    });
+  }
+  query("#settings").addEventListener("click", settings, { signal });
+  query("#fullscreen").addEventListener(
     "click",
-    (event) => {
-      event.preventDefault();
-      if (run.status === "playing") pause();
+    () => {
+      void toggleFullscreen().then((error) => {
+        if (error) {
+          run.notice = error;
+          run.noticeTime = 5;
+        }
+      });
     },
     { signal },
   );
@@ -220,53 +235,13 @@ export function startSession(
     { signal },
   );
 
-  root
-    .querySelectorAll<HTMLButtonElement>("[data-form-tier]")
-    .forEach((button) =>
-      button.addEventListener(
-        "click",
-        () => {
-          const tier = Number(button.dataset.formTier);
-          if (tier === 0 || tier === 1 || tier === 2) changeForm(run, tier);
-          hud();
-          canvas.focus({ preventScroll: true });
-        },
-        { signal },
-      ),
-    );
   function hud(): void {
     query(".battle-location").textContent = voyageStage(
       run.elapsed,
     ).name.toUpperCase();
-    const character = characterById(run.character);
-    query("#energy-text").textContent = "∞";
-    query("#energy-bar").style.width = `${run.energy}%`;
-    query(".energy-meter").setAttribute(
-      "aria-valuenow",
-      String(Math.floor(run.energy)),
-    );
-    root
-      .querySelectorAll<HTMLButtonElement>("[data-form-tier]")
-      .forEach((button) => {
-        const tier = Number(button.dataset.formTier) as FormTier;
-        const definition = character.forms[tier];
-        button.textContent = `${tier + 1}. ${definition.name}${tier > run.formUnlocked ? " · " + formRequirement(run.character, tier) : ""}`;
-        button.classList.toggle("active", run.form === tier);
-        button.setAttribute("aria-pressed", String(run.form === tier));
-        button.disabled =
-          run.status !== "playing" ||
-          (tier > 0 && (tier > run.formUnlocked || run.formCooldown > 0));
-      });
-    query("#innate-label").textContent = `Innato · ${character.innate}`;
-    query("#nakama-label").textContent = run.nakama.length
-      ? `Nakama · ${run.nakama.map((item) => characterNames[item.character]).join(" + ")}`
-      : "Sin nakama · elige compañeros en el puerto";
-    query("#synergy-label").textContent = activeSynergies(
-      run.character,
-      run.nakama.map((item) => item.character),
-    )
-      .map((item) => `${item.name}: ${item.description}`)
-      .join(" / ");
+    query("#fps-text").hidden = !preferences.fps;
+    query("#fps-text").textContent = `${Math.round(qualityMonitor.fps)} FPS`;
+    root.style.setProperty("--touch-scale", String(preferences.touchScale));
     hpText.textContent = `${Math.ceil(run.player.health.current)} / ${run.player.health.maximum}`;
     hpBar.style.width = `${(run.player.health.current / run.player.health.maximum) * 100}%`;
     hpMeter.setAttribute(
@@ -277,7 +252,6 @@ export function startSession(
     time.textContent = formatTime(run.elapsed);
     kills.textContent = String(run.kills);
     level.textContent = `NIVEL ${run.level}`;
-    xpText.textContent = `${Math.round(run.xp * 100) / 100} / ${xpForLevel(run.level)}`;
     xpBar.style.width = `${Math.min(100, (run.xp / xpForLevel(run.level)) * 100)}%`;
     xpMeter.setAttribute("aria-valuenow", String(run.xp));
     xpMeter.setAttribute("aria-valuemax", String(xpForLevel(run.level)));
@@ -288,8 +262,9 @@ export function startSession(
     dashButton.disabled =
       run.status !== "playing" || run.player.dashCooldown > 0;
     pauseButton.disabled = !["playing", "paused"].includes(run.status);
-    pauseButton.textContent =
-      run.status === "paused" ? "▷ Continuar" : "Ⅱ Pausa";
+    pauseButton.innerHTML = controlIcon(
+      run.status === "paused" ? "play" : "pause",
+    );
     const wave = Math.floor(run.elapsed / 60);
     note.textContent =
       run.noticeTime > 0
@@ -314,36 +289,18 @@ export function startSession(
       buildKey = nextBuild;
       query("#fighter-name").textContent =
         characterNames[run.character].toUpperCase();
-      query("#weapon-loadout").innerHTML =
-        run.weapons
-          .map((slot) => {
-            const definition = weaponById(slot.id);
-            return `<button data-active-weapon="${slot.id}" aria-pressed="${activeTechniques(run).includes(slot.id)}" class="loadout-chip ${slot.evolved ? "evolved" : ""}" title="${definition.description}">${run.linkedWeapons.includes(slot.id) ? "∞ " : ""}${iconMarkup(slot.id)} ${slot.evolved ? definition.evolution.title : definition.title} <b>${run.ranks[weaponKey(slot.id)]}/5</b></button>`;
-          })
-          .join("") +
-        `<span class="loadout-empty">${run.weapons.length}/${contentLimits.weapons} TÉCNICAS</span>`;
-      query("#passive-loadout").innerHTML =
-        passives
-          .filter((item) => run.ranks[item.id] > 0)
-          .map(
-            (item) =>
-              `<span title="${item.title}: ${item.description}">${iconMarkup(item.id)} ${item.title} ${run.ranks[item.id]}</span>`,
-          )
-          .join("") ||
-        "<span>Recoge cristales para elegir técnicas y pasivos.</span>";
-      const active = Object.entries(affinities(run)).filter(
-        ([, count]) => count >= 2,
-      );
-      query("#affinities").textContent =
-        active.length > 0
-          ? affinityDescription(run)
-          : "Afinidades: combina 2 técnicas o pasivos del mismo grupo";
+      query("#weapon-loadout").innerHTML = run.weapons
+        .map((slot) => {
+          const definition = weaponById(slot.id);
+          return `<button data-active-weapon="${slot.id}" aria-label="${definition.title} ${run.ranks[weaponKey(slot.id)]}/5" aria-pressed="${activeTechniques(run).includes(slot.id)}" class="loadout-chip" title="${definition.title} · ${definition.description}">${iconMarkup(slot.id)}<b>${run.ranks[weaponKey(slot.id)]}/5</b></button>`;
+        })
+        .join("");
     }
     query("#rift-status").textContent = run.arena
       ? `${bosses[run.enemies[0]?.boss?.kind ?? "buggy"].name} · ${bossMoves[run.enemies[0]?.boss?.move ?? "knifeFan"].name} · ${Math.ceil(run.arena.remaining)} s`
       : run.rift
         ? `Grieta · ${Math.ceil(run.rift.remaining)} s · ${Math.round(Math.hypot(run.rift.position.x - run.player.position.x, run.rift.position.y - run.player.position.y))} m`
-        : `Jefes vencidos: ${run.bossesDefeated} · Vínculo ${run.linkedWeapons.length}/${bondLimit(run)}`;
+        : "";
     query<HTMLButtonElement>("#enter-rift").hidden = !run.rift;
     query<HTMLButtonElement>("#enter-rift").disabled =
       run.status !== "playing" ||
@@ -352,8 +309,6 @@ export function startSession(
         run.rift.position.x - run.player.position.x,
         run.rift.position.y - run.player.position.y,
       ) > 200;
-    query("#loot-stats").textContent =
-      `฿ ${run.berries} · COFRES ${run.openedChests}${run.haste > 0 ? ` · IMPULSO ${Math.ceil(run.haste)}s` : ""}`;
   }
   function restart(): void {
     run = makeRun();
@@ -407,7 +362,7 @@ export function startSession(
         )}</div><button id="back-rewards">Volver a recompensas</button>`;
     } else if (run.status === "paused") {
       content =
-        '<p class="eyebrow">UN RESPIRO EN ALTA MAR</p><h1>A tu ritmo.</h1><p class="modal-subtitle">La partida está en pausa.</p><div class="modal-actions"><button id="resume">Continuar</button><button class="secondary" id="leave">Volver al puerto</button></div>';
+        '<p class="eyebrow">UN RESPIRO EN ALTA MAR</p><h1>A tu ritmo.</h1><p class="modal-subtitle">La partida está en pausa.</p><div class="modal-actions"><button id="resume">Continuar</button><button class="secondary" id="pause-settings">Ajustes</button><button class="secondary" id="leave">Volver al puerto</button></div>';
     } else {
       accountReward = settleRun(profile, run);
       saveProfile();
@@ -468,6 +423,9 @@ export function startSession(
       syncOverlay();
       hud();
     });
+    overlay
+      .querySelector("#pause-settings")
+      ?.addEventListener("click", settings);
     overlay.querySelector("#resume")?.addEventListener("click", pause);
     overlay.querySelector("#restart")?.addEventListener("click", restart);
     overlay.querySelector("#leave")?.addEventListener("click", () => {
@@ -480,6 +438,7 @@ export function startSession(
   window.addEventListener(
     "keydown",
     (event) => {
+      if (document.querySelector("dialog[open]")) return;
       if (
         run.status === "upgrade" &&
         ["Digit1", "Digit2", "Digit3"].includes(event.code) &&
@@ -528,7 +487,12 @@ export function startSession(
     if (stopped) return;
     const dt = Math.min(0.1, Math.max(0, (now - previous) / 1000));
     previous = now;
-    if (run.hitStop > 0 && !reducedMotion && run.status === "playing") {
+    if (run.status === "playing") qualityMonitor.sample(dt);
+    if (
+      run.hitStop > 0 &&
+      !renderer.reducedMotion &&
+      run.status === "playing"
+    ) {
       run.hitStop = Math.max(0, run.hitStop - dt);
       accumulator = 0;
     } else if (run.status === "playing") {

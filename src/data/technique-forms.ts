@@ -1,0 +1,446 @@
+import {
+  weaponById,
+  type WeaponId,
+  type WeaponDefinition,
+  type HitShape,
+} from "./content";
+import type { FormTier } from "./crew";
+export interface TechniqueStyle {
+  title: string;
+  detail: string;
+  windup: number;
+  active: number;
+  recovery: number;
+  range: number;
+  width: number;
+  strikes: number;
+  shape?: HitShape;
+}
+function style(
+  title: string,
+  detail: string,
+  windup: number,
+  active: number,
+  recovery: number,
+  range = 1,
+  width = 1,
+  strikes = 0,
+  shape?: HitShape,
+): TechniqueStyle {
+  return {
+    title,
+    detail,
+    windup,
+    active,
+    recovery,
+    range,
+    width,
+    strikes,
+    ...(shape ? { shape } : {}),
+  };
+}
+/** Ritmo, cobertura y gestos propios; los modificadores de forma siguen en crew.ts. */
+export const techniqueStyles: Readonly<
+  Record<WeaponId, readonly [TechniqueStyle, TechniqueStyle]>
+> = {
+  pistol: [
+    style(
+      "Jet Pistol",
+      "Retracción breve, salida explosiva y estela de vapor.",
+      0.55,
+      0.65,
+      0.55,
+      1,
+      1,
+    ),
+    style(
+      "Kong Gun",
+      "Compresión del brazo de haki, puño pesado y rebote elástico.",
+      1.35,
+      1.35,
+      1.2,
+      1.15,
+      1.6,
+    ),
+  ],
+  gatling: [
+    style(
+      "Jet Gatling",
+      "Ráfaga alterna acelerada entre los dos brazos.",
+      0.55,
+      0.8,
+      0.55,
+      1,
+      1,
+      2,
+    ),
+    style(
+      "Kong Organ",
+      "Brazos comprimidos; descarga pesada y alterna de haki.",
+      1.2,
+      1.35,
+      1.15,
+      1.1,
+      1.4,
+      4,
+    ),
+  ],
+  bazooka: [
+    style(
+      "Jet Bazooka",
+      "Doble palma rápida con estela de vapor.",
+      0.6,
+      0.7,
+      0.6,
+    ),
+    style(
+      "Leo Bazooka",
+      "Ambos brazos de haki se comprimen y golpean juntos.",
+      1.35,
+      1.3,
+      1.2,
+      1.1,
+      1.5,
+    ),
+  ],
+  whip: [
+    style(
+      "Jet Whip",
+      "Barrido veloz y rastro de vapor en la pierna.",
+      0.6,
+      0.7,
+      0.6,
+    ),
+    style(
+      "Rhino Schneider",
+      "Pierna de haki, barrido más ancho y onda al contacto.",
+      1.2,
+      1.2,
+      1.15,
+      1.1,
+      1.3,
+    ),
+  ],
+  balloon: [
+    style("Jet Balloon", "Inflado rápido y anillo de vapor.", 0.6, 0.75, 0.65),
+    style(
+      "Boundman Impact",
+      "Expansión de haki, rebote y ondas concéntricas.",
+      1.25,
+      1.3,
+      1.2,
+      1.1,
+      1.4,
+    ),
+  ],
+  onigiri: [
+    style(
+      "Sanzen Sekai",
+      "Rotación de las tres hojas y corte en espiral.",
+      0.85,
+      1.2,
+      0.85,
+      1.05,
+      1.2,
+      1,
+    ),
+    style(
+      "Asura · Ichibugin",
+      "Nueve trazos cruzados desde la manifestación de Asura.",
+      1.1,
+      1.35,
+      1.1,
+      1.15,
+      1.4,
+      2,
+    ),
+  ],
+  phoenix: [
+    style(
+      "108 Pound Ho",
+      "Tres ondas de espada en abanico.",
+      0.85,
+      1.2,
+      0.85,
+      1.1,
+      1.3,
+      1,
+    ),
+    style(
+      "Asura · Makyusen",
+      "Ondas entrecruzadas de nueve hojas.",
+      1.15,
+      1.4,
+      1.1,
+      1.15,
+      1.5,
+      2,
+    ),
+  ],
+  collier: [
+    style(
+      "Diable · Flambage Shot",
+      "Patada ardiente con arco de fuego naranja.",
+      0.85,
+      1.15,
+      0.8,
+      1.05,
+      1.15,
+    ),
+    style(
+      "Ifrit · Boeuf Burst",
+      "Latigazo de pierna con llamarada azul y doble impacto.",
+      1.05,
+      1.3,
+      0.75,
+      1.1,
+      1.35,
+      1,
+    ),
+  ],
+  concasse: [
+    style(
+      "Diable · Concasse",
+      "Salto, giro y talón de fuego contra el suelo.",
+      0.9,
+      1.2,
+      0.85,
+      1.05,
+      1.2,
+    ),
+    style(
+      "Ifrit · Hell Memories",
+      "Caída de talón y anillos de llama azul.",
+      1.15,
+      1.35,
+      0.9,
+      1.15,
+      1.4,
+      1,
+    ),
+  ],
+  thunder: [
+    style(
+      "Thunderstorm Tempo",
+      "Tres ramas de rayo bajo una tormenta cargada.",
+      1.1,
+      1.3,
+      0.85,
+      1.1,
+      1.3,
+      1,
+    ),
+    style(
+      "Zeus · Raitei",
+      "Zeus se carga, desata rayos y ramifica la descarga.",
+      1.25,
+      1.5,
+      1,
+      1.1,
+      1.5,
+      2,
+    ),
+  ],
+  cyclone: [
+    style(
+      "Gust Sword",
+      "Dos espirales de aire en expansión.",
+      0.85,
+      1.25,
+      0.9,
+      1.1,
+      1.25,
+    ),
+    style(
+      "Zeus · Storm Tempo",
+      "Vórtice oscuro con descargas en su contorno.",
+      1.15,
+      1.45,
+      1,
+      1.1,
+      1.5,
+      2,
+    ),
+  ],
+  firestar: [
+    style(
+      "Kabuto · Fire Bird Star",
+      "Proyectil con alas ígneas que salen del tirachinas.",
+      1.15,
+      1.1,
+      0.85,
+      1.1,
+      1,
+      1,
+    ),
+    style(
+      "Sogeking · Fire Phoenix",
+      "Salva de aves de fuego en abanico.",
+      1.25,
+      1.3,
+      0.9,
+      1.15,
+      1,
+      2,
+    ),
+  ],
+  popgreen: [
+    style(
+      "Bamboo Javelin",
+      "Brotes de bambú se elevan en secuencia.",
+      1.1,
+      1.3,
+      0.9,
+      1.05,
+      1.3,
+      1,
+    ),
+    style(
+      "Pop Green · Impact Wolf",
+      "Los tallos forman una mandíbula y estallan al cerrarse.",
+      1.2,
+      1.5,
+      1,
+      1.1,
+      1.5,
+      2,
+    ),
+  ],
+  hoof: [
+    style(
+      "Heavy · Kokutei Roseo",
+      "Doble huella de pezuña y avance del torso.",
+      1.1,
+      1.25,
+      1,
+      1.05,
+      1.3,
+      1,
+    ),
+    style(
+      "Monster · Kokutei Palm",
+      "Palma gigante y golpe expansivo sobre el suelo.",
+      1.4,
+      1.5,
+      1.2,
+      1.15,
+      1.7,
+      1,
+      "cone",
+    ),
+  ],
+  clutch: [
+    style(
+      "Gigantesco Mano · Clutch",
+      "Brazos gigantes florecen y cierran una presa amplia.",
+      1.2,
+      1.4,
+      1.1,
+      1.1,
+      1.5,
+    ),
+    style(
+      "Demonio · Grand Jacuzzi Clutch",
+      "Seis brazos oscuros cierran una presa en espiral.",
+      1.3,
+      1.6,
+      1.2,
+      1.15,
+      1.7,
+      2,
+    ),
+  ],
+  strongright: [
+    style(
+      "Battle · Strong Hammer",
+      "Puño reforzado, pistón y ondas de impacto.",
+      1.2,
+      1.2,
+      1.15,
+      1.05,
+      1.35,
+    ),
+    style(
+      "General Cannon",
+      "Dos brazos fijan la guardia; descarga de aire desde el cuerpo.",
+      1.5,
+      1.5,
+      1.3,
+      1.3,
+      1.6,
+      0,
+      "line",
+    ),
+  ],
+  aubade: [
+    style(
+      "Soul Solid · Kasuriuta",
+      "Desenvaine helado con estela de escarcha.",
+      0.7,
+      1.1,
+      0.7,
+      1.05,
+      1.2,
+    ),
+    style(
+      "Soul King · Soul Parade",
+      "Tres estocadas espectrales con expansión de hielo.",
+      0.85,
+      1.5,
+      0.85,
+      1.15,
+      1.4,
+      2,
+    ),
+  ],
+  sharkbrick: [
+    style(
+      "Karakusa Gawara Seiken",
+      "Palma desde la guardia y onda circular alrededor del cuerpo.",
+      1.1,
+      1.3,
+      1,
+      1.05,
+      1.4,
+      0,
+      "circle",
+    ),
+    style(
+      "Vagabond Drill",
+      "Palma dirigida y onda helicoidal de karate gyojin.",
+      1.35,
+      1.5,
+      1.2,
+      1.2,
+      1.6,
+      1,
+      "line",
+    ),
+  ],
+};
+export function techniqueStyle(
+  id: WeaponId,
+  form: FormTier,
+): TechniqueStyle | undefined {
+  return form === 0 ? undefined : techniqueStyles[id][form - 1];
+}
+export function techniqueDefinition(
+  id: WeaponId,
+  form: FormTier,
+): WeaponDefinition {
+  const base = weaponById(id),
+    variant = techniqueStyle(id, form);
+  if (!variant) return base;
+  return {
+    ...base,
+    title: variant.title,
+    description: variant.detail,
+    windup: base.windup * variant.windup,
+    active: base.active * variant.active,
+    recovery: base.recovery * variant.recovery,
+    range: base.range * variant.range,
+    width: base.width * variant.width,
+    strikes: base.strikes + variant.strikes,
+    shape: variant.shape ?? base.shape,
+  };
+}

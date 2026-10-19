@@ -1,3 +1,4 @@
+import { moveOnTerrain, freePosition, steerAround } from "./terrain";
 import { voyageStage } from "../data/voyage";
 import { emptyPreparation, type Preparation } from "../data/training";
 import { riftRules } from "../data/rifts";
@@ -174,6 +175,7 @@ function spawn(run: Run): void {
         ),
       ),
     };
+    position = freePosition(position, definition.radius, run.elapsed);
     if (distanceSquared(position, run.player.position) >= 550 ** 2) break;
     angle += Math.PI / 4;
   }
@@ -205,6 +207,10 @@ export function step(run: Run, input: Input, dt: number): void {
   if (!run.arena) run.elapsed = Math.min(combat.duration, run.elapsed + dt);
   const stage = voyageStage(run.elapsed);
   if (stage.id !== previousStage.id) {
+    for (const chest of run.chests)
+      chest.position = freePosition(chest.position, 20, run.elapsed);
+    if (run.rift)
+      run.rift.position = freePosition(run.rift.position, 26, run.elapsed);
     run.notice = `${stage.name} · ${stage.subtitle}`;
     run.noticeTime = 6;
   }
@@ -236,10 +242,22 @@ export function step(run: Run, input: Input, dt: number): void {
   const movement = player.dashTime > 0 ? player.facing : direction;
   const before = { ...player.position };
   player.velocity = { x: movement.x * speed, y: movement.y * speed };
-  player.position.x += player.velocity.x * dt;
-  player.position.y += player.velocity.y * dt;
+  if (run.arena) {
+    player.position.x += player.velocity.x * dt;
+    player.position.y += player.velocity.y * dt;
+  } else
+    moveOnTerrain(
+      player.position,
+      { x: player.velocity.x * dt, y: player.velocity.y * dt },
+      player.radius,
+      run.elapsed,
+    );
   clampPlayer(run);
   clampArena(run);
+  player.velocity = {
+    x: (player.position.x - before.x) / dt,
+    y: (player.position.y - before.y) / dt,
+  };
   run.distance += Math.hypot(
     player.position.x - before.x,
     player.position.y - before.y,
@@ -288,8 +306,22 @@ export function step(run: Run, input: Input, dt: number): void {
       (enemy.elite ? 1.08 : 1) *
       (1 + run.elapsed / 1500) *
       ((enemy.slow ?? 0) > 0 ? 0.6 : 1);
-    enemy.position.x += ((dx / distance) * speed + enemy.velocity.x) * dt;
-    enemy.position.y += ((dy / distance) * speed + enemy.velocity.y) * dt;
+    const heading = steerAround(
+      enemy.position,
+      player.position,
+      enemy.radius,
+      run.elapsed,
+      enemy.id,
+    );
+    moveOnTerrain(
+      enemy.position,
+      {
+        x: (heading.x * speed + enemy.velocity.x) * dt,
+        y: (heading.y * speed + enemy.velocity.y) * dt,
+      },
+      enemy.radius,
+      run.elapsed,
+    );
     enemy.velocity.x *= Math.exp(-12 * dt);
     enemy.velocity.y *= Math.exp(-12 * dt);
     if (distance < player.radius + enemy.radius) {

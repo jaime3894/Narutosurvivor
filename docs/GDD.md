@@ -250,3 +250,42 @@ Se intentaron consultas de Google sobre tilesets e iconos de One Piece y las pá
 Suelos de 128 px repetibles, ocho materiales, doce objetos decorativos y caminos curvos dibujados con esos materiales. Son decoración transitable; no se introducen colisiones invisibles. Los dibujos de props se exportan con cortes de fila medidos para evitar cortar palmeras y añadir restos de filas contiguas. Presupuesto PNG total de precarga/interfaz 9 MB, ampliado desde 8 por contenido nuevo, con test que suma también marchas, escenarios e iconos. No hay dependencias de servicios de imágenes para jugar.
 
 Límites visuales: los ataques de jefe comparten poses de preparación/ejecución, aunque sus patrones y efectos son distintos; perfiles laterales por espejo y ataques en tres cuartos. El terreno repite texturas y los objetos decorativos no bloquean. La valoración de acabado y diversión sigue siendo humana; no se declara animación perfecta ni fidelidad de fotograma a material oficial.
+
+## FASE 4C — Terreno sólido, campo completo y técnicas de transformación
+
+Esta revisión atiende las peticiones sobre mapa, HUD y formas sin declarar terminadas las campañas ni la fase 6. Sustituye la decisión anterior de que toda la decoración fuera transitable.
+
+### Espacio y colisiones
+
+El mundo pasa de 2400×1800 a **4800×3600**: cuatro veces la superficie. Los caminos y objetos cubren el mapa ampliado, con el desembarco inicial despejado. Props reducidos a 76–94 unidades frente a las 104–132 anteriores; conservan las texturas originales existentes. `data/terrain.ts` proporciona la misma posición, escala y geometría al dibujo y a la física. Las palmeras bloquean por el tronco y las rocas por su base, no por la copa o su rectángulo transparente. Arbustos bajos de costa siguen siendo transitables; barriles/cajas/ruinas también bloquean.
+
+La colisión circular utiliza un índice espacial y desplazamientos de hasta 6 unidades por paso, incluida la embestida. Desliza alrededor de los bordes; no permite atravesar un tronco en un fotograma. Enemigos y nakama rodean los obstáculos; no se cambia el coste de movimiento ni se consume energía. Cofres, grietas y nuevas apariciones se colocan fuera de sólidos. Al cambiar de tramo se liberan jugador, cofres y grietas de las nuevas bases; la experiencia puede atraerse a través de ellos para evitar botín inaccesible. Las técnicas no chocan contra la decoración: la dificultad añadida afecta a la navegación, no oculta el alcance de los ataques. Las arenas de jefe se despejan visual y físicamente; al regresar se conserva el terreno y botín de costa.
+
+### HUD y ajustes efectivos
+
+El campo ocupa toda la ventana (`100dvh`), con vida/nivel arriba a la izquierda, reloj/ubicación/bajas arriba, técnicas seleccionables abajo y embestida táctil. La experiencia queda en una línea inferior. Se eliminan del HUD energía, selectores de forma, evoluciones, pasivos y afinidades; las reglas y elecciones de mejora/evolución siguen funcionando. El nombre base y el icono de una técnica identifican su ranura aun después de transformarse. Las formas se activan automáticamente por dominio; F permite volver a una forma ya desbloqueada. Los anuncios de transformación son breves, no un panel permanente. Pausa, ajustes y pantalla completa usan iconos SVG propios y etiquetas accesibles.
+
+Se consultaron como referencia funcional `JPTER78/pokesurvivor/js/core/settings.js` y `js/ui/settings-ui.js`. Implementación propia: calidad automática/alta/media/baja, cámara 80/100/120%, números de daño, reducción de movimiento, FPS y tamaño de embestida táctil. Calidad adapta resolución interna, iluminación y cantidad de efectos; nunca elimina obstáculos, ataques, enemigos ni avisos de jefe. Auto baja tras tres ventanas de FPS bajos y recupera tras ocho rápidas, con techo medio en puntero táctil. El aspecto del canvas y de la cámara se mantienen al redimensionar o cambiar zoom.
+
+Pantalla completa utiliza las APIs estándar/WebKit desde un clic; muestra error o incompatibilidad si el navegador la deniega. Ajustes guardados localmente en `marea.settings.v1`, saneados al cargar y aplicados en memoria si falla almacenamiento. Abrir ajustes pausa el combate; cerrar reanuda solo si estaba jugando. Mando, audio, i18n y PWA siguen pendientes de fase 6: no se añaden controles sin función.
+
+### Dominio y ejecución por forma
+
+Las transformaciones mantienen los requisitos existentes de 5/5 y sus bonificaciones de `crew.ts`. No se desbloquean por nivel del personaje ni curan gratis. Luffy: Pistol 5/5 → Gear Second; además Gatling 5/5 → Gear Fourth. Zoro: Oni Giri/Phoenix; Sanji: Collier/Concassé; Nami: Thunder/Cyclone; Usopp: Fire Star/Pop Green. Para Chopper, Robin, Franky, Brook y Jinbe, que actualmente poseen una sola técnica en el catálogo de 18, la tercera forma exige evolucionarla mediante cofre. Ampliar su repertorio para pedir otra técnica 5/5 queda como contenido posterior, sin mezclar técnicas ajenas.
+
+Las 18 ranuras poseen tres ejecuciones (54 combinaciones), definidas en `technique-forms.ts`. Cada una cambia nombre, anticipación, actividad, recuperación y cobertura o secuencia de impactos. Los buffs de forma se aplican además de ese patrón; no se duplican multiplicadores de daño ocultos. La física utiliza los mismos tiempos y forma de área que la presentación. El selector permite demostrarlas sin depuración y consultar requisito/buffs.
+
+| Personaje | Segunda ejecución | Ejecución final |
+| --- | --- | --- |
+| Luffy | Jet Pistol/Gatling/Bazooka/Whip/Balloon: salida rápida y vapor | Kong Gun/Organ, Leo Bazooka, Rhino Schneider y Boundman Impact: peso, haki y ondas; brazos/pierna unidos al cuerpo |
+| Zoro | Sanzen Sekai, 108 Pound Ho: giro de tres hojas | Asura Ichibugin/Makyusen: nueve trazos y manifestaciones Santoryu |
+| Sanji | Flambage Shot y Concassé con llama naranja | Boeuf Burst/Hell Memories con llama azul y golpes encadenados |
+| Nami | Thunderstorm Tempo/Gust Sword, ramas y espirales | Zeus Raitei/Storm Tempo, nube propia y descarga ramificada |
+| Usopp | Fire Bird Star con alas ígneas; Bamboo Javelin | Salva Fire Phoenix e Impact Wolf vegetal |
+| Chopper | Kokutei Roseo doble | Kokutei Palm de Monster, cono amplio y onda de suelo |
+| Robin | Gigantesco Mano con brazos mayores | Grand Jacuzzi Clutch, seis brazos oscuros en cierre espiral |
+| Franky | Strong Hammer mecánico | General Cannon: dos antebrazos fijan la salida de aire; sin puño volador reutilizado |
+| Brook | Kasuriuta helado | Soul Parade de tres estocadas y escarcha expansiva |
+| Jinbe | Karakusa, onda circular de palma | Vagabond Drill dirigido, onda helicoidal |
+
+Son adaptaciones de juego con arte original existente y efectos propios, no animaciones oficiales reproducidas. Se conserva un único gesto corporal principal cuando se vinculan varias técnicas; sus eventos de daño y efectos siguen activos. Perfiles laterales espejados y poses compartidas por ciertos ataques siguen siendo límites conocidos; no se promete animación perfecta. La calidad artística y la diversión requieren evaluación humana.

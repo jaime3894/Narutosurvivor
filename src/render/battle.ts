@@ -1,3 +1,7 @@
+import {
+  defaultRenderPreferences,
+  type RenderPreferences,
+} from "../core/preferences";
 import { drawWorld } from "./world";
 import { drawBoss } from "./boss-assets";
 import { drawRifts, drawBossTelegraph } from "./rifts";
@@ -14,18 +18,39 @@ export class BattleRenderer {
   readonly context: CanvasRenderingContext2D;
   private readonly resizeObserver: ResizeObserver;
   readonly camera: Position = { x: 1200, y: 900 };
+  private viewWidth = 800;
+  private viewHeight = 600;
+  private resizeKey = "";
+  private bounds = { width: 800, height: 600 };
+  get reducedMotion(): boolean {
+    return this.systemCalm || this.preferences().calm;
+  }
+  private resize(): void {
+    const prefs = this.preferences();
+    const key = `${this.bounds.width}:${this.bounds.height}:${prefs.level}:${prefs.zoom}`;
+    if (key === this.resizeKey) return;
+    this.resizeKey = key;
+    this.viewHeight = 720 / prefs.zoom;
+    this.viewWidth =
+      (this.viewHeight * this.bounds.width) / (this.bounds.height || 1);
+    const density = [0.6, 0.8, 1][prefs.level] ?? 1;
+    this.canvas.width = Math.round(this.viewWidth * density);
+    this.canvas.height = Math.round(this.viewHeight * density);
+    this.context.imageSmoothingEnabled = false;
+  }
   constructor(
     readonly canvas: HTMLCanvasElement,
-    readonly reducedMotion: boolean,
+    readonly systemCalm: boolean,
+    private readonly preferences: () => RenderPreferences = () =>
+      defaultRenderPreferences,
   ) {
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Canvas 2D no disponible");
     this.context = context;
     const resize = (): void => {
       const bounds = canvas.getBoundingClientRect();
-      canvas.width = Math.round(600 * (bounds.width / (bounds.height || 1)));
-      canvas.height = 600;
-      context.imageSmoothingEnabled = false;
+      this.bounds = { width: bounds.width, height: bounds.height };
+      this.resize();
     };
     resize();
     this.resizeObserver = new ResizeObserver(resize);
@@ -33,8 +58,18 @@ export class BattleRenderer {
   }
   draw(run: Run, dt: number): void {
     const ctx = this.context;
-    const VIEW_WIDTH = this.canvas.width;
-    const VIEW_HEIGHT = this.canvas.height;
+    this.resize();
+    const prefs = this.preferences();
+    const VIEW_WIDTH = this.viewWidth;
+    const VIEW_HEIGHT = this.viewHeight;
+    ctx.setTransform(
+      this.canvas.width / VIEW_WIDTH,
+      0,
+      0,
+      this.canvas.height / VIEW_HEIGHT,
+      0,
+      0,
+    );
     const player = run.player;
     const blend = this.reducedMotion ? 1 : 1 - Math.exp(-10 * dt);
     this.camera.x += (player.position.x - this.camera.x) * blend;
@@ -62,6 +97,10 @@ export class BattleRenderer {
       ctx,
       { x: camX, y: camY, width: VIEW_WIDTH, height: VIEW_HEIGHT },
       run.elapsed,
+      {
+        lighting: prefs.level > 0,
+        ...(run.arena ? { clear: { ...run.arena.center, radius: 290 } } : {}),
+      },
     );
     drawRifts(ctx, run, this.reducedMotion);
     drawLoot(ctx, run, this.reducedMotion);
@@ -159,7 +198,7 @@ export class BattleRenderer {
       ctx.stroke();
     }
     for (const projectile of run.projectiles) drawProjectile(ctx, projectile);
-    for (const effect of run.effects) {
+    for (const effect of run.effects.slice(-[60, 110, 180][prefs.level]!)) {
       const progress = 1 - effect.life / effect.total;
       ctx.globalAlpha = 1 - progress;
       const { x, y } = effect.position;
@@ -185,7 +224,7 @@ export class BattleRenderer {
           ctx.stroke();
         }
       }
-      if (effect.value > 0) {
+      if (effect.value > 0 && prefs.damageNumbers) {
         ctx.font = "bold 14px monospace";
         ctx.textAlign = "center";
         ctx.fillStyle = effect.kind === "hurt" ? "#ffb7a0" : "#fff6d8";
@@ -230,7 +269,7 @@ export class BattleRenderer {
     }
     ctx.globalAlpha = 1;
     ctx.restore();
-    if (hurt) {
+    if (hurt && !this.reducedMotion) {
       ctx.fillStyle = `rgba(190, 65, 50, ${hurt.life * 0.22})`;
       ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
     }

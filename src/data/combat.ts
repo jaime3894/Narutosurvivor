@@ -1,6 +1,6 @@
 export const combat = {
   duration: 300,
-  world: { width: 2400, height: 1800, shore: 72 },
+  world: { width: 4800, height: 3600, shore: 72 },
   player: {
     radius: 12,
     speed: 215,

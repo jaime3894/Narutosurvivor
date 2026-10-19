@@ -17,6 +17,24 @@ export function drawProjectile(
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(Math.atan2(projectile.velocity.y, projectile.velocity.x));
+  if (projectile.form > 0) {
+    const flap = Math.sin(travel * 0.13) * 8;
+    ctx.fillStyle = projectile.form === 2 ? "#ff9e4c" : "#f0bd65";
+    ctx.strokeStyle = "#fff0b5";
+    ctx.lineWidth = 1.5;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(4, 0);
+      ctx.lineTo(-3, side * (12 + flap));
+      ctx.lineTo(-15, side * (17 + flap));
+      ctx.lineTo(-10, side * 4);
+      ctx.lineTo(-21, side * 6);
+      ctx.lineTo(-9, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
   ctx.fillStyle = "#dc633b";
   ctx.beginPath();
   ctx.moveTo(-4, -4);

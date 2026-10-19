@@ -14,10 +14,15 @@ export function frankyArms(
   return frankyElbows[attack.form][direction].map((anchor, index) => {
     const elbow = { x: root.x + anchor.x, y: root.y + anchor.y };
     const rest = { x: elbow.x + Math.sign(anchor.x) * 5, y: elbow.y + 27 };
-    const amount = index === 1 ? reach : 0;
+    const amount = attack.form === 2 ? reach : index === 1 ? reach : 0;
     const goal = {
-      x: root.x + attack.direction.x * attack.distance,
-      y: root.y - 40 + attack.direction.y * attack.distance,
+      x:
+        root.x +
+        attack.direction.x * (attack.form === 2 ? 27 : attack.distance),
+      y:
+        root.y -
+        40 +
+        attack.direction.y * (attack.form === 2 ? 27 : attack.distance),
     };
     return {
       elbow,

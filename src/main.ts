@@ -10,6 +10,7 @@ import "./style.css";
 import "./ui/crew.css";
 import "./ui/battle.css";
 import "./ui/pirate.css";
+import "./ui/viewport.css";
 const root = document.querySelector<HTMLDivElement>("#app");
 if (!root) throw new Error("Falta el contenedor principal");
 const app = root;

@@ -195,5 +195,14 @@ test("recoger un cofre evoluciona Rifle, pausa y permite continuar con la nueva 
   ).toBe(state?.elapsed);
   await dialog.getByRole("button", { name: /Gomu Gomu no Rifle/ }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.locator("#weapon-loadout .evolved")).toContainText("Rifle");
+  expect(
+    await page.evaluate(() =>
+      window
+        .__MAREA_DEBUG__!.snapshot()
+        .weapons.some((w) => w.id === "pistol" && w.evolved),
+    ),
+  ).toBe(true);
+  await expect(
+    page.locator("#weapon-loadout [data-active-weapon=pistol]"),
+  ).toHaveAttribute("aria-label", "Gomu Gomu no Pistol 5/5");
 });

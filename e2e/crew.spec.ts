@@ -52,7 +52,9 @@ test("elegir capitán, dos nakama y transformar sin mezclar sus identidades", as
     .toBe(2);
   state = await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot());
   expect(state.energy).toBe(100);
-  await expect(page.locator("#energy-text")).toHaveText("∞");
+  await expect(
+    page.locator("#energy-text, .energy-row, .crew-hud"),
+  ).toHaveCount(0);
   expect(state.synergies).toHaveLength(3);
   await page.evaluate(() => {
     window.__MAREA_DEBUG__!.setHealth(0);

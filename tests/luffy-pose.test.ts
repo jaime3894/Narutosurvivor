@@ -160,3 +160,42 @@ describe("el gesto coincide con los impactos reales", () => {
     ).toBeLessThan(20);
   });
 });
+
+it("Kong Gun repliega el brazo entre impactos de la forma final", () => {
+  const run = createRun(1);
+  run.form = 2;
+  const a: Attack = {
+    id: 1,
+    weapon: "pistol",
+    caster: "luffy",
+    form: 2,
+    age: 0,
+    windup: 0.3,
+    active: 0.5,
+    recovery: 0.3,
+    direction: { x: 1, y: 0 },
+    distance: 100,
+    range: 120,
+    target: { x: 1300, y: 900 },
+    strikes: [
+      { at: 0.34, index: 0, fired: false },
+      { at: 0.52, index: 1, fired: false },
+      { at: 0.7, index: 2, fired: false },
+    ],
+    evolved: false,
+    damage: 20,
+    width: 20,
+    hitIds: [],
+  };
+  a.age = 0.34;
+  const contact = makeLuffyPose(run, a, "right").arms[1];
+  a.age = 0.46;
+  const returnArm = makeLuffyPose(run, a, "right").arms[1];
+  const reach = (arm: typeof contact) =>
+    Math.hypot(arm.fist.x - arm.shoulder.x, arm.fist.y - arm.shoulder.y);
+  expect(reach(contact)).toBeGreaterThan(reach(returnArm) + 30);
+  a.age = 0.52;
+  expect(reach(makeLuffyPose(run, a, "right").arms[1])).toBeGreaterThan(
+    reach(returnArm) + 30,
+  );
+});

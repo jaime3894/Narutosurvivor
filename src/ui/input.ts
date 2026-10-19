@@ -15,6 +15,7 @@ export class Controls {
     window.addEventListener(
       "keydown",
       (event) => {
+        if (document.querySelector("dialog[open]")) return;
         if (
           ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(
             event.code,

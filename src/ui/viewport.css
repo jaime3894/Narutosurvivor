@@ -1,0 +1,455 @@
+/* Campo completo: el HUD acompaña al mundo y nunca le resta espacio. */
+.battle-shell {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #172c38;
+}
+.battle-shell .battle-main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  padding: 0;
+  display: block;
+}
+.battle-shell .arena {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+.battle-shell #battle {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  touch-action: none;
+}
+.field-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #fff5d5;
+  text-shadow: 1px 2px #172030;
+  font-family: Pixelify, ui-sans-serif, system-ui, sans-serif;
+}
+.field-hud button {
+  pointer-events: auto;
+}
+.field-hud .health-block {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  width: 235px;
+  max-width: 37%;
+  font-size: 17px;
+}
+.field-hud #level {
+  font-size: 12px;
+  color: #f9d36e;
+}
+.field-hud .health-meter {
+  position: relative;
+  height: 15px;
+  margin-top: 6px;
+  border: 1px solid #f8dfaa80;
+  background: #252d37;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.field-hud .health-meter i {
+  background: #ff576f;
+  height: 100%;
+  display: block;
+}
+.field-hud #hp-text {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  font-size: 11px;
+  line-height: 13px;
+}
+.field-clock {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.field-clock strong {
+  font-size: 26px;
+}
+.field-clock small {
+  display: block;
+  font-size: 10px;
+  color: #dfd8be;
+  white-space: nowrap;
+}
+.field-actions {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  top: max(14px, env(safe-area-inset-top));
+  display: flex;
+  gap: 6px;
+}
+.field-actions button {
+  width: 39px;
+  height: 37px;
+  padding: 0;
+  border: 2px solid #b8ccdf;
+  border-radius: 9px;
+  background: #193452d9;
+  color: #fff5d5;
+  font-size: 23px;
+}
+.field-hud .loadout-weapons {
+  position: absolute;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  max-width: 75%;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.field-hud .loadout-chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 55px;
+  height: 57px;
+  min-width: 0;
+  min-height: 0;
+  padding: 3px 5px 10px;
+  background: #142e38d9;
+  border: 2px solid #476672;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px #081e37a0;
+}
+.field-hud .loadout-chip[aria-pressed="true"] {
+  border-color: #ff70b4;
+  box-shadow:
+    0 0 0 2px #213b5f,
+    0 0 12px #ff70b450;
+}
+.field-hud .loadout-chip .game-icon {
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  background-size: 210px 210px;
+  background-position: calc(var(--icon-x) * -35px) calc(var(--icon-y) * -35px);
+}
+.field-hud .loadout-chip b {
+  position: absolute;
+  bottom: 2px;
+  font-size: 10px;
+  line-height: 10px;
+  color: #f9dd98;
+}
+.field-hud .dash-button {
+  position: absolute;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(25px, env(safe-area-inset-bottom));
+  width: calc(63px * var(--touch-scale, 1));
+  height: calc(63px * var(--touch-scale, 1));
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  border-radius: 50%;
+  font-size: 24px;
+  background: #1e415bd9;
+  border: 2px solid #c3dcea;
+}
+.field-hud #dash-state {
+  font-size: 10px;
+}
+.field-hud .xp-meter {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  border: 0;
+  border-radius: 0;
+  background: #152c3f80;
+}
+.field-hud .xp-meter i {
+  height: 100%;
+  display: block;
+  background: #7bcfe8;
+}
+.field-hud .wave-note {
+  position: absolute;
+  top: 86px;
+  left: 50%;
+  bottom: auto;
+  width: max-content;
+  max-width: 75%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 12px;
+  padding: 5px 10px;
+  background: #122b3699;
+  border: 0;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.wave-note:empty {
+  display: none;
+}
+.rift-hud {
+  position: absolute;
+  top: 125px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 12px;
+}
+.rift-hud p:empty {
+  display: none;
+}
+#fps-text {
+  position: absolute;
+  left: 16px;
+  top: 72px;
+  font-size: 11px;
+  color: #d7e9dd;
+}
+.battle-shell #overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+.battle-shell #overlay .scrim {
+  pointer-events: auto;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 16px;
+  background: #07172eb8;
+  backdrop-filter: blur(3px);
+}
+.battle-shell .battle-modal {
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  width: min(960px, 100%);
+  margin: auto;
+}
+.battle-shell .debug-tools {
+  position: absolute;
+  z-index: 9;
+  left: 8px;
+  bottom: 92px;
+  max-width: 60%;
+  max-height: 85px;
+  overflow: auto;
+  font-size: 10px;
+  background: #102c3bd9;
+  padding: 4px;
+  opacity: 0.8;
+}
+.debug-tools button,
+.debug-tools select {
+  min-height: 25px;
+  padding: 3px;
+  font-size: 10px;
+}
+.settings-dialog {
+  width: min(700px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 24px;
+  color: #f9f1d5;
+  background: linear-gradient(145deg, #315792, #1c335b);
+  border: 3px solid #e3edff;
+  border-radius: 16px;
+  font-family: inherit;
+  box-shadow: 0 20px 70px #07152c;
+}
+.settings-dialog::backdrop {
+  background: #071326c9;
+  backdrop-filter: blur(4px);
+}
+.settings-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.settings-dialog h1 {
+  font-size: 28px;
+}
+.settings-dialog h2 {
+  font-size: 19px;
+  color: #ffe09a;
+  margin: 22px 0 10px;
+}
+.settings-dialog label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 11px 0;
+  border-bottom: 1px solid #c3dbff25;
+}
+.settings-dialog select {
+  max-width: 55%;
+  background: #142747;
+  color: #fff1ce;
+  border: 2px solid #789ac7;
+  padding: 8px;
+  border-radius: 7px;
+}
+.settings-dialog input[type="checkbox"] {
+  width: 23px;
+  height: 23px;
+  accent-color: #ffd45c;
+}
+.settings-dialog button {
+  background: #173454;
+  border: 2px solid #a3bfe4;
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: #fff3d2;
+}
+.settings-dialog p {
+  line-height: 1.5;
+  color: #d5e1ef;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  .field-hud .health-block {
+    left: 10px;
+    top: 12px;
+    max-width: 38%;
+    font-size: 13px;
+  }
+  .field-hud #level {
+    display: block;
+    font-size: 10px;
+  }
+  .field-clock {
+    top: 13px;
+  }
+  .field-clock strong {
+    font-size: 22px;
+  }
+  .field-clock small {
+    max-width: 105px;
+    white-space: normal;
+    font-size: 8px;
+  }
+  .field-actions {
+    right: 8px;
+    top: 12px;
+    gap: 3px;
+  }
+  .field-actions button {
+    width: 29px;
+    height: 31px;
+    font-size: 18px;
+  }
+  .field-hud .loadout-weapons {
+    gap: 4px;
+    max-width: 72%;
+    bottom: 20px;
+    left: 43%;
+  }
+  .field-hud .loadout-chip {
+    width: 42px;
+    height: 47px;
+    padding: 2px 2px 10px;
+  }
+  .field-hud .loadout-chip .game-icon {
+    width: 29px;
+    height: 29px;
+    background-size: 174px 174px;
+    background-position: calc(var(--icon-x) * -29px) calc(var(--icon-y) * -29px);
+  }
+  .field-hud .wave-note {
+    top: 86px;
+    font-size: 10px;
+  }
+  .field-hud .dash-button {
+    right: 10px;
+    bottom: 25px;
+    width: calc(48px * var(--touch-scale, 1));
+    height: calc(48px * var(--touch-scale, 1));
+  }
+  .settings-dialog {
+    padding: 16px;
+  }
+}
+
+.settings-row small {
+  display: block;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.4;
+  color: #c9d9ef;
+  margin-top: 4px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-hud button {
+  margin: 0;
+  color: #f3f2dd;
+}
+.field-hud button span {
+  margin-left: 0;
+}
+.field-actions button {
+  display: grid;
+  place-items: center;
+}
+.field-actions svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+.field-hud .dash-button svg {
+  width: 25px;
+  height: 25px;
+  pointer-events: none;
+}
+.settings-dialog header {
+  padding: 0 0 16px;
+  max-width: none;
+  margin: 0;
+}
+.settings-dialog h1 {
+  margin: 6px 0;
+}
+.field-hud .wave-note {
+  max-width: calc(100% - 24px);
+}
+@media (max-width: 600px) {
+  .field-actions svg {
+    width: 17px;
+    height: 17px;
+  }
+}

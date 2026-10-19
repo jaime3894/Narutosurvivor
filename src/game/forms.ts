@@ -17,7 +17,7 @@ export function masteredForm(
   return 1;
 }
 export function formRequirement(id: CharacterId, tier: FormTier): string {
-  if (tier === 0) return "Estilo inicial · energía infinita";
+  if (tier === 0) return "Estilo inicial";
   const rule = formMilestones[id];
   return tier === 1
     ? `${weaponById(rule.first).title} 5/5`
@@ -33,6 +33,6 @@ export function syncForms(run: Run): void {
   run.energy = 100;
   run.transformTime = 0.7;
   run.attacks = run.attacks.filter((a) => a.caster !== run.character);
-  run.notice = `¡${characterById(run.character).forms[tier].name}! · dominio de técnica · energía infinita`;
+  run.notice = `¡${characterById(run.character).forms[tier].name}! · dominio de técnica`;
   run.noticeTime = 4;
 }

@@ -80,16 +80,18 @@ export function makeLuffyPose(
         : 1.5 * (1 - ease(recovery));
   const profile = direction === "left" || direction === "right";
   const sign = direction === "left" ? -1 : 1;
-  const bodyAngle = profile
-    ? sign *
-      (phase === "windup"
-        ? -animationFeel.torsoWindup * prepare
-        : phase === "active"
-          ? -animationFeel.torsoWindup +
-            (animationFeel.torsoWindup + animationFeel.torsoFollowThrough) *
-              reach
-          : animationFeel.torsoFollowThrough * (1 - ease(recovery)))
-    : 0;
+  const bodyAngle =
+    (attack.form === 1 ? 1.35 : attack.form === 2 ? 0.8 : 1) *
+    (profile
+      ? sign *
+        (phase === "windup"
+          ? -animationFeel.torsoWindup * prepare
+          : phase === "active"
+            ? -animationFeel.torsoWindup +
+              (animationFeel.torsoWindup + animationFeel.torsoFollowThrough) *
+                reach
+            : animationFeel.torsoFollowThrough * (1 - ease(recovery)))
+      : 0);
   const origin = casterPosition(run, "luffy"),
     root = {
       x: origin.x + attack.direction.x * lean,
@@ -119,7 +121,9 @@ export function makeLuffyPose(
       attack.weapon === "gatling"
         ? barrageReach(attack, side === near ? 0 : 1)
         : participates
-          ? reach
+          ? attack.form === 2 && attack.strikes.length > 1
+            ? barrageReach(attack)
+            : reach
           : 0;
     const separation = attack.weapon === "bazooka" ? side * 7 : 0;
     const goal = {
@@ -133,7 +137,9 @@ export function makeLuffyPose(
     const dx = fist.x - shoulder.x,
       dy = fist.y - shoulder.y,
       length = Math.hypot(dx, dy) || 1;
-    const bend = animationFeel.armBend * Math.sin(Math.PI * amount) * side;
+    const spring = attack.form === 2 ? 1.8 : attack.form === 1 ? 0.55 : 1;
+    const bend =
+      animationFeel.armBend * spring * Math.sin(Math.PI * amount) * side;
     const elbow = {
       x: (shoulder.x + fist.x) / 2 - (dy / length) * bend,
       y: (shoulder.y + fist.y) / 2 + (dx / length) * bend,

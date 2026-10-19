@@ -1,3 +1,4 @@
+import { freePosition } from "./terrain";
 import { syncForms } from "./forms";
 import { xpForLevel } from "../data/combat";
 import {
@@ -109,7 +110,12 @@ export function spawnChest(
   position = run.player.position,
 ): Chest | undefined {
   if (run.chests.length >= 4) return undefined;
-  const chest = { id: run.nextId++, position: { ...position } };
+  const chest = {
+    id: run.nextId++,
+    position: run.arena
+      ? { ...position }
+      : freePosition(position, 20, run.elapsed),
+  };
   run.chests.push(chest);
   return chest;
 }

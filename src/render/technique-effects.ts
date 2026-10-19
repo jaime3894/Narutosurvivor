@@ -55,15 +55,21 @@ export function drawClutch(
     a.age < a.windup + a.active
       ? 1
       : 1 - ease((a.age - a.windup - a.active) / a.recovery);
-  const giant = a.form === 1 ? 1.3 : 1;
-  for (const side of [-1, 1]) {
-    const x = target.x + side * 24,
-      y = target.y + 24;
+  const giant = a.form === 1 ? 1.6 : a.form === 2 ? 1.3 : 1;
+  for (const limb of Array.from(
+    { length: a.form === 2 ? 6 : 2 },
+    (_, i) => i,
+  )) {
+    const side = limb % 2 === 0 ? -1 : 1;
+    const level = Math.floor(limb / 2);
+    const x = target.x + side * (24 + level * 9),
+      y = target.y + 24 - level * 15;
     ctx.save();
     ctx.globalAlpha *= alpha;
     petals(ctx, x, y, reduced ? 4 : 4 + a.age * 15, a.age);
     ctx.translate(x, y);
     ctx.scale(side * growth * giant, growth * giant);
+    if (a.form === 2) ctx.rotate((level - 1) * 0.35 * growth);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -200,19 +206,22 @@ export function drawVines(
       ? 1
       : 1 - ease((a.age - a.windup - a.active) / a.recovery);
   for (let i = -1; i <= 1; i++) {
-    const x = target.x + i * 18;
+    const x = target.x + i * (a.form > 0 ? 24 : 18);
     ctx.strokeStyle = "#294f3b";
     ctx.lineWidth = 7;
     ctx.beginPath();
     ctx.moveTo(x, target.y + 20);
-    ctx.bezierCurveTo(
-      x + i * 27,
-      target.y + 15 - growth * 55,
-      x - i * 13,
-      target.y + 20 - growth * 65,
-      x + i * 7,
-      target.y + 20 - growth * 40,
-    );
+    if (a.form === 1) {
+      ctx.lineTo(x + i * 6, target.y + 20 - growth * (65 - Math.abs(i) * 9));
+    } else
+      ctx.bezierCurveTo(
+        x + i * 27,
+        target.y + 15 - growth * 55,
+        x - i * 13,
+        target.y + 20 - growth * 65,
+        x + i * 7,
+        target.y + 20 - growth * 40,
+      );
     ctx.stroke();
     ctx.strokeStyle = "#89b65f";
     ctx.lineWidth = 3;
@@ -262,7 +271,8 @@ export function drawCut(
         ? "#ceadf3"
         : color;
   ctx.lineWidth = a.evolved ? 4 : 2.5;
-  const count = a.caster === "zoro" ? 3 : 1;
+  const count =
+    a.caster === "zoro" ? (a.form === 2 ? 9 : 3) : a.form === 2 ? 3 : 1;
   for (let i = 0; i < count; i++) {
     ctx.beginPath();
     ctx.moveTo(-8 + i * 4, -22 + i * 4);

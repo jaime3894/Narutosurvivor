@@ -19,10 +19,10 @@ export function contactReach(attack: Attack): number {
   );
 }
 /** Cada brazo recupera antes de su siguiente golpe de Gatling. */
-export function barrageReach(attack: Attack, parity: number): number {
+export function barrageReach(attack: Attack, parity?: number): number {
   let reach = 0;
   const strikes = attack.strikes.filter(
-    (strike) => strike.index % 2 === parity,
+    (strike) => parity === undefined || strike.index % 2 === parity,
   );
   for (let index = 0; index < strikes.length; index++) {
     const strike = strikes[index];

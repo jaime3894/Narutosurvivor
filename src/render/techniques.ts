@@ -1,3 +1,4 @@
+import { drawFormEffects } from "./form-effects";
 import { casterPosition } from "../game/crew";
 import { affinityColors, weaponById } from "../data/content";
 import type { Run } from "../game/types";
@@ -110,6 +111,7 @@ export function drawTechniques(
         break;
       }
       case "palm": {
+        if (attack.form > 0) break;
         if (attack.age < contact || progress.phase !== "active") break;
         ctx.strokeStyle = "#b1e6e3";
         ctx.lineWidth = 3;
@@ -167,6 +169,13 @@ export function drawTechniques(
         // Los dos brazos texturizados se dibujan una sola vez en el rig de Luffy.
         break;
     }
+    drawFormEffects(
+      ctx,
+      attack,
+      origin,
+      { x: endpoint.x, y: endpoint.y - 40 },
+      reducedMotion,
+    );
     ctx.restore();
   }
 }

@@ -1,3 +1,4 @@
+import { moveOnTerrain, steerAround } from "./terrain";
 import { activeSynergies, characterById, type FormTier } from "../data/crew";
 import { masteredForm, syncForms } from "./forms";
 import type { CharacterId } from "../data/content";
@@ -28,7 +29,7 @@ export function changeForm(run: Run, form: FormTier): boolean {
   run.attacks = run.attacks.filter((attack) => attack.caster !== run.character);
   if (form > 0)
     run.player.invulnerable = Math.max(run.player.invulnerable, 0.15);
-  run.notice = `${definition.name} · energía infinita`;
+  run.notice = definition.name;
   run.noticeTime = 3;
   return true;
 }
@@ -60,8 +61,24 @@ export function updateCrew(run: Run, dt: number): void {
     const distance = Math.hypot(dx, dy);
     const travel = Math.min(distance, (225 + distance * 2) * dt);
     if (distance > 1) {
-      nakama.position.x += (dx / distance) * travel;
-      nakama.position.y += (dy / distance) * travel;
+      if (run.arena) {
+        nakama.position.x += (dx / distance) * travel;
+        nakama.position.y += (dy / distance) * travel;
+      } else {
+        const direction = steerAround(
+          nakama.position,
+          target,
+          10,
+          run.elapsed,
+          index,
+        );
+        moveOnTerrain(
+          nakama.position,
+          { x: direction.x * travel, y: direction.y * travel },
+          10,
+          run.elapsed,
+        );
+      }
       nakama.facing = { x: dx / distance, y: dy / distance };
     }
     nakama.moving = distance > 5;

@@ -1,3 +1,4 @@
+import { techniqueDefinition } from "../data/technique-forms";
 import { activeTechniques } from "./bonds";
 import { characterById } from "../data/crew";
 import { casterPosition, casterForm } from "./crew";
@@ -125,14 +126,17 @@ function createAttack(
   };
 }
 function strike(run: Run, attack: Attack, index: number): void {
-  const definition = weaponById(attack.weapon);
+  const definition = techniqueDefinition(attack.weapon, attack.form);
   const origin = casterPosition(run, attack.caster);
   const endpoint = attackEndpoint(run, attack);
   if (definition.shape === "projectile") {
+    const angle =
+      Math.atan2(attack.direction.y, attack.direction.x) +
+      (attack.form > 0 ? (index - (attack.strikes.length - 1) / 2) * 0.1 : 0);
     run.projectiles.push({
       id: run.nextId++,
       position: { ...origin },
-      velocity: { x: attack.direction.x * 580, y: attack.direction.y * 580 },
+      velocity: { x: Math.cos(angle) * 580, y: Math.sin(angle) * 580 },
       damage: attack.damage,
       life: attack.distance / 580 + 0.2,
       weapon: attack.weapon,
@@ -224,7 +228,10 @@ export function updateTechniques(run: Run, dt: number): void {
   for (const slot of slots) {
     if (!groupReady) continue;
     if (slot.timer > 0 || run.attacks.length >= 16) continue;
-    const definition = weaponById(slot.id);
+    const definition = techniqueDefinition(
+      slot.id,
+      casterForm(run, weaponById(slot.id).owner),
+    );
     const attack = createAttack(
       run,
       definition,
@@ -246,7 +253,10 @@ export function updateTechniques(run: Run, dt: number): void {
   for (const nakama of run.nakama) {
     nakama.timer = Math.max(0, nakama.timer - dt);
     if (nakama.timer > 0 || run.attacks.length >= 16) continue;
-    const definition = weaponById(characterById(nakama.character).starter);
+    const definition = techniqueDefinition(
+      characterById(nakama.character).starter,
+      casterForm(run, nakama.character),
+    );
     if (active.includes(definition.id)) continue;
     const attack = createAttack(run, definition, false, nakama.character);
     if (attack) {

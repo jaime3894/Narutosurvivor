@@ -1,3 +1,4 @@
+import { freePosition } from "./terrain";
 import { bossMoves, bossRepertoire } from "../data/boss-moves";
 import { bosses, bossOrder, riftRules } from "../data/rifts";
 import { combat } from "../data/combat";
@@ -27,6 +28,7 @@ export function spawnRift(run: Run): boolean {
     remaining: riftRules.ttl,
     boss: bossOrder[run.bossesDefeated % bossOrder.length] ?? "buggy",
   };
+  run.rift.position = freePosition(run.rift.position, 26, run.elapsed);
   if (run.noticeTime < 4)
     notify(
       run,

@@ -56,7 +56,21 @@ export function combatPose(attack: Attack): {
   const heavy = attack.weapon === "concasse";
   return {
     frame,
-    advance: amount * (attack.caster === "brook" ? 9 : 3),
+    advance:
+      amount *
+      (attack.caster === "brook"
+        ? attack.form === 2
+          ? 15
+          : 9
+        : attack.caster === "zoro"
+          ? attack.form === 2
+            ? 12
+            : attack.form === 1
+              ? 8
+              : 3
+          : attack.caster === "sanji"
+            ? 3 + attack.form * 3
+            : 3),
     lift: heavy
       ? frame < 2
         ? -9 * ease(attack.age / contact)

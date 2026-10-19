@@ -1,3 +1,4 @@
+import { combat } from "../data/combat";
 import type { Run } from "./types";
 import { distanceSquared, effect, hitEnemy, notify, stats } from "./rules";
 import { openChest, spawnChest } from "./progression";
@@ -8,11 +9,17 @@ export function updateLoot(run: Run, dt: number): void {
     spawnChest(run, {
       x: Math.max(
         100,
-        Math.min(2300, run.player.position.x + Math.cos(angle) * 180),
+        Math.min(
+          combat.world.width - 100,
+          run.player.position.x + Math.cos(angle) * 180,
+        ),
       ),
       y: Math.max(
         100,
-        Math.min(1700, run.player.position.y + Math.sin(angle) * 180),
+        Math.min(
+          combat.world.height - 100,
+          run.player.position.y + Math.sin(angle) * 180,
+        ),
       ),
     });
     run.chestTimer += 55;

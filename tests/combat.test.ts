@@ -1,3 +1,4 @@
+import { steerAround } from "../src/game/terrain";
 import {
   chooseBossReward,
   linkTechnique,
@@ -47,8 +48,12 @@ describe("combate y controles", () => {
     advance(a, 1, { x: 1, y: 0, dash: false });
     advance(b, 1, { x: 1, y: 1, dash: false });
     expect(a.distance).toBeCloseTo(b.distance);
-    advance(a, 20, { x: 1, y: 0, dash: false });
-    expect(a.player.position.x).toBe(combat.world.width - combat.world.shore);
+    a.player.position.y = combat.world.shore + a.player.radius;
+    a.spawnTimer = 100;
+    advance(a, 25, { x: 1, y: 0, dash: false });
+    expect(a.player.position.x).toBe(
+      combat.world.width - combat.world.shore - a.player.radius,
+    );
   });
   it("golpea automáticamente tras la preparación y deja experiencia", () => {
     const run = createRun(1);
@@ -251,8 +256,11 @@ function pilot(run: Run): Input {
       x: 1200 + Math.cos(phase) * 370,
       y: 900 + Math.sin(phase) * 320,
     };
-  const dx = goal.x - player.x,
-    dy = goal.y - player.y;
+  const direct = run.arena
+    ? { x: goal.x - player.x, y: goal.y - player.y }
+    : steerAround(player, goal, run.player.radius, run.elapsed);
+  const dx = direct.x,
+    dy = direct.y;
   const distance = Math.hypot(dx, dy) || 1;
   let x = dx / distance,
     y = dy / distance;

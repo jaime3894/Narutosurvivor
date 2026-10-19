@@ -1,5 +1,5 @@
 import type { CharacterId, WeaponId } from "../data/content";
-import { weaponById } from "../data/content";
+import { techniqueDefinition } from "../data/technique-forms";
 import type { FormTier } from "../data/crew";
 import { createRun } from "../game/simulation";
 import type { Attack, Run } from "../game/types";
@@ -22,7 +22,7 @@ export function createTechniquePreview(): (
     const key = `${id}:${form}:${weapon}:${direction}`;
     if (cached?.key !== key) {
       const run = createRun(1, id),
-        definition = weaponById(weapon);
+        definition = techniqueDefinition(weapon, form);
       const vector =
         direction === "left"
           ? { x: -1, y: 0 }

@@ -66,7 +66,7 @@ function drawArm(
 ): void {
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  const bulk = form === 2 ? 1.25 : 1;
+  const bulk = form === 2 ? 1.7 : 1;
   if (!arm.extended) {
     const col = arm.side === -1 ? 2 : 3;
     ctx.drawImage(
