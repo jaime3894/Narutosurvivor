@@ -7,6 +7,10 @@ test("tres jefes permiten elegir vínculos de dos, tres y cuatro técnicas por l
   await page.goto("/?debug");
   await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
   for (const [i, id] of (["gatling", "bazooka", "whip"] as const).entries()) {
+    await page.evaluate(
+      (technique) => window.__MAREA_DEBUG__!.learnTechnique(technique),
+      id,
+    );
     await page.getByRole("button", { name: "Grieta", exact: true }).click();
     const before = await page.evaluate(() =>
       window.__MAREA_DEBUG__!.snapshot(),

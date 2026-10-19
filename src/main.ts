@@ -1,3 +1,4 @@
+import { openMissions } from "./ui/missions";
 import { loadCustomAtlases } from "./render/asset-loader";
 import { openCrew } from "./ui/crew";
 import type { CrewSelection } from "./data/crew";
@@ -25,6 +26,11 @@ function showPort(): void {
       cleanup?.();
       cleanup = startSession(app, showPort, debug, selection);
     },
+    missions: () =>
+      openMissions((id) => {
+        cleanup?.();
+        cleanup = startSession(app, showPort, debug, selection, id);
+      }),
     crew: () =>
       openCrew(selection, (next) => {
         selection = next;

@@ -1,3 +1,4 @@
+import { terrainTime, type MissionId } from "./missions";
 export const voyageStages = [
   {
     id: "coast",
@@ -43,9 +44,12 @@ export const voyageStages = [
   },
 ] as const;
 export type VoyageStage = (typeof voyageStages)[number];
-export const voyageStage = (seconds: number): VoyageStage =>
-  seconds >= 240
+export const voyageStage = (
+  seconds: number,
+  mission: MissionId = "voyage",
+): VoyageStage =>
+  terrainTime(seconds, mission) >= 240
     ? voyageStages[2]
-    : seconds >= 120
+    : terrainTime(seconds, mission) >= 120
       ? voyageStages[1]
       : voyageStages[0];

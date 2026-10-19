@@ -240,8 +240,11 @@ describe("recompensas y vínculos", () => {
     for (const [index, id] of (
       ["gatling", "bazooka", "whip"] as const
     ).entries()) {
+      expect(grantUpgrade(run, weaponKey(id))).toBe(true);
+      const rank = run.ranks[weaponKey(id)];
       victory(run);
       bond(run, id);
+      expect(run.ranks[weaponKey(id)]).toBe(rank);
       expect(run.linkedWeapons).toHaveLength(index + 2);
       expect(activeTechniques(run)).toEqual(run.linkedWeapons);
       expect(run.weapons.length).toBe(index + 2);
@@ -290,5 +293,38 @@ describe("recompensas y vínculos", () => {
     expect(bondCandidates(run)).toContain("whip");
     expect(linkTechnique(run, "whip")).toBe(true);
     expect(activeTechniques(run)).toHaveLength(3);
+  });
+});
+
+describe("vínculos de inventario, sin aprender ataques del catálogo", () => {
+  it("con una técnica solo ofrece atributos y rechaza un ataque propio sin aprender", () => {
+    const run = createRun(1);
+    victory(run);
+    expect(run.bossRewards.every((r) => r.kind === "boon")).toBe(true);
+    expect(bondCandidates(run)).toEqual([]);
+    run.status = "bond";
+    const before = JSON.stringify(run);
+    expect(linkTechnique(run, "gatling")).toBe(false);
+    expect(JSON.stringify(run)).toBe(before);
+  });
+  it("solo ofrece las aprendidas, respeta sus rangos y mantiene pendientes las no aprendidas tras otro jefe", () => {
+    const run = createRun(1);
+    grantUpgrade(run, "weapon:gatling");
+    grantUpgrade(run, "weapon:gatling");
+    expect(bondCandidates(run)).toEqual(["gatling"]);
+    victory(run);
+    bond(run, "gatling");
+    expect(run.ranks["weapon:gatling"]).toBe(2);
+    const inventory = JSON.stringify(
+      run.weapons.map((w) => ({ id: w.id, evolved: w.evolved })),
+    );
+    victory(run);
+    expect(bondCandidates(run)).toEqual([]);
+    expect(run.bossRewards.every((r) => r.kind === "boon")).toBe(true);
+    expect(
+      JSON.stringify(
+        run.weapons.map((w) => ({ id: w.id, evolved: w.evolved })),
+      ),
+    ).toBe(inventory);
   });
 });

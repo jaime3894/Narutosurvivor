@@ -1,3 +1,4 @@
+import type { MissionId } from "../data/missions";
 import type { BossMoveId } from "../data/boss-moves";
 import type { Preparation } from "../data/training";
 import type { FormTier } from "../data/crew";
@@ -83,6 +84,7 @@ export interface Effect {
     | "pickup"
     | "level"
     | "evolve"
+    | "shell"
     | "explosion"
     | "heal";
   life: number;
@@ -134,12 +136,31 @@ export interface ChestReward {
   id?: UpgradeId;
   amount?: number;
 }
+export interface CampaignEncounter {
+  index: number;
+  role: "miniboss" | "final";
+  health: number;
+  seconds: number;
+}
+export interface ShellWarning {
+  id: number;
+  position: Position;
+  remaining: number;
+}
+export interface DirectorState {
+  nextEncounter: number;
+  finalDefeated: boolean;
+  busterStarted: boolean;
+  buster: { remaining: number; timer: number; shells: ShellWarning[] } | null;
+}
 export interface Rift {
+  encounter?: CampaignEncounter;
   position: Position;
   remaining: number;
   boss: BossId;
 }
 export interface RiftArena {
+  encounter?: CampaignEncounter;
   center: Position;
   remaining: number;
   bossId: number;
@@ -155,7 +176,7 @@ export interface Hazard {
   radius: number;
   damage: number;
   life: number;
-  kind: "knife" | "wave" | "bomb" | "claw";
+  kind: "knife" | "wave" | "bomb" | "claw" | "sand";
 }
 export interface BossReward {
   kind: "bond" | "boon";
@@ -172,6 +193,8 @@ export interface Nakama {
   supportTimer: number;
 }
 export interface Run {
+  mission: MissionId;
+  director: DirectorState;
   id: string;
   preparation: Preparation;
   rerollsLeft: number;

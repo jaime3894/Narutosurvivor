@@ -1,4 +1,4 @@
-import { bossOrder, type BossId } from "../data/rifts";
+import { allBosses, bossArt, type BossId } from "../data/rifts";
 import type { Enemy } from "../game/types";
 const atlases = new Map<BossId, HTMLImageElement>();
 const walks = new Map<BossId, HTMLImageElement>();
@@ -6,9 +6,9 @@ export const bossAtlas = (id: BossId): HTMLImageElement | undefined =>
   atlases.get(id);
 export async function loadBossAtlases(root: URL): Promise<void> {
   await Promise.all(
-    bossOrder.map(async (id) => {
+    allBosses.map(async (id) => {
       const walk = new Image();
-      walk.src = new URL(`assets/bosses/${id}-walk-v7.png`, root).href;
+      walk.src = new URL(bossArt(id).walk, root).href;
       try {
         await walk.decode();
         if (walk.width === 1152 && walk.height === 256) walks.set(id, walk);
@@ -16,7 +16,7 @@ export async function loadBossAtlases(root: URL): Promise<void> {
         console.warn(`Marcha de ${id} no disponible.`);
       }
       const image = new Image();
-      image.src = new URL(`assets/bosses/${id}-v6.png`, root).href;
+      image.src = new URL(bossArt(id).poses, root).href;
       try {
         await image.decode();
         if (image.width !== 1024 || image.height !== 128)

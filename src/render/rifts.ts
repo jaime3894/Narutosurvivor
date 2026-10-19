@@ -1,4 +1,5 @@
-import { bossMoves } from "../data/boss-moves";
+import { busterRules } from "../data/missions";
+import { bossMoves, fanPatterns } from "../data/boss-moves";
 import { bosses, riftRules } from "../data/rifts";
 import type { Run, Enemy } from "../game/types";
 export function drawRifts(
@@ -7,6 +8,37 @@ export function drawRifts(
   reduced: boolean,
 ): void {
   ctx.save();
+  for (const shell of run.director.buster?.shells ?? []) {
+    const progress = 1 - shell.remaining / busterRules.warning;
+    ctx.fillStyle = "rgba(241,116,69,.22)";
+    ctx.strokeStyle = "#ffdd94";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(
+      shell.position.x,
+      shell.position.y,
+      busterRules.radius,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(
+      shell.position.x,
+      shell.position.y,
+      Math.max(1, busterRules.radius * progress),
+      -Math.PI / 2,
+      -Math.PI / 2 + Math.PI * 2 * progress,
+    );
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(shell.position.x - 8, shell.position.y);
+    ctx.lineTo(shell.position.x + 8, shell.position.y);
+    ctx.moveTo(shell.position.x, shell.position.y - 8);
+    ctx.lineTo(shell.position.x, shell.position.y + 8);
+    ctx.stroke();
+  }
   if (run.rift) {
     const { x, y } = run.rift.position;
     ctx.fillStyle = "#201b36";
@@ -59,14 +91,14 @@ export function drawRifts(
       ctx.arc(0, 0, h.radius * (0.6 + progress * 0.4), 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-    } else if (h.kind === "wave") {
+    } else if (h.kind === "wave" || h.kind === "sand") {
       ctx.rotate(Math.atan2(h.velocity.y, h.velocity.x));
-      ctx.strokeStyle = "#b5eff9";
+      ctx.strokeStyle = h.kind === "sand" ? "#e3c689" : "#b5eff9";
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.arc(-5, 0, 20, -1.1, 1.1);
       ctx.stroke();
-      ctx.strokeStyle = "#4bacc9";
+      ctx.strokeStyle = h.kind === "sand" ? "#a47d4b" : "#4bacc9";
       ctx.beginPath();
       ctx.arc(-11, 0, 24, -1.1, 1.1);
       ctx.stroke();
@@ -105,13 +137,14 @@ export function drawBossTelegraph(
     b.phase === "windup" ||
     (b.phase === "attack" && (b.move === "slam" || b.move === "claw"))
   ) {
-    if (b.move === "slam" || b.move === "knifeRing" || b.move === "bomb") {
-      const position = b.move === "bomb" ? b.target : enemy.position;
+    if (["slam", "knifeRing", "bomb", "sandTomb"].includes(b.move)) {
+      const position =
+        b.move === "bomb" || b.move === "sandTomb" ? b.target : enemy.position;
       ctx.beginPath();
       ctx.arc(position.x, position.y, move.range, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      if (b.move === "bomb") {
+      if (b.move === "bomb" || b.move === "sandTomb") {
         ctx.beginPath();
         ctx.moveTo(position.x - 12, position.y);
         ctx.lineTo(position.x + 12, position.y);
@@ -121,22 +154,47 @@ export function drawBossTelegraph(
       }
     } else {
       const angle = Math.atan2(b.direction.y, b.direction.x),
-        wide =
-          b.move === "knifeFan" || b.move === "sharkWave" || b.move === "claw";
-      for (let line = 0; line < (b.move === "crossDash" ? 2 : 1); line++) {
-        ctx.save();
-        ctx.translate(enemy.position.x, enemy.position.y);
-        ctx.rotate(angle + (line * Math.PI) / 2);
+        fan = fanPatterns[b.move];
+      ctx.save();
+      ctx.translate(enemy.position.x, enemy.position.y);
+      ctx.rotate(angle);
+      if (fan) {
+        const count =
+          enemy.health.current < enemy.health.maximum * 0.5
+            ? fan.enraged
+            : fan.count;
+        for (let i = 0; i < count; i++) {
+          const theta = fan.radial
+            ? (i * Math.PI * 2) / count
+            : (i - (count - 1) / 2) * fan.spread;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(theta) * 30, Math.sin(theta) * 30);
+          ctx.lineTo(
+            Math.cos(theta) * move.range,
+            Math.sin(theta) * move.range,
+          );
+          ctx.stroke();
+        }
+      } else if (b.move === "claw" || b.move === "bladeCross") {
+        const arc = Math.acos(0.45);
         ctx.beginPath();
-        ctx.moveTo(0, -18);
-        ctx.lineTo(move.range, -(wide ? 100 : 18));
-        ctx.lineTo(move.range, wide ? 100 : 18);
-        ctx.lineTo(0, 18);
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, move.range, -arc, arc);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-        ctx.restore();
+      } else {
+        for (let line = 0; line < (b.move === "crossDash" ? 2 : 1); line++) {
+          ctx.save();
+          ctx.rotate((line * Math.PI) / 2);
+          ctx.beginPath();
+          ctx.rect(0, -18, move.range, 36);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
       }
+      ctx.restore();
     }
   }
   ctx.textAlign = "center";

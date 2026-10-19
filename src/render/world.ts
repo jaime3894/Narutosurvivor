@@ -1,3 +1,4 @@
+import { terrainTime, type MissionId } from "../data/missions";
 import { worldProps } from "../data/terrain";
 import { voyageStage } from "../data/voyage";
 import { worldAsset } from "./world-assets";
@@ -45,9 +46,10 @@ export function drawWorld(
   options: {
     clear?: { x: number; y: number; radius: number };
     lighting?: boolean;
+    mission?: MissionId;
   } = {},
 ): void {
-  const stage = voyageStage(seconds),
+  const stage = voyageStage(seconds, options.mission),
     ps = patterns(ctx),
     shore = combat.world.shore;
   ctx.save();
@@ -99,7 +101,12 @@ export function drawWorld(
       ctx.globalAlpha = 1;
       ctx.restore();
     }
-  drawDecorations(ctx, view, seconds, options.clear);
+  drawDecorations(
+    ctx,
+    view,
+    terrainTime(seconds, options.mission),
+    options.clear,
+  );
   if (options.lighting === false) {
     ctx.restore();
     return;

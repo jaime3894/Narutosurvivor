@@ -90,6 +90,7 @@ test("Zoro solo puede vincular sus dos técnicas; después el jefe ofrece atribu
   await page.goto("/?debug");
   await page.getByRole("button", { name: "Capitán Zoro", exact: true }).click();
   await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.evaluate(() => window.__MAREA_DEBUG__!.learnTechnique("phoenix"));
   await page.getByRole("button", { name: "Grieta", exact: true }).click();
   await page
     .getByRole("button", { name: "Derrotar jefe", exact: true })

@@ -9,6 +9,24 @@ export const riftRules = {
   maxBond: 4,
 } as const;
 export const bosses = {
+  mr1: {
+    name: "Mr.1 · Daz Bones",
+    subtitle: "Supa Supa · acero cortante",
+    health: 2100,
+    damage: 24,
+    speed: 92,
+    radius: 25,
+    color: "#b9cbd9",
+  },
+  crocodile: {
+    name: "Sir Crocodile",
+    subtitle: "Suna Suna · señor del desierto",
+    health: 3200,
+    damage: 30,
+    speed: 87,
+    radius: 28,
+    color: "#d9ba75",
+  },
   buggy: {
     name: "Buggy, el Payaso",
     subtitle: "Bara Bara · lluvia de cuchillos",
@@ -39,6 +57,11 @@ export const bosses = {
 } as const;
 export type BossId = keyof typeof bosses;
 export const bossOrder: readonly BossId[] = ["buggy", "kuro", "arlong"];
+export const allBosses: readonly BossId[] = [...bossOrder, "mr1", "crocodile"];
+export const bossArt = (id: BossId): { poses: string; walk: string } => ({
+  poses: `assets/bosses/${id}-${id === "mr1" || id === "crocodile" ? "v9" : "v6"}.png`,
+  walk: `assets/bosses/${id}-walk-${id === "mr1" || id === "crocodile" ? "v9" : "v7"}.png`,
+});
 export const boons = {
   damage: {
     title: "Voluntad del conquistador",

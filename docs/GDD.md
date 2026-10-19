@@ -289,3 +289,36 @@ Las 18 ranuras poseen tres ejecuciones (54 combinaciones), definidas en `techniq
 | Jinbe | Karakusa, onda circular de palma | Vagabond Drill dirigido, onda helicoidal |
 
 Son adaptaciones de juego con arte original existente y efectos propios, no animaciones oficiales reproducidas. Se conserva un único gesto corporal principal cuando se vinculan varias técnicas; sus eventos de daño y efectos siguen activos. Perfiles laterales espejados y poses compartidas por ciertos ataques siguen siendo límites conocidos; no se promete animación perfecta. La calidad artística y la diversión requieren evaluación humana.
+
+## FASE 4D — Vínculos de inventario, misiones y director
+
+### Recompensa de jefe
+
+Un vínculo combina **técnicas propias que ya están en el inventario de esta partida**. Ya no aprende ataques del catálogo ni consume un hueco libre para concederlos. No aparecen la técnica activa inicial ni las ya vinculadas; el primer vínculo necesita otra técnica aprendida. Con una sola técnica, o sin candidatos adicionales, el jefe ofrece atributos. Al vincular se conservan rango y evolución. La validación del motor rechaza selecciones inexistentes, ajenas o duplicadas, aunque se manipule el índice de una tarjeta. Las pruebas anteriores que obtenían técnicas gratis mediante vínculos se han adaptado para aprenderlas primero por el sistema de mejoras.
+
+### Dos capítulos jugables y travesía libre
+
+El puerto añade **Islas y jefes**. Son dos misiones independientes de cinco minutos de costa más sus duelos, con principio, oleadas, bombardeo y jefe final. Se mantiene la travesía libre existente con grietas opcionales; el botón principal conserva su comportamiento. Alabasta está disponible sin desbloqueo de cuenta para probar contenido: el mapa progresivo/persistencia de conquistas pertenece a fase 5.
+
+| Misión | Encuentros | Buster Call | Final |
+| --- | --- | --- | --- |
+| East Blue | Buggy a 1:15; Kuro a 2:35, como minijefes | 3:30, 24 s | Arlong a 5:00, duelo de 120 s |
+| Alabasta | Mr.1 a 1:30 | 3:30, 28 s | Crocodile a 5:00, duelo de 120 s |
+
+East Blue conserva costa y puerto; Alabasta usa terreno desértico desde el comienzo. Los títulos de las oleadas identifican desembarco/puerto/Arlong Park y Nanohana/Rainbase/Alubarna. No se presenta esto como exploración narrativa de todas las localizaciones del manga. Se reutilizan los tres arquetipos de enemigos y las texturas originales existentes, con composiciones y dificultad diferentes por misión. El resto de islas sigue pendiente dentro de fase 4.
+
+`missions.ts` define duración, encuentros, composición, intervalo, tamaño de lote, resistencia, velocidad y daño de cinco oleadas por isla. La simulación respeta los topes de entidades previos. El director procesa eventos por reloj de costa, una sola vez, con estado independiente por partida. Las arenas, pausas y elecciones congelan reloj y bombardeo. Un encuentro programado anuncia su grieta durante cinco segundos; se puede entrar antes o esperar la entrada automática. El duelo conserva la costa, sus cofres y botín. Agotar un duelo obligatorio derrota la misión; las grietas de la travesía libre siguen permitiendo retirarse sin premio al caducar.
+
+La victoria de misión exige vencer al jefe final; llegar a 5:00 no la concede. El reloj queda en 5:00 mientras se completa el último encuentro. La recompensa del jefe se elige antes del resultado. Se conservan las compras por capitán y el abono único de berries al liquidar la partida.
+
+### Mr.1, Crocodile y avisos coherentes
+
+Mr.1 alterna corte frontal de acero, carga Sparkling Daisy y abanico Spiral Hollow. Crocodile alterna Desert Spada (cinco/siete ondas de arena), Desert Girasole (zona fijada al preparar) y carga con gancho. Sus proyectiles de arena tienen forma y color propios; no se reutiliza visualmente el agua de Arlong. Todos conservan preparación, dirección fijada, ejecución, recuperación y furia bajo 50% de vida.
+
+Los abanicos comparten datos de cantidad, velocidad y ángulo entre motor y aviso; las garras muestran el sector real de impacto. Las nuevas cargas recorren la longitud anunciada durante su ventana activa. Las poses proceden de dos hojas originales creadas para el proyecto con asistencia de IA: cuatro claves de combate y doce dibujos de marcha por personaje, con ancla en los pies y escala constante. No se han descargado sprites oficiales. Las vistas laterales se espejan y los tres ataques de cada jefe comparten claves corporales; sus trayectorias y avisos son propios. Contrato y presupuesto en ASSETS.
+
+### Buster Call
+
+Adaptación jugable de alerta naval, no reconstrucción de un episodio canónico. Cada 2,2 s señala hasta tres zonas; la primera anticipa ligeramente la dirección del jugador y las otras cubren el entorno. Radio 48 y preparación visible de 1,35 s. El aviso queda fijo al aparecer, sin perseguir al jugador; círculo/cruz y progreso temporal siguen visibles en todas las calidades. Al agotarse aplica 24 de daño antes de armadura, con la invulnerabilidad habitual, y desaparece: no cobra daño de nuevo. Termina al drenar los últimos impactos, sin repetirse. Los objetivos se colocan dentro del terreno transitable. Las explosiones dibujan el mismo radio del área peligrosa.
+
+El movimiento sigue siendo la defensa principal; no hay coste de energía. El render no oculta el bombardeo con calidad baja o movimiento reducido. No se añaden audio/mandos ficticios ni un servicio externo de imágenes. Quedan pendientes valoración humana de balance y pruebas físicas en móvil, nuevas islas y la fase 6 de audio/controles/accesibilidad completa.

@@ -1,3 +1,4 @@
+import { terrainTime } from "../data/missions";
 import { moveOnTerrain, steerAround } from "./terrain";
 import { activeSynergies, characterById, type FormTier } from "../data/crew";
 import { masteredForm, syncForms } from "./forms";
@@ -69,14 +70,14 @@ export function updateCrew(run: Run, dt: number): void {
           nakama.position,
           target,
           10,
-          run.elapsed,
+          terrainTime(run.elapsed, run.mission),
           index,
         );
         moveOnTerrain(
           nakama.position,
           { x: direction.x * travel, y: direction.y * travel },
           10,
-          run.elapsed,
+          terrainTime(run.elapsed, run.mission),
         );
       }
       nakama.facing = { x: dx / distance, y: dy / distance };

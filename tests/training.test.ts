@@ -1,3 +1,4 @@
+import { grantUpgrade } from "../src/game/progression";
 import { describe, it, expect } from "vitest";
 import {
   newProfile,
@@ -143,6 +144,10 @@ describe("vínculos exclusivos", () => {
     "%s nunca puede recibir la técnica de otro capitán, tampoco mediante selección manipulada",
     (id) => {
       const run = createRun(1, id);
+      const other = weapons.find(
+        (w) => w.owner === id && w.id !== run.activeWeapon,
+      );
+      if (other) expect(grantUpgrade(run, weaponKey(other.id))).toBe(true);
       offerBossRewards(run);
       const candidates = bondCandidates(run);
       expect(

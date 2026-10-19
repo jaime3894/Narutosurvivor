@@ -133,3 +133,15 @@ El cargador valida dimensiones y conserva respaldo si falta una hoja. Marcha y a
 Tipografía: [Pixelify Sans, Google Fonts](https://github.com/google/fonts/tree/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/pixelifysans), SIL OFL 1.1, copyright 2021 The Pixelify Sans Project Authors. Archivo local `assets/fonts/PixelifySans.ttf` y texto íntegro en `public/licenses/PixelifySans-OFL.txt`; se distribuye sin modificar. Consultas a Google y a las páginas de Kenney bloqueadas por el proxy (403); no se han descargado assets de esas páginas.
 
 El test de presupuesto de PNG suma el arte anterior, los nuevos jefes, sus marchas, suelo, decoración e iconos y exige menos de 9 MB. La fuente se aloja localmente para evitar peticiones a Google Fonts al jugar. Los recursos funcionan bajo la subruta de GitHub Pages.
+
+## Jefes de isla v9
+
+Mr.1 y Crocodile tienen arte original creado con asistencia de IA, sin recursos extraídos de juegos/anime. Fuentes aprobadas: `docs/art-source/island-bosses-v9.png` (cuatro columnas/dos filas) y `island-boss-walks-v9.png` (seis columnas/cuatro filas). No se descargan al jugar.
+
+- `assets/bosses/{mr1,crocodile}-v9.png`: 1024×128, cuatro celdas 256×128, guardia frontal/posterior, anticipación y ejecución. Ancla (128,118).
+- `assets/bosses/{mr1,crocodile}-walk-v9.png`: 1152×256, seis columnas y dos vistas, celda 192×128. Ancla (96,118). Doce dibujos independientes por personaje.
+- Exportador reproducible: `node scripts/compile-island-bosses.mjs scripts/island-bosses-v9.json`; compresión sin pérdida: `node scripts/optimize-png.mjs public/assets/bosses/*-v9.png`.
+- El exportador separa las figuras de las celdas contiguas, conserva la transparencia, ajusta escala y alinea los pies. No genera arte. Registro de rutas `bossArt`, independiente del orden de grietas de la travesía libre.
+- Presupuesto de todos los PNG precargados: **10 MB**, ampliado desde 9 por estos cuatro atlas (aproximadamente 450 KB adicionales). El test suma los cinco jefes y sus marchas; los E2E verifican celdas distintas, transparencia y ausencia de cortes. No se relaja el presupuesto individual de 100 KB de poses ni 500 KB de marcha.
+
+Límites: tres cuartos y espejo lateral; los ataques de cada jefe utilizan dos claves corporales compartidas además de su patrón/telegráfico propio. No se prometen animaciones oficiales ni dibujos independientes en 360 grados.

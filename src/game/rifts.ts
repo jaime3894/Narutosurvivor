@@ -1,11 +1,12 @@
+import { terrainTime } from "../data/missions";
 import { freePosition } from "./terrain";
-import { bossMoves, bossRepertoire } from "../data/boss-moves";
-import { bosses, bossOrder, riftRules } from "../data/rifts";
+import { bossMoves, bossRepertoire, fanPatterns } from "../data/boss-moves";
+import { bosses, bossOrder, riftRules, type BossId } from "../data/rifts";
 import { combat } from "../data/combat";
 import type { Enemy, Run } from "./types";
 import { distanceSquared, effect, notify, stats } from "./rules";
 import { offerBossRewards } from "./bonds";
-export function spawnRift(run: Run): boolean {
+export function spawnRift(run: Run, kind?: BossId): boolean {
   if (run.status !== "playing" || run.rift || run.arena) return false;
   const angle = run.random() * Math.PI * 2;
   run.rift = {
@@ -26,9 +27,13 @@ export function spawnRift(run: Run): boolean {
       ),
     },
     remaining: riftRules.ttl,
-    boss: bossOrder[run.bossesDefeated % bossOrder.length] ?? "buggy",
+    boss: kind ?? bossOrder[run.bossesDefeated % bossOrder.length] ?? "buggy",
   };
-  run.rift.position = freePosition(run.rift.position, 26, run.elapsed);
+  run.rift.position = freePosition(
+    run.rift.position,
+    26,
+    terrainTime(run.elapsed, run.mission),
+  );
   if (run.noticeTime < 4)
     notify(
       run,
@@ -58,10 +63,13 @@ export function enterRift(run: Run): boolean {
   const id = run.nextId++,
     definition = bosses[rift.boss],
     health =
-      definition.health * (1 + run.elapsed / 450 + run.bossesDefeated * 0.18);
+      definition.health *
+      (1 + run.elapsed / 450 + run.bossesDefeated * 0.18) *
+      (rift.encounter?.health ?? 1);
   run.arena = {
+    ...(rift.encounter ? { encounter: rift.encounter } : {}),
     center,
-    remaining: riftRules.arenaTime,
+    remaining: rift.encounter?.seconds ?? riftRules.arenaTime,
     bossId: id,
     returnPosition: { ...run.player.position },
     enemies: run.enemies,
@@ -101,7 +109,10 @@ export function enterRift(run: Run): boolean {
   run.projectiles = [];
   run.hazards = [];
   run.rift = null;
-  notify(run, `${definition.name} · esquiva sus avisos · 75 s`);
+  notify(
+    run,
+    `${definition.name} · esquiva sus avisos · ${run.arena.remaining} s`,
+  );
   return true;
 }
 export function finishArena(run: Run, victory: boolean): void {
@@ -121,8 +132,15 @@ export function finishArena(run: Run, victory: boolean): void {
   run.player.invulnerable = 1;
   schedule(run);
   if (victory) {
+    if (arena.encounter) {
+      run.director.nextEncounter = arena.encounter.index + 1;
+      if (arena.encounter.role === "final") run.director.finalDefeated = true;
+    }
     run.bossesDefeated++;
     offerBossRewards(run);
+  } else if (arena.encounter) {
+    run.status = "lost";
+    notify(run, "El duelo terminó sin vencer al jefe");
   } else
     notify(
       run,
@@ -168,7 +186,7 @@ function emitFan(
   count: number,
   speed: number,
   spread: number,
-  kind: "knife" | "wave",
+  kind: "knife" | "wave" | "sand",
   radial = false,
 ): void {
   const state = enemy.boss;
@@ -186,7 +204,7 @@ function emitFan(
         y: enemy.position.y + Math.sin(a) * 30,
       },
       velocity: { x: Math.cos(a) * speed, y: Math.sin(a) * speed },
-      radius: kind === "wave" ? 14 : 7,
+      radius: kind === "wave" || kind === "sand" ? 14 : 7,
       damage,
       life: 3,
       kind,
@@ -206,8 +224,11 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
     const dx = p.x - enemy.position.x,
       dy = p.y - enemy.position.y,
       len = Math.hypot(dx, dy) || 1;
-    const desired =
-      state.move === "bomb" || state.move === "knifeRing" ? 155 : 90;
+    const desired = ["bomb", "knifeRing", "sandTomb", "sandFan"].includes(
+      state.move,
+    )
+      ? 155
+      : 90;
     if (len > desired) {
       const speed =
         d.speed * ((enemy.slow ?? 0) > 0 ? 0.7 : 1) * (enraged ? 1.15 : 1);
@@ -226,13 +247,18 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
   } else if (state.phase === "windup" && state.time <= 0) {
     state.phase = "attack";
     state.time = move.active;
-    if (state.move === "knifeFan")
-      emitFan(run, enemy, enraged ? 9 : 7, 280, 0.15, "knife");
-    else if (state.move === "knifeRing")
-      emitFan(run, enemy, enraged ? 16 : 12, 220, 0, "knife", true);
-    else if (state.move === "sharkWave")
-      emitFan(run, enemy, enraged ? 5 : 3, 220, 0.27, "wave");
-    else if (state.move === "bomb")
+    const fan = fanPatterns[state.move];
+    if (fan)
+      emitFan(
+        run,
+        enemy,
+        enraged ? fan.enraged : fan.count,
+        fan.speed,
+        fan.spread,
+        fan.kind,
+        fan.radial ?? false,
+      );
+    else if (state.move === "bomb" || state.move === "sandTomb")
       run.hazards.push({
         id: run.nextId++,
         position: { ...state.target },
@@ -247,7 +273,7 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
       distanceSquared(p, enemy.position) < (move.range + run.player.radius) ** 2
     )
       hurtPlayer(run, d.damage * move.damage);
-    else if (state.move === "claw") {
+    else if (state.move === "claw" || state.move === "bladeCross") {
       const dx = p.x - enemy.position.x,
         dy = p.y - enemy.position.y,
         len = Math.hypot(dx, dy) || 1;
@@ -258,7 +284,11 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
         hurtPlayer(run, d.damage * move.damage);
     }
   } else if (state.phase === "attack") {
-    if (["dash", "crossDash", "charge"].includes(state.move)) {
+    if (
+      ["dash", "crossDash", "charge", "bladeDash", "hookDash"].includes(
+        state.move,
+      )
+    ) {
       if (
         state.move === "crossDash" &&
         state.time <= move.active * 0.45 &&
@@ -267,7 +297,12 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
         state.direction = { x: -state.direction.y, y: state.direction.x };
         state.burst = 1;
       }
-      const speed = state.move === "charge" ? 470 : 660;
+      const speed =
+        state.move === "bladeDash" || state.move === "hookDash"
+          ? move.range / move.active
+          : state.move === "charge"
+            ? 470
+            : 660;
       enemy.position.x += state.direction.x * speed * dt;
       enemy.position.y += state.direction.y * speed * dt;
     }
@@ -290,8 +325,9 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
     hurtPlayer(
       run,
       d.damage *
-        (["dash", "crossDash", "charge"].includes(state.move) &&
-        state.phase === "attack"
+        (["dash", "crossDash", "charge", "bladeDash", "hookDash"].includes(
+          state.move,
+        ) && state.phase === "attack"
           ? 1.3
           : 1),
     );
@@ -316,6 +352,11 @@ export function updateRifts(run: Run, dt: number): void {
     return;
   }
   if (run.rift) {
+    if (run.rift.encounter && run.rift.remaining <= dt) {
+      run.rift.position = { ...run.player.position };
+      enterRift(run);
+      return;
+    }
     run.rift.remaining -= dt;
     if (run.rift.remaining <= 0) {
       run.rift = null;
@@ -325,6 +366,9 @@ export function updateRifts(run: Run, dt: number): void {
       28 ** 2
     )
       enterRift(run);
-  } else if (run.elapsed >= run.nextRiftTime || run.kills >= run.nextRiftKills)
+  } else if (
+    run.mission === "voyage" &&
+    (run.elapsed >= run.nextRiftTime || run.kills >= run.nextRiftKills)
+  )
     spawnRift(run);
 }

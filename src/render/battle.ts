@@ -99,6 +99,7 @@ export class BattleRenderer {
       run.elapsed,
       {
         lighting: prefs.level > 0,
+        mission: run.mission,
         ...(run.arena ? { clear: { ...run.arena.center, radius: 290 } } : {}),
       },
     );
@@ -234,7 +235,9 @@ export class BattleRenderer {
           y - 18 - progress * (this.reducedMotion ? 0 : 20),
         );
       }
-      if (["level", "evolve", "explosion", "heal"].includes(effect.kind)) {
+      if (
+        ["level", "evolve", "explosion", "heal", "shell"].includes(effect.kind)
+      ) {
         ctx.strokeStyle =
           effect.kind === "heal"
             ? "#b8edc4"
@@ -246,7 +249,13 @@ export class BattleRenderer {
         ctx.arc(
           x,
           y,
-          14 + progress * (effect.kind === "explosion" ? 280 : 70),
+          14 +
+            progress *
+              (effect.kind === "explosion"
+                ? 280
+                : effect.kind === "shell"
+                  ? 34
+                  : 70),
           0,
           Math.PI * 2,
         );

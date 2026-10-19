@@ -1,4 +1,4 @@
-import { weapons, weaponById, weaponKey, type WeaponId } from "../data/content";
+import { weapons, weaponById, type WeaponId } from "../data/content";
 import { boons } from "../data/rifts";
 import type { Run } from "./types";
 import { offerUpgrades } from "./progression";
@@ -27,14 +27,21 @@ export function selectTechnique(run: Run, id: WeaponId): boolean {
 export const bondLimit = (run: Run): number =>
   Math.min(4, weapons.filter((w) => w.owner === run.character).length);
 export function bondCandidates(run: Run): WeaponId[] {
-  if (run.linkedWeapons.length >= bondLimit(run)) return [];
+  if (
+    run.linkedWeapons.length >= bondLimit(run) ||
+    !run.weapons.some(
+      (w) =>
+        w.id === run.activeWeapon && weaponById(w.id).owner === run.character,
+    )
+  )
+    return [];
   return weapons
     .filter(
       (w) =>
         w.owner === run.character &&
         !run.linkedWeapons.includes(w.id) &&
         (run.linkedWeapons.length > 0 || w.id !== run.activeWeapon) &&
-        (run.weapons.some((s) => s.id === w.id) || run.weapons.length < 4),
+        run.weapons.some((s) => s.id === w.id),
     )
     .map((w) => w.id);
 }
@@ -45,7 +52,7 @@ export function offerBossRewards(run: Run): void {
       kind: "bond",
       id: "bond",
       title: `Vincular ${Math.max(2, run.linkedWeapons.length + 1)} técnicas`,
-      detail: "Lanzarlas juntas · solo técnicas de tu capitán",
+      detail: "Lanzarlas juntas · solo técnicas que ya tienes",
     });
   const available = Object.entries(boons).filter(
     ([id, b]) => run.boons[id as keyof typeof boons] < b.max,
@@ -81,6 +88,7 @@ export function chooseBossReward(run: Run, index: number): boolean {
   if (run.status !== "bossReward" || !Number.isInteger(index) || !reward)
     return false;
   if (reward.kind === "bond") {
+    if (!bondCandidates(run).length) return false;
     run.status = "bond";
     run.rewardSerial++;
     return true;
@@ -105,10 +113,6 @@ function finishReward(run: Run): void {
 export function linkTechnique(run: Run, id: WeaponId): boolean {
   if (run.status !== "bond" || !bondCandidates(run).includes(id)) return false;
   if (!run.linkedWeapons.length) run.linkedWeapons = [run.activeWeapon];
-  if (!run.weapons.some((w) => w.id === id)) {
-    run.weapons.push({ id, timer: 0, evolved: false });
-    run.ranks[weaponKey(id)] = 1;
-  }
   run.linkedWeapons.push(id);
   run.activeWeapon = run.linkedWeapons[0] ?? id;
   for (const slot of run.weapons) slot.timer = 0;

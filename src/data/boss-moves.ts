@@ -1,4 +1,52 @@
 export const bossMoves = {
+  bladeCross: {
+    name: "Spider · corte de acero",
+    windup: 1,
+    active: 0.35,
+    recovery: 1.2,
+    range: 155,
+    damage: 1.3,
+  },
+  bladeDash: {
+    name: "Sparkling Daisy",
+    windup: 1.05,
+    active: 0.5,
+    recovery: 1.3,
+    range: 300,
+    damage: 1.25,
+  },
+  bladeFan: {
+    name: "Spiral Hollow",
+    windup: 1.2,
+    active: 0.4,
+    recovery: 1.4,
+    range: 320,
+    damage: 1.1,
+  },
+  sandFan: {
+    name: "Desert Spada",
+    windup: 1.15,
+    active: 0.45,
+    recovery: 1.3,
+    range: 360,
+    damage: 1.1,
+  },
+  sandTomb: {
+    name: "Desert Girasole",
+    windup: 1.55,
+    active: 0.4,
+    recovery: 1.5,
+    range: 100,
+    damage: 1.5,
+  },
+  hookDash: {
+    name: "Gancho dorado",
+    windup: 1.1,
+    active: 0.6,
+    recovery: 1.4,
+    range: 290,
+    damage: 1.3,
+  },
   knifeFan: {
     name: "Bara Bara · abanico de cuchillos",
     windup: 0.9,
@@ -74,7 +122,33 @@ export const bossMoves = {
 } as const;
 export type BossMoveId = keyof typeof bossMoves;
 export const bossRepertoire = {
+  mr1: ["bladeCross", "bladeDash", "bladeFan"],
+  crocodile: ["sandFan", "sandTomb", "hookDash"],
   buggy: ["knifeFan", "bomb", "knifeRing"],
   kuro: ["dash", "claw", "crossDash"],
   arlong: ["slam", "sharkWave", "charge"],
 } as const satisfies Record<string, readonly BossMoveId[]>;
+
+export interface FanPattern {
+  count: number;
+  enraged: number;
+  speed: number;
+  spread: number;
+  kind: "knife" | "wave" | "sand";
+  radial?: boolean;
+}
+/** Motor y avisos comparten cantidad, velocidad y ángulos de los proyectiles. */
+export const fanPatterns: Readonly<Partial<Record<BossMoveId, FanPattern>>> = {
+  knifeFan: { count: 7, enraged: 9, speed: 280, spread: 0.15, kind: "knife" },
+  knifeRing: {
+    count: 12,
+    enraged: 16,
+    speed: 220,
+    spread: 0,
+    kind: "knife",
+    radial: true,
+  },
+  sharkWave: { count: 3, enraged: 5, speed: 220, spread: 0.27, kind: "wave" },
+  bladeFan: { count: 7, enraged: 9, speed: 300, spread: 0.16, kind: "knife" },
+  sandFan: { count: 5, enraged: 7, speed: 235, spread: 0.22, kind: "sand" },
+};

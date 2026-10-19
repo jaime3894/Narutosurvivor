@@ -453,3 +453,54 @@
     height: 17px;
   }
 }
+.mission-dialog {
+  width: min(1000px, calc(100% - 24px));
+}
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.mission-card {
+  background: #142c50;
+  border: 2px solid #7e9fc7;
+  border-radius: 12px;
+  padding: 18px;
+}
+.mission-banner {
+  height: 90px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(155deg, #307777, #1b4652);
+  border: 1px solid #b1d8ce;
+}
+.mission-banner.alabasta {
+  background: linear-gradient(155deg, #b68b4e, #62433d);
+}
+.mission-card ol {
+  padding-left: 20px;
+  color: #e6d5ae;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.mission-card button {
+  width: 100%;
+  background: #ffd15b;
+  color: #24314d;
+  border-color: #fff0b0;
+}
+.mission-dialog .mission-call {
+  color: #ffca91;
+}
+.mission-card p {
+  font-size: 14px;
+}
+@media (max-width: 650px) {
+  .mission-grid {
+    grid-template-columns: 1fr;
+  }
+  .mission-banner {
+    height: 60px;
+  }
+}

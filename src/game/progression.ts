@@ -1,3 +1,4 @@
+import { terrainTime } from "../data/missions";
 import { freePosition } from "./terrain";
 import { syncForms } from "./forms";
 import { xpForLevel } from "../data/combat";
@@ -114,7 +115,7 @@ export function spawnChest(
     id: run.nextId++,
     position: run.arena
       ? { ...position }
-      : freePosition(position, 20, run.elapsed),
+      : freePosition(position, 20, terrainTime(run.elapsed, run.mission)),
   };
   run.chests.push(chest);
   return chest;

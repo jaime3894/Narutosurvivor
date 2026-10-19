@@ -1,3 +1,4 @@
+import { missions, waveAt, type MissionId } from "../data/missions";
 import { controlIcon } from "./control-icons";
 import { openSettings, toggleFullscreen } from "./settings";
 import {
@@ -86,6 +87,11 @@ export interface DebugBridge {
     rift: boolean;
     bossesDefeated: number;
     stage: string;
+    mission: MissionId;
+    encounter: number;
+    finalDefeated: boolean;
+    buster: number;
+    shells: number;
     nakama: { character: CharacterId; x: number; y: number }[];
     synergies: string[];
     casters: CharacterId[];
@@ -95,6 +101,7 @@ export interface DebugBridge {
   setHealth: (health: number) => void;
   choose: (id: UpgradeId) => boolean;
   equipTechnique: (id: WeaponId) => void;
+  learnTechnique: (id: WeaponId) => boolean;
   prepareEvolution: (id: WeaponId) => void;
   dropPickup: (kind: PickupKind) => void;
   spawnChest: () => void;
@@ -117,6 +124,7 @@ export function startSession(
   onExit: () => void,
   debug: boolean,
   selection: CrewSelection = { captain: "luffy", nakama: [] },
+  mission: MissionId = "voyage",
 ): () => void {
   const makeRun = () =>
     createRun(
@@ -124,6 +132,7 @@ export function startSession(
       selection.captain,
       selection.nakama,
       prepareSailor(profile, selection.captain),
+      mission,
     );
   let run = makeRun();
   let accountReward = 0;
@@ -236,9 +245,10 @@ export function startSession(
   );
 
   function hud(): void {
-    query(".battle-location").textContent = voyageStage(
-      run.elapsed,
-    ).name.toUpperCase();
+    query(".battle-location").textContent =
+      run.mission === "voyage"
+        ? voyageStage(run.elapsed).name.toUpperCase()
+        : `${missions[run.mission].name} · ${waveAt(run.elapsed, run.mission)?.name ?? ""}`;
     query("#fps-text").hidden = !preferences.fps;
     query("#fps-text").textContent = `${Math.round(qualityMonitor.fps)} FPS`;
     root.style.setProperty("--touch-scale", String(preferences.touchScale));
@@ -300,7 +310,9 @@ export function startSession(
       ? `${bosses[run.enemies[0]?.boss?.kind ?? "buggy"].name} · ${bossMoves[run.enemies[0]?.boss?.move ?? "knifeFan"].name} · ${Math.ceil(run.arena.remaining)} s`
       : run.rift
         ? `Grieta · ${Math.ceil(run.rift.remaining)} s · ${Math.round(Math.hypot(run.rift.position.x - run.player.position.x, run.rift.position.y - run.player.position.y))} m`
-        : "";
+        : run.director.buster
+          ? `BUSTER CALL · ${Math.ceil(run.director.buster.remaining)} s`
+          : "";
     query<HTMLButtonElement>("#enter-rift").hidden = !run.rift;
     query<HTMLButtonElement>("#enter-rift").disabled =
       run.status !== "playing" ||
@@ -350,7 +362,7 @@ export function startSession(
     } else if (run.status === "bossReward") {
       content = `<p class="eyebrow">JEFE DERROTADO · ELIGE UNA RECOMPENSA</p><h1>La tripulación crece.</h1><div class="upgrade-grid">${run.bossRewards.map((r, i) => `<button class="upgrade-card" data-boss-reward="${i}">${iconMarkup(r.id === "bond" ? "multishot" : r.id === "damage" ? "power" : r.id === "health" ? "vitality" : r.id === "speed" ? "stride" : r.id, "upgrade-icon")}<span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">TECLA ${i + 1}</span></button>`).join("")}</div>`;
     } else if (run.status === "bond") {
-      content = `<p class="eyebrow">VÍNCULO · ${Math.max(2, run.linkedWeapons.length + 1)} TÉCNICAS JUNTAS</p><h1>Elige qué técnica vincular.</h1><p class="modal-subtitle">${run.linkedWeapons.length ? run.linkedWeapons.map((w) => weaponById(w).title).join(" + ") : weaponById(run.activeWeapon).title}. Solo aparecen técnicas de ${characterNames[run.character]}.</p><div class="upgrade-grid">${bondCandidates(
+      content = `<p class="eyebrow">VÍNCULO · ${Math.max(2, run.linkedWeapons.length + 1)} TÉCNICAS JUNTAS</p><h1>Elige qué técnica vincular.</h1><p class="modal-subtitle">${run.linkedWeapons.length ? run.linkedWeapons.map((w) => weaponById(w).title).join(" + ") : weaponById(run.activeWeapon).title}. Solo aparecen técnicas de ${characterNames[run.character]} que ya has aprendido en esta partida.</p><div class="upgrade-grid">${bondCandidates(
         run,
       )
         .map((id) => {
@@ -367,7 +379,7 @@ export function startSession(
       accountReward = settleRun(profile, run);
       saveProfile();
       const won = run.status === "won";
-      content = `<p class="eyebrow">${won ? "TRAVESÍA COMPLETADA" : "EL MAR VOLVERÁ A LLAMARTE"}</p><h1>${won ? "La costa es tuya." : "Una ola más."}</h1><p class="modal-subtitle">${won ? "Cinco minutos. Una pequeña leyenda." : "Cada intento deja una historia. Vuelve a intentarlo."}</p><div class="results-grid"><div><strong>${formatTime(run.elapsed)}</strong><span>RESISTIDO</span></div><div><strong>${run.kills}</strong><span>DERROTADOS</span></div><div><strong>${run.level}</strong><span>NIVEL</span></div><div><strong>${Math.round(run.damageDealt)}</strong><span>DAÑO CAUSADO</span></div></div><div class="build-summary">${
+      content = `<p class="eyebrow">${won ? "TRAVESÍA COMPLETADA" : "EL MAR VOLVERÁ A LLAMARTE"}</p><h1>${won ? (run.mission === "voyage" ? "La costa es tuya." : `${missions[run.mission].name} completada.`) : "Una ola más."}</h1><p class="modal-subtitle">${won ? (run.mission === "voyage" ? "Cinco minutos. Una pequeña leyenda." : "Travesía, bombardeo y jefe final superados.") : "Cada intento deja una historia. Vuelve a intentarlo."}</p><div class="results-grid"><div><strong>${formatTime(run.elapsed)}</strong><span>RESISTIDO</span></div><div><strong>${run.kills}</strong><span>DERROTADOS</span></div><div><strong>${run.level}</strong><span>NIVEL</span></div><div><strong>${Math.round(run.damageDealt)}</strong><span>DAÑO CAUSADO</span></div></div><div class="build-summary">${
         upgrades
           .filter((item) => run.ranks[item.id] > 0)
           .map((item) => `${item.title} ${run.ranks[item.id]}`)
@@ -543,7 +555,12 @@ export function startSession(
         boss: run.enemies.find((e) => e.boss)?.boss?.kind ?? null,
         rift: Boolean(run.rift),
         bossesDefeated: run.bossesDefeated,
-        stage: voyageStage(run.elapsed).id,
+        stage: voyageStage(run.elapsed, run.mission).id,
+        mission: run.mission,
+        encounter: run.director.nextEncounter,
+        finalDefeated: run.director.finalDefeated,
+        buster: run.director.buster?.remaining ?? 0,
+        shells: run.director.buster?.shells.length ?? 0,
         nakama: run.nakama.map((item) => ({
           character: item.character,
           x: item.position.x,
@@ -578,6 +595,12 @@ export function startSession(
           0,
           Math.min(run.player.health.maximum, health),
         );
+      },
+      learnTechnique: (id) => {
+        const granted = grantUpgrade(run, weaponKey(id));
+        syncOverlay();
+        hud();
+        return granted;
       },
       equipTechnique: (id) => {
         const definition = weaponById(id);

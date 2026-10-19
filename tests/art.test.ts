@@ -1,4 +1,4 @@
-import { bossOrder } from "../src/data/rifts";
+import { allBosses as bossOrder, bossArt } from "../src/data/rifts";
 import { readFileSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { characters } from "../src/data/crew";
@@ -60,7 +60,7 @@ describe("poses corporales de combate", () => {
     // Hasta 36 poses anchas; el presupuesto conjunto incluye también el arte anterior.
     expect(png.length).toBeLessThan(500_000);
   });
-  it("toda la precarga artística permanece dentro de 9 MB", () => {
+  it("toda la precarga artística permanece dentro de 10 MB", () => {
     const base = expected.reduce(
       (sum, key) => sum + statSync(`public/${manifest[key]}`).size,
       0,
@@ -83,8 +83,7 @@ describe("poses corporales de combate", () => {
       base +
         poses +
         bossOrder.reduce(
-          (sum, id) =>
-            sum + statSync(`public/assets/bosses/${id}-walk-v7.png`).size,
+          (sum, id) => sum + statSync(`public/${bossArt(id).walk}`).size,
           0,
         ) +
         [
@@ -96,7 +95,7 @@ describe("poses corporales de combate", () => {
           0,
         ) +
         bossOrder.reduce(
-          (sum, id) => sum + statSync(`public/assets/bosses/${id}-v6.png`).size,
+          (sum, id) => sum + statSync(`public/${bossArt(id).poses}`).size,
           0,
         ) +
         layers.reduce(
@@ -104,7 +103,7 @@ describe("poses corporales de combate", () => {
             sum + statSync(`public/assets/characters/${path}`).size,
           0,
         ),
-    ).toBeLessThan(9_000_000);
+    ).toBeLessThan(10_000_000);
   });
   it.each([
     ["luffy-kick-bodies-v5.png", 288, 320],
@@ -135,7 +134,7 @@ describe("capas anatómicas de Luffy", () => {
 
 describe("arte de jefes", () => {
   it.each(bossOrder)("%s tiene cuatro poses en un PNG compacto", (id) => {
-    const path = `public/assets/bosses/${id}-v6.png`,
+    const path = `public/${bossArt(id).poses}`,
       png = readFileSync(path);
     expect(png.readUInt32BE(16)).toBe(1024);
     expect(png.readUInt32BE(20)).toBe(128);
@@ -148,7 +147,7 @@ describe("recursos del puerto y escenarios v7", () => {
     ["world/terrain-v7.png", 512, 256],
     ["world/props-v7.png", 512, 384],
     ["icons/icons-v7.png", 384, 384],
-    ...bossOrder.map((id) => [`bosses/${id}-walk-v7.png`, 1152, 256]),
+    ...bossOrder.map((id) => [bossArt(id).walk.slice(7), 1152, 256]),
   ])(
     "%s publica un atlas completo con contrato estable",
     (path, width, height) => {

@@ -19,3 +19,5 @@ Jefes de grieta v6: public/assets/bosses/*-v6.png. Ilustración original creada 
 
 Revisión v7: escenarios y props assets/world/*-v7.png, iconos assets/icons/icons-v7.png y marchas de jefe assets/bosses/*-walk-v7.png. Ilustraciones creadas para el proyecto con asistencia de IA, no extraídas de juegos/anime. Fuente y adaptación en docs/ASSETS.md.
 Tipografía Pixelify Sans: Google Fonts, SIL Open Font License 1.1. Texto íntegro en PixelifySans-OFL.txt; distribuida sin modificar. Referencia de origen fijada en docs/ASSETS.md.
+
+Jefes de isla v9: assets/bosses/{mr1,crocodile}-v9.png y *-walk-v9.png. Arte original creado para este proyecto con asistencia de IA, corregido y adaptado a atlas transparentes. No son sprites extraídos de juegos ni del anime. Fuentes, exportación y límites en docs/ASSETS.md. Personajes y nombres de One Piece pertenecen a sus titulares; proyecto fan no oficial.
