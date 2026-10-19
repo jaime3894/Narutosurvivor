@@ -226,3 +226,61 @@ test("los 33 atlas reales tienen transparencia, cuatro vistas y dos claves de ma
     }
   expect(failures).toEqual([]);
 });
+
+test("Luffy base abre de pie y permite demostrar la carrera y el golpe texturizado", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Elegir tripulación", exact: true })
+    .click();
+  const idle = page.getByRole("button", { name: "De pie", exact: true });
+  await expect(idle).toHaveAttribute("aria-pressed", "true");
+  const standing = await page
+    .locator("#crew-preview")
+    .evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+  await page.getByRole("button", { name: "Correr", exact: true }).click();
+  await expect
+    .poll(() =>
+      page
+        .locator("#crew-preview")
+        .evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL()),
+    )
+    .not.toBe(standing);
+  await page
+    .getByRole("button", { name: "Golpe de goma", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Golpe de goma", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.waitForTimeout(500);
+  expect(errors).toEqual([]);
+});
+
+test("Luffy tiene seis dibujos de carrera distintos de su postura neutral en cuatro vistas", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const frames = await page.evaluate(async () => {
+    const manifest: Record<string, string> = await (
+      await fetch("./assets/manifest.json")
+    ).json();
+    const image = new Image();
+    image.src = manifest["hero:luffy:0"]!;
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 80;
+    const ctx = canvas.getContext("2d")!;
+    return [0, 1, 2, 3].map((row) =>
+      [0, 4, 5, 6, 7, 8, 9].map((frame) => {
+        ctx.clearRect(0, 0, 64, 80);
+        ctx.drawImage(image, frame * 64, row * 80, 64, 80, 0, 0, 64, 80);
+        return canvas.toDataURL();
+      }),
+    );
+  });
+  for (const direction of frames) expect(new Set(direction).size).toBe(7);
+});

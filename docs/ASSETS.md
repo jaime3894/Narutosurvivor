@@ -55,3 +55,15 @@ Cada personaje tiene idle, caminar, ataque y daño; las piernas alternan y las a
 - Audio: solo original o con licencia registrada; implementación en fase 6.
 
 Registrar siempre autor, URL, licencia y modificaciones de cualquier nuevo recurso. El atlas corporal opcional ya funciona; los contratos de jefes, terreno y audio aún no son cargadores implementados.
+
+## Excepción de Luffy base: seis poses y capas de puñetazo
+
+`public/assets/characters/luffy-base-v4.png` mantiene 960×320: columnas 0–3 neutral, 4–9 seis dibujos de carrera independientes, 10–14 neutral como reserva. El combate con puñetazos sustituye el cuerpo entero por el torso sin brazos y añade exactamente dos brazos modulares; no usa la reserva neutral como cuerpo de ataque.
+
+- `luffy-base-body-v4.png`: 64×320; cuatro filas de torso base sin brazos, ancla `(32,74)`.
+- `luffy-bodies-v4.png`: 288×320; tres columnas de 96×80 y cuatro orientaciones, para torso de los Gears, ancla `(48,74)`.
+- `luffy-arms-v4.png`: 512×192; cuatro columnas de 128×64 (brazo recto con puño, recto con palma, guardia izquierda/derecha), tres filas de materiales base/Second/haki.
+
+Las anclas del hombro se definen por forma y vista en `src/data/luffy-art.ts`. Las manos se dibujan con tamaño estable; el tramo de piel se estira con su textura y contorno. El cuerpo de ataque no contiene manos horneadas, por lo que no aparecen puños adicionales. Para sustituir el arte de ataque de Luffy deben reemplazarse también estas capas, además del atlas normal de reposo/carrera. Las capas son propias de esta revisión con asistencia de IA de imagen, sin sprites extraídos de juegos.
+
+Exportación opcional: `node scripts/compile-luffy-art.mjs /ruta/config.json`, con `{ "base": "/ruta/hoja8x4.png", "arms": "/ruta/brazos4x3.png", "bodies": "/ruta/torsos3x4.png" }`. Requiere Chromium; el build usa los PNG ya exportados y no necesita las hojas maestras ni IA. [Ver postura, carrera y golpe](screenshots/luffy-postura-carrera-golpe.png).

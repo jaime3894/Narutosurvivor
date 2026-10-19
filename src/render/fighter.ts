@@ -1,3 +1,5 @@
+import { drawLuffyRig } from "./luffy-rig";
+import { selectLuffyPunch } from "./luffy-pose";
 import { characterNames } from "../data/content";
 import type { CharacterId } from "../data/content";
 import type { FormTier } from "../data/crew";
@@ -22,7 +24,8 @@ function actor(
   support: boolean,
 ): void {
   const attacks = run.attacks.filter((item) => item.caster === id);
-  const attack = attacks[0];
+  const punch = id === "luffy" ? selectLuffyPunch(run) : undefined;
+  const attack = punch ?? attacks[0];
   const direction = attack
     ? facingDirection(attack.direction.x, attack.direction.y)
     : facingDirection(facing.x, facing.y);
@@ -92,7 +95,9 @@ function actor(
       64,
       30,
     );
-  } else drawSprite(ctx, atlas, position, direction, state, time);
+  } else if (!punch || !drawLuffyRig(ctx, run, punch, direction)) {
+    drawSprite(ctx, atlas, position, direction, state, time);
+  }
   if (id === "luffy" && form > 0 && !reducedMotion) {
     ctx.strokeStyle = "#e9e6da";
     ctx.globalAlpha = 0.6;

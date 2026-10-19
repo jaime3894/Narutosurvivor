@@ -104,3 +104,12 @@ Solicitud del usuario: rehacer el acabado tomando como referencia modelos 2D det
 Compilación por componentes de alfa para conservar figuras completas, corrección de perfiles y eliminación de restos de sprites vecinos. Marcha con dos poses clave por dirección y seis tiempos; preparación, ataque y daño derivados del cuerpo, junto con las extremidades de las técnicas. Se corrigieron ancla de hombro, color de Gear Second, multigolpes de Boundman y composición de Fusen. Fuentes y límites documentados en ASSETS.
 
 Verificación: 132 tests de lógica/recursos, build estricto y 13 E2E del build. Los recursos tienen dimensiones correctas, transparencia real, cuatro vistas, poses distintas y un total inferior a 5 MB. Galería completa, selector y combate revisados en Chromium; control móvil y ruta de Pages cubiertos. Continúan pendientes la aprobación artística del usuario y su prueba humana de cinco minutos. Los ciclos no son seis dibujos manuales independientes; se documenta expresamente. Siguiente fase prevista sigue siendo 4, después de revisar este acabado.
+
+## Corrección de Luffy — postura normal y puño conectado
+
+- Nuevo Luffy base con postura neutral, pies apoyados y brazos relajados. Seis dibujos de carrera distintos por dirección. Selector con «De pie», «Correr» y «Golpe de goma», mostrando la pose neutral inicialmente.
+- Torso de ataque sin brazos y dos extremidades texturizadas, con piel base/Second/haki. El brazo que golpea sustituye al de guardia; el puño conserva su textura y tamaño durante extensión/retracción. Anclas por vista/forma; los Gears conservan cuerpos anchos.
+- Un controlador corporal de dos brazos evita duplicados con Pistol, Bazooka, Gatling y técnicas simultáneas. Fusen no añade puños ajenos a la silueta hinchada. Las reglas de combate no cambian.
+- 143 tests de lógica/recursos y 15 E2E del build: continuidad del puño, retorno, prioridad entre técnicas, dos brazos, alternancia Gatling, uso como nakama, seis dibujos de carrera en cuatro vistas y selector de demostración. Build estricto aprobado. Revisión visual ampliada y dentro de la interfaz.
+
+Límites: los otros nueve personajes y las marchas de Gear Second/Boundman conservan su ciclo de dos poses. Las capas nuevas cubren los puñetazos de Luffy; los ataques de pierna y Fusen mantienen su ejecución de fase 3. Las técnicas simultáneas comparten dos brazos visibles para conservar anatomía, aunque sus impactos sigan activos. La aprobación artística y la prueba humana de diversión siguen pendientes. No se avanza a fase 4 durante esta corrección.

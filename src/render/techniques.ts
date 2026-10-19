@@ -1,3 +1,4 @@
+import { luffyLayers } from "./luffy-assets";
 import { casterPosition } from "../game/crew";
 import type { Position } from "../core/entity";
 import { affinityColors, weaponById } from "../data/content";
@@ -121,6 +122,7 @@ export function drawTechniques(
       case "chain":
       case "double":
       case "barrage": {
+        if (attack.caster === "luffy" && luffyLayers()) break;
         const count =
           definition.animation === "double"
             ? 2
