@@ -26,8 +26,12 @@ Una vez activado, las siguientes fases se publican al subir a `main`. No hay que
 
 El test local de ruta no acredita que GitHub haya completado el despliegue remoto.
 
-## Bloqueo observado desde el entorno cloud
+## Estado verificado al continuar la publicación
 
-La conexión a `api.github.com` y `jaime3894.github.io` recibe un 403 del proxy durante CONNECT, antes de llegar al servicio. Se puede subir código por Git, pero ese resultado no establece permisos de administración de Pages. No se ha confirmado el estado de Pages desde la API ni se ha podido comprobar la web pública desde este entorno.
+La API de GitHub ya es accesible. El repositorio informa `has_pages: false`. La ejecución [39219463652](https://github.com/jaime3894/One-piece-survivor/actions/runs/39219463652) completó correctamente instalación, tests, build, navegador y subida del sitio compilado. El job «Publicar» falla en «Configurar Pages» con «Get Pages site failed / Not Found»; el paso de despliegue no llega a ejecutarse.
 
-Se han añadido ambos destinos al borrador de red del entorno, conservando los presets existentes. Guardar un borrador no aplica la red: se necesita revisar, guardar y publicar en ajustes. La activación de GitHub Pages se puede realizar directamente en GitHub independientemente de ese cambio de red. No se necesita pegar secretos en el chat.
+Se intentó activar Pages con la API oficial (`POST /repos/jaime3894/One-piece-survivor/pages`, `build_type: workflow`). GitHub respondió **403 Resource not accessible by integration**. El acceso general al repositorio y a Actions funciona; falta autorización específica de Pages en la integración. No es un fallo de compilación ni una aprobación pendiente del código.
+
+La URL pública devuelve 404. Para desbloquear la publicación, el propietario debe habilitar Pages con origen **GitHub Actions** mediante los pasos anteriores. Después puede reejecutarse el workflow existente, sin instalar npm en el ordenador. No se debe cambiar la visibilidad del repositorio ni introducir tokens en el código para resolverlo.
+
+Los dominios `api.github.com` y `jaime3894.github.io`, antes bloqueados por el proxy, ya permiten completar estas comprobaciones desde la máquina actual. Esto no acredita por sí solo la publicación de una nueva versión del entorno cloud.
