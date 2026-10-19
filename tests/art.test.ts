@@ -2,6 +2,11 @@ import { readFileSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { characters } from "../src/data/crew";
 import { enemyTypes } from "../src/data/combat";
+import {
+  combatArtists,
+  combatAtlasPath,
+  combatLayout,
+} from "../src/data/combat-art";
 const manifest: Record<string, string> = JSON.parse(
   readFileSync("public/assets/manifest.json", "utf8"),
 ) as Record<string, string>;
@@ -46,6 +51,58 @@ describe("arte de producción", () => {
   });
 });
 
+describe("poses corporales de combate", () => {
+  it.each(combatArtists)("%s publica todas las poses y formas", (id) => {
+    const png = readFileSync(`public/${combatAtlasPath(id)}`);
+    expect(png.readUInt32BE(16)).toBe(combatLayout.width);
+    expect(png.readUInt32BE(20)).toBe(combatLayout.height);
+    // Hasta 36 poses anchas; el presupuesto conjunto incluye también el arte anterior.
+    expect(png.length).toBeLessThan(500_000);
+  });
+  it("toda la precarga artística permanece dentro de 8 MB", () => {
+    const base = expected.reduce(
+      (sum, key) => sum + statSync(`public/${manifest[key]}`).size,
+      0,
+    );
+    const poses = combatArtists.reduce(
+      (sum, id) => sum + statSync(`public/${combatAtlasPath(id)}`).size,
+      0,
+    );
+    const layers = [
+      "luffy-arms-v4.png",
+      "luffy-bodies-v4.png",
+      "luffy-base-body-v4.png",
+      "luffy-kick-bodies-v5.png",
+      "luffy-sandals-v5.png",
+      "franky-fists-v5.png",
+      "franky-bodies-v5.png",
+      "luffy-balloon-v5.png",
+    ];
+    expect(
+      base +
+        poses +
+        layers.reduce(
+          (sum, path) =>
+            sum + statSync(`public/assets/characters/${path}`).size,
+          0,
+        ),
+    ).toBeLessThan(8_000_000);
+  });
+  it.each([
+    ["luffy-kick-bodies-v5.png", 288, 320],
+    ["luffy-sandals-v5.png", 96, 16],
+    ["franky-fists-v5.png", 192, 64],
+    ["franky-bodies-v5.png", 288, 320],
+    ["luffy-balloon-v5.png", 288, 320],
+  ] as const)(
+    "%s conserva el contrato de las piezas anatómicas",
+    (name, width, height) => {
+      const png = readFileSync(`public/assets/characters/${name}`);
+      expect(png.readUInt32BE(16)).toBe(width);
+      expect(png.readUInt32BE(20)).toBe(height);
+    },
+  );
+});
 describe("capas anatómicas de Luffy", () => {
   it.each([
     ["luffy-arms-v4.png", 512, 192],

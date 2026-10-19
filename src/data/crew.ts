@@ -90,12 +90,21 @@ export const characters: readonly CharacterDefinition[] = [
       "Primer corte: +15% de daño contra enemigos por encima del 70% de vida.",
     support: "Oni Giri desde su posición, sin prestar espadas al capitán.",
     forms: [
-      form("Una espada", "Postura de esgrima y Wado al cinto.", 0),
-      form("Santoryu", "Bandana y tres espadas en combate.", 1, {
-        damage: 1.25,
-        critical: 0.06,
-        range: 1.1,
-      }),
+      form(
+        "Santoryu",
+        "Oni Giri: dos katanas en las manos y una en la boca.",
+        0,
+      ),
+      form(
+        "Santoryu · Bandana",
+        "Bandana y agarre de tres espadas en combate.",
+        1,
+        {
+          damage: 1.25,
+          critical: 0.06,
+          range: 1.1,
+        },
+      ),
       form("Asura", "Tres rostros y siluetas de nueve espadas.", 2, {
         damage: 1.65,
         range: 1.2,

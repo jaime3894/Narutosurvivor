@@ -12,3 +12,5 @@ No procede del proyecto opshell ni de sprites extraídos de videojuegos. La lice
 Nombres y personajes de One Piece pertenecen a sus titulares; no se presenta como producto oficial.
 
 Luffy v4: atlas base con seis poses de carrera y capas de torso/brazos creadas para el proyecto con asistencia de IA; mismas notas de procedencia que el arte principal.
+
+Técnicas v5: ocho hojas *-combat-v5.png y piezas de Franky/Luffy *-v5.png creadas para el proyecto con asistencia de IA de imagen, a partir de las referencias originales anteriores. Exportación a atlas, separación de filas, normalización de escala y compresión PNG sin pérdida. Sin sprites oficiales ni imágenes extraídas de juegos. Véase docs/ASSETS.md para contratos y límites.

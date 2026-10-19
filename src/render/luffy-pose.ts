@@ -25,17 +25,22 @@ export interface LuffyPose {
 const punchWeapons = new Set(["pistol", "gatling", "bazooka"]);
 /** Un solo controlador corporal: dos brazos incluso con varias técnicas simultáneas. */
 export function selectLuffyPunch(run: Run): Attack | undefined {
+  const attack = selectLuffyBodyAction(run);
+  return attack && punchWeapons.has(attack.weapon) ? attack : undefined;
+}
+export function selectLuffyBodyAction(run: Run): Attack | undefined {
   if (
     run.attacks.some(
       (attack) => attack.caster === "luffy" && attack.weapon === "balloon",
     )
   )
-    return undefined;
+    return run.attacks.find(
+      (attack) => attack.caster === "luffy" && attack.weapon === "balloon",
+    );
   return run.attacks
     .filter(
       (attack) =>
         attack.caster === "luffy" &&
-        punchWeapons.has(attack.weapon) &&
         attack.age < attack.windup + attack.active + attack.recovery,
     )
     .sort((a, b) => priority(b) - priority(a) || b.id - a.id)[0];

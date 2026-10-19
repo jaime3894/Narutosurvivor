@@ -1,4 +1,3 @@
-import { createLuffyPreview, type LuffyPreviewAction } from "./luffy-preview";
 import {
   characters,
   characterById,
@@ -7,7 +6,10 @@ import {
   type CrewSelection,
   type FormTier,
 } from "../data/crew";
-import { characterNames } from "../data/content";
+import { characterNames, weapons, type WeaponId } from "../data/content";
+import { createTechniquePreview } from "./technique-preview";
+import { bodyActions } from "../data/combat-art";
+import type { Direction } from "../render/sprites";
 import { getSpriteAtlas, drawSprite } from "../render/sprites";
 export function openCrew(
   initial: CrewSelection,
@@ -18,9 +20,11 @@ export function openCrew(
     nakama: [...initial.nakama],
   };
   let preview: FormTier = 0;
-  let previewAction: LuffyPreviewAction = "idle";
+  let previewAction: "idle" | "walk" | "punch" = "idle";
+  let technique: WeaponId = characterById(initial.captain).starter;
+  let direction: Direction = "right";
+  const techniquePreview = createTechniquePreview();
   let previewStarted = performance.now();
-  const luffyPreview = createLuffyPreview();
   let frame = 0;
   let stopped = false;
   const previous = document.activeElement;
@@ -30,7 +34,19 @@ export function openCrew(
   function render(): void {
     const chosen = characterById(selection.captain);
     const form = chosen.forms[preview];
-    dialog.innerHTML = `<div class="crew-heading"><div><p class="eyebrow">LOS SOMBRERO DE PAJA / FASE 3</p><h2>Elige a tus nakama.</h2></div><button id="close-crew" class="small-button">Cerrar ✕</button></div><p class="crew-intro">Un capitán y hasta dos compañeros de apoyo. Cada uno pelea con su propia técnica.</p><div class="crew-layout"><div class="crew-grid">${characters.map((item) => `<article class="crew-card ${item.id === selection.captain ? "selected" : ""}"><button class="captain-choice" data-captain="${item.id}" aria-label="Elegir a ${characterNames[item.id]} como capitán" aria-pressed="${item.id === selection.captain}"><canvas class="crew-portrait" data-portrait="${item.id}" width="112" height="112"></canvas><strong>${characterNames[item.id]}</strong><span>${item.role}</span></button><label class="nakama-choice"><input type="checkbox" data-nakama="${item.id}" aria-label="Reclutar a ${characterNames[item.id]} como nakama" ${selection.nakama.includes(item.id) ? "checked" : ""} ${item.id === selection.captain || (!selection.nakama.includes(item.id) && selection.nakama.length >= 2) ? "disabled" : ""}>${item.id === selection.captain ? "CAPITÁN" : "NAKAMA"}</label></article>`).join("")}</div><aside class="crew-details"><canvas id="crew-preview" width="220" height="210" aria-label="Vista de ${characterNames[chosen.id]} ${form.name}"></canvas>${chosen.id === "luffy" && preview === 0 ? `<div class="form-tabs" role="group" aria-label="Animaciones de Luffy">${(["idle", "walk", "punch"] as const).map((action) => `<button data-preview-action="${action}" aria-pressed="${action === previewAction}" class="${action === previewAction ? "active" : ""}">${action === "idle" ? "De pie" : action === "walk" ? "Correr" : "Golpe de goma"}</button>`).join("")}</div>` : ""}<p class="eyebrow">${chosen.role}</p><h3>${characterNames[chosen.id]}</h3><p class="innate"><b>Innato</b> · ${chosen.innate}</p><div class="form-tabs" role="group" aria-label="Vista de formas">${chosen.forms.map((item, index) => `<button data-form-preview="${index}" class="${preview === index ? "active" : ""}" aria-pressed="${preview === index}">${index + 1}. ${item.name}</button>`).join("")}</div><p class="form-description"><b>${form.name}</b> · ${form.description}<br>${preview === 0 ? "Estilo inicial · recupera energía" : "Disponible en nivel " + form.level + " · consume " + form.drain + " energía/s"}</p><p class="support-description">Como nakama: ${chosen.support}</p></aside></div><div class="crew-bottom"><div><b>Tripulación</b> · ${[selection.captain, ...selection.nakama].map((id) => characterNames[id]).join(" + ")}<p id="crew-synergies">${
+    dialog.innerHTML = `<div class="crew-heading"><div><p class="eyebrow">LOS SOMBRERO DE PAJA / FASE 3</p><h2>Elige a tus nakama.</h2></div><button id="close-crew" class="small-button">Cerrar ✕</button></div><p class="crew-intro">Un capitán y hasta dos compañeros de apoyo. Cada uno pelea con su propia técnica.</p><div class="crew-layout"><div class="crew-grid">${characters.map((item) => `<article class="crew-card ${item.id === selection.captain ? "selected" : ""}"><button class="captain-choice" data-captain="${item.id}" aria-label="Elegir a ${characterNames[item.id]} como capitán" aria-pressed="${item.id === selection.captain}"><canvas class="crew-portrait" data-portrait="${item.id}" width="112" height="112"></canvas><strong>${characterNames[item.id]}</strong><span>${item.role}</span></button><label class="nakama-choice"><input type="checkbox" data-nakama="${item.id}" aria-label="Reclutar a ${characterNames[item.id]} como nakama" ${selection.nakama.includes(item.id) ? "checked" : ""} ${item.id === selection.captain || (!selection.nakama.includes(item.id) && selection.nakama.length >= 2) ? "disabled" : ""}>${item.id === selection.captain ? "CAPITÁN" : "NAKAMA"}</label></article>`).join("")}</div><aside class="crew-details"><canvas id="crew-preview" width="220" height="210" aria-label="Vista de ${characterNames[chosen.id]} ${form.name}${previewAction === "punch" ? " · " + bodyActions[chosen.id] : ""}"></canvas>${`<div class="form-tabs" role="group" aria-label="Animaciones del personaje">${(["idle", "walk", "punch"] as const).map((action) => `<button data-preview-action="${action}" aria-pressed="${action === previewAction}" class="${action === previewAction ? "active" : ""}">${action === "idle" ? "De pie" : action === "walk" ? "Correr" : chosen.id === "luffy" ? "Golpe de goma" : "Ver técnica"}</button>`).join("")}</div>`}${
+      previewAction === "punch"
+        ? `<label>Técnica <select id="preview-technique" aria-label="Técnica de demostración">${weapons
+            .filter((w) => w.owner === chosen.id)
+            .map(
+              (w) =>
+                `<option value="${w.id}" ${w.id === technique ? "selected" : ""}>${w.title}</option>`,
+            )
+            .join(
+              "",
+            )}</select></label><label>Vista <select id="preview-direction" aria-label="Dirección de demostración">${(["right", "left", "down", "up"] as const).map((d, i) => `<option value="${d}" ${d === direction ? "selected" : ""}>${["Derecha", "Izquierda", "Frente", "Espalda"][i]}</option>`).join("")}</select></label>`
+        : ""
+    }<p class="eyebrow">${chosen.role}</p><h3>${characterNames[chosen.id]}</h3><p class="innate"><b>Innato</b> · ${chosen.innate}</p><div class="form-tabs" role="group" aria-label="Vista de formas">${chosen.forms.map((item, index) => `<button data-form-preview="${index}" class="${preview === index ? "active" : ""}" aria-pressed="${preview === index}">${index + 1}. ${item.name}</button>`).join("")}</div><p class="form-description"><b>${form.name}</b> · ${form.description}<br>${preview === 0 ? "Estilo inicial · recupera energía" : "Disponible en nivel " + form.level + " · consume " + form.drain + " energía/s"}</p><p class="support-description">Como nakama: ${chosen.support}</p></aside></div><div class="crew-bottom"><div><b>Tripulación</b> · ${[selection.captain, ...selection.nakama].map((id) => characterNames[id]).join(" + ")}<p id="crew-synergies">${
       activeSynergies(selection.captain, selection.nakama)
         .map((item) => `${item.name}: ${item.description}`)
         .join("<br>") || "Combina nakama para descubrir sinergias."
@@ -53,6 +69,32 @@ export function openCrew(
           1.4,
         );
     }
+    dialog
+      .querySelector<HTMLSelectElement>("#preview-technique")
+      ?.addEventListener("change", (event) => {
+        const value = (event.currentTarget as HTMLSelectElement).value;
+        const weapon = weapons.find(
+          (w) => w.id === value && w.owner === selection.captain,
+        );
+        if (weapon) {
+          technique = weapon.id;
+          previewStarted = performance.now();
+        }
+      });
+    dialog
+      .querySelector<HTMLSelectElement>("#preview-direction")
+      ?.addEventListener("change", (event) => {
+        const value = (event.currentTarget as HTMLSelectElement).value;
+        if (
+          value === "left" ||
+          value === "right" ||
+          value === "up" ||
+          value === "down"
+        ) {
+          direction = value;
+          previewStarted = performance.now();
+        }
+      });
     dialog
       .querySelectorAll<HTMLButtonElement>("[data-preview-action]")
       .forEach((button) =>
@@ -82,6 +124,7 @@ export function openCrew(
             captain: id,
             nakama: selection.nakama.filter((item) => item !== id),
           };
+          technique = characterById(id).starter;
           preview = 0;
           previewAction = "idle";
           render();
@@ -149,11 +192,14 @@ export function openCrew(
       const reduced = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
-      if (selection.captain === "luffy" && preview === 0) {
-        luffyPreview(
+      if (previewAction === "punch" && !reduced) {
+        techniquePreview(
           ctx,
-          reduced ? "idle" : previewAction,
-          reduced ? 0 : (now - previewStarted) / 1000,
+          selection.captain,
+          preview,
+          technique,
+          direction,
+          (now - previewStarted) / 1000,
         );
       } else
         drawSprite(
@@ -161,7 +207,7 @@ export function openCrew(
           getSpriteAtlas(selection.captain, preview),
           { x: 110, y: 172 },
           "down",
-          reduced ? "idle" : "walk",
+          reduced ? "idle" : previewAction === "walk" ? "walk" : "idle",
           reduced ? 0 : now / 1000,
           2,
         );

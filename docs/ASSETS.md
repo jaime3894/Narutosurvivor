@@ -8,7 +8,7 @@ Los atlas están en `public/assets/characters/<id>-<forma>.png` y `public/assets
 
 Las imágenes maestras se generaron durante esta revisión y no son sprites descargados ni extraídos de videojuegos. Los PNG compilados están versionados y bastan para jugar, probar y compilar en una sesión nueva. El permiso de uso de una ilustración no transfiere derechos sobre los personajes de One Piece.
 
-El atlas reproduce seis tiempos de marcha a partir de **dos poses clave por dirección**, con pausas y cambios de apoyo; no son seis dibujos independientes. Reposo, anticipación/ataque y daño se derivan de esas poses con desplazamiento, inclinación y recuperación. Las extremidades de las técnicas continúan animándose por separado y el cuerpo utiliza la edad del ataque. Este cambio mejora el acabado, sin presentarse como una animación final de seis fotogramas dibujados a mano.
+El atlas reproduce seis tiempos de marcha a partir de **dos poses clave por dirección**, con pausas y cambios de apoyo; no son seis dibujos independientes. Reposo, anticipación/ataque y daño se derivan de esas poses con desplazamiento, inclinación y recuperación. El estado de ataque del atlas normal sirve de reserva: la revisión v5 utiliza poses de combate propias y piezas independientes para Luffy/Franky, descritas más abajo. La marcha general conserva dos poses; no se presenta como seis dibujos independientes.
 
 La adaptación opcional se hace con `node scripts/compile-sprite-art.mjs /ruta/config.json`. La configuración es una lista de `{ "id": "luffy", "source": "/ruta/hoja1536x1024.png", "heights": [68,68,72] }`; las hojas maestras deben tener tres pares de poses × cuatro orientaciones. Se necesita Chromium (o `CHROMIUM_PATH`). No se ejecuta generación de imágenes durante el build. Las variantes `profile` y `flipKeys` corrigen hojas cuya orientación no coincide con la fila pedida.
 
@@ -44,7 +44,7 @@ Los PNG principales se precargan y decodifican antes de mostrar el puerto. En re
 
 ## Ataques y anclas
 
-El atlas es corporal: la extensión de un brazo no cabe en una celda. `src/render/techniques.ts` dibuja extremidades/armas conectadas desde el actor, con hombro visual a `(0,-45)` respecto a pies. `src/game/techniques.ts` controla anticipación, fase activa, impactos y recuperación con paso fijo; el render consume esos tiempos. Sustituir un atlas no cambia daño ni colisión. Luffy mantiene hombro–brazo–puño al estirar y retraer; Zoro mueve hojas; Sanji extiende/gira piernas. Franky utiliza cadena metálica y Boundman brazos oscuros de haki, con estilos separados.
+El cuerpo del ataque contiene sus manos, pies y equipo: `combat-fighter.ts` selecciona claves dibujadas según los eventos del motor. `techniques.ts` añade únicamente efectos. Luffy utiliza sus rigs de brazos/pierna o el cuerpo de Fusen; Franky utiliza un cuerpo sin antebrazos y exactamente dos piezas mecánicas. Las anclas se separan de la lógica en `src/data/luffy-art.ts` y `src/data/technique-joints.ts`. No se añade una katana desde el hombro ni otra pierna sobre una pose que ya la tiene.
 
 Cada personaje tiene idle, caminar, ataque y daño; las piernas alternan y las armas acompañan la pose. La reducción de movimiento conserva las señales funcionales y reduce vapor, temblores y partículas. Los enemigos tienen uniforme y gorra de la Marina, ropa de la banda de Buggy o cuerpo pesado/maza de los matones de Alvida. Son esbirros originales; jefes con nombre en fase 4.
 
@@ -67,3 +67,30 @@ Registrar siempre autor, URL, licencia y modificaciones de cualquier nuevo recur
 Las anclas del hombro se definen por forma y vista en `src/data/luffy-art.ts`. Las manos se dibujan con tamaño estable; el tramo de piel se estira con su textura y contorno. El cuerpo de ataque no contiene manos horneadas, por lo que no aparecen puños adicionales. Para sustituir el arte de ataque de Luffy deben reemplazarse también estas capas, además del atlas normal de reposo/carrera. Las capas son propias de esta revisión con asistencia de IA de imagen, sin sprites extraídos de juegos.
 
 Exportación opcional: `node scripts/compile-luffy-art.mjs /ruta/config.json`, con `{ "base": "/ruta/hoja8x4.png", "arms": "/ruta/brazos4x3.png", "bodies": "/ruta/torsos3x4.png" }`. Requiere Chromium; el build usa los PNG ya exportados y no necesita las hojas maestras ni IA. [Ver postura, carrera y golpe](screenshots/luffy-postura-carrera-golpe.png).
+
+
+## Técnicas v5 — poses completas y piezas conectadas
+
+Ocho hojas `assets/characters/{zoro,sanji,nami,usopp,chopper,robin,brook,jinbe}-combat-v5.png`, **1152×768** transparentes. Seis columnas de **192×128**, ancla de apoyo **(80,118)**. Filas: base frontal/posterior, estilo 1 frontal/posterior, estilo 2 frontal/posterior. Cada fila utiliza una perspectiva de tres cuartos orientada a la derecha; izquierda se espeja y arriba utiliza la vista posterior. Son vistas adaptadas, no rotación continua dibujada para cada ángulo. Claves: guardia, anticipación, contacto, continuación, recogida, guardia. Sogeking comparte su guardia inicial/final; las otras claves son distintas. La escala es fija dentro de cada fila para evitar encoger el torso al levantar una espada.
+
+Zoro tiene Santoryu también en base: Oni Giri requiere tres katanas. La tercera forma se compone de tres manifestaciones Santoryu; se ocultan las piernas de las dos manifestaciones laterales. Hay tres cabezas, seis brazos y nueve hojas, con un solo apoyo inferior. Las filas 4/5 del PNG repiten Santoryu para mantener el contrato; el compositor dibuja Asura.
+
+Piezas adicionales:
+
+| Archivo | Dimensiones | Contenido |
+| --- | --- | --- |
+| `franky-bodies-v5.png` | 288×320 | Tres formas × cuatro vistas, celdas 96×80, ancla (48,74), sin ambos antebrazos |
+| `franky-fists-v5.png` | 192×64 | Tres piezas de antebrazo/puño, celdas 64×64, unión al codo por cadena |
+| `luffy-kick-bodies-v5.png` | 288×320 | Tres formas × cuatro vistas con dos brazos y una pierna de apoyo; el rig sustituye la pierna ausente |
+| `luffy-sandals-v5.png` | 96×16 | Tres terminaciones texturizadas, celdas 32×16 |
+| `luffy-balloon-v5.png` | 288×320 | Tres formas × cuatro vistas del cuerpo hinchado completo de Fusen |
+
+El build precarga estas piezas y las hojas de combate del mismo origen, además de los 33 atlas normales y las capas v4. Presupuesto conjunto: menos de **8 MB** de PNG; revisión actual aproximadamente **7,33 MB**. `scripts/optimize-png.mjs` recomprime IDAT sin cambiar ningún píxel y verifica la igualdad de los datos descomprimidos.
+
+Exportar poses: `node scripts/compile-combat-art.mjs /ruta/config.json`. Entradas `{id,source,heights:[70,70,72]}`; `sourceRows`, `rowMap`, `rowCuts` y `poseMap` permiten ordenar y separar filas; `patch:{target,row,count}` incorpora filas dibujadas aparte. Ejemplo: una hoja de Nami por estilo usa `sourceRows:2`, `heights:[70]`, con la primera como base y las otras parcheando las filas 2/4 con `count:2`. Se verifican recortes y poses vacías después de exportar.
+
+Exportar piezas: `node scripts/compile-luffy-art.mjs /ruta/config.json` admite además `{kick:"/ruta/12-cuerpos.png",franky:"/ruta/3-antebrazos.png",frankyBody:"/ruta/12-cuerpos-sin-antebrazos.png",balloon:"/ruta/12-fusen.png"}`. El build utiliza los PNG versionados; no necesita generar ni descargar imágenes. Para reemplazar el arte propio de las técnicas deben sustituirse estas hojas/piezas con el mismo contrato, además del manifiesto normal si se cambia reposo/marcha.
+
+Procedencia: ilustraciones originales creadas para esta revisión con asistencia de IA de imagen, usando como referencia las hojas originales de la revisión anterior. No son sprites oficiales ni recursos extraídos de juegos. El registro MIT de los retratos de reserva continúa separado. La revisión visual no constituye aprobación artística del usuario.
+
+Banco visual: con `npm run dev` activo, `node scripts/review-combat-art.mjs` genera las galerías de [base](screenshots/tecnicas-forma-0-v5.png), [estilo 1](screenshots/tecnicas-forma-1-v5.png) y [estilo 2](screenshots/tecnicas-forma-2-v5.png): 18 técnicas × tres formas × seis tiempos. El selector incorpora «Ver técnica», elección de técnica propia y vista.

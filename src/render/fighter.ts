@@ -1,17 +1,18 @@
 import { drawLuffyRig } from "./luffy-rig";
-import { selectLuffyPunch } from "./luffy-pose";
+import { selectLuffyPunch, selectLuffyBodyAction } from "./luffy-pose";
+import { drawLuffyKick } from "./luffy-kick";
+import { drawFrankyRig } from "./franky-rig";
+import { combatParts } from "./combat-parts";
+import { contactReach, ease } from "./motion";
+import { selectBodyAttack } from "./combat-pose";
+import { drawCombatFighter } from "./combat-fighter";
 import { characterNames } from "../data/content";
 import type { CharacterId } from "../data/content";
 import type { FormTier } from "../data/crew";
 import type { Position } from "../core/entity";
 import type { Run } from "../game/types";
 import { animationProgress } from "../game/techniques";
-import {
-  drawSprite,
-  getSpriteAtlas,
-  facingDirection,
-  spriteFrame,
-} from "./sprites";
+import { drawSprite, getSpriteAtlas, facingDirection } from "./sprites";
 function actor(
   ctx: CanvasRenderingContext2D,
   run: Run,
@@ -25,7 +26,8 @@ function actor(
 ): void {
   const attacks = run.attacks.filter((item) => item.caster === id);
   const punch = id === "luffy" ? selectLuffyPunch(run) : undefined;
-  const attack = punch ?? attacks[0];
+  const attack =
+    id === "luffy" ? selectLuffyBodyAction(run) : selectBodyAttack(run, id);
   const direction = attack
     ? facingDirection(attack.direction.x, attack.direction.y)
     : facingDirection(facing.x, facing.y);
@@ -54,47 +56,49 @@ function actor(
     ctx.stroke();
   }
   const inflate = attacks.find((item) => item.weapon === "balloon");
-  if (inflate) {
-    drawSprite(ctx, atlas, position, direction, state, time);
-    const extension = Math.max(0, animationProgress(inflate).extension),
-      radius = 22 + extension * 24;
-    ctx.fillStyle = "#a66c56";
-    ctx.beginPath();
-    ctx.ellipse(
-      position.x,
-      position.y - 22,
-      radius + 2,
-      radius * 0.82 + 2,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-    ctx.fillStyle = "#e0ad82";
-    ctx.beginPath();
-    ctx.ellipse(
-      position.x - 2,
-      position.y - 24,
-      radius,
-      radius * 0.82,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
+  const balloon = combatParts()?.luffyBalloon;
+  if (inflate && balloon) {
+    const progress = animationProgress(inflate);
+    const inflation =
+      progress.phase === "windup"
+        ? 0.55 * ease(inflate.age / inflate.windup)
+        : progress.phase === "active"
+          ? 0.55 + 0.45 * contactReach(inflate)
+          : 1 -
+            ease(
+              (inflate.age - inflate.windup - inflate.active) /
+                inflate.recovery,
+            );
+    const scale = 0.62 + inflation * 0.38;
     const row = ["down", "left", "right", "up"].indexOf(direction);
-    const frame = spriteFrame(state, time);
     ctx.drawImage(
-      atlas,
-      frame * 64,
+      balloon,
+      inflate.form * 96,
       row * 80,
-      64,
-      30,
-      position.x - 32,
-      position.y - 74 - extension * 14,
-      64,
-      30,
+      96,
+      80,
+      position.x - 48 * scale,
+      position.y - 74,
+      96 * scale,
+      80,
     );
+  } else if (
+    attack?.weapon === "whip" &&
+    drawLuffyKick(ctx, run, attack, direction)
+  ) {
+    // La pierna móvil sustituye a la ausente en esta capa corporal.
+  } else if (
+    attack &&
+    id === "franky" &&
+    drawFrankyRig(ctx, attack, position, direction)
+  ) {
+    // Dos antebrazos propios; el que sale lleva su cadena y regresa al mismo codo.
+  } else if (
+    attack &&
+    id !== "luffy" &&
+    drawCombatFighter(ctx, attack, position, direction, reducedMotion)
+  ) {
+    // La pose ya contiene sus manos, pies y armas; no se superponen otros miembros.
   } else if (!punch || !drawLuffyRig(ctx, run, punch, direction)) {
     drawSprite(ctx, atlas, position, direction, state, time);
   }

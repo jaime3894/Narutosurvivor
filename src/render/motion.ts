@@ -54,31 +54,3 @@ export function barrageReach(attack: Attack, parity: number): number {
   }
   return reach;
 }
-
-export function bladeMotion(attack: Attack): { offset: number; trail: number } {
-  const contact =
-    attack.strikes[0]?.at ??
-    attack.windup + Math.min(0.04, attack.active * 0.25);
-  const end = attack.windup + attack.active;
-  if (attack.age < attack.windup)
-    return { offset: -0.8 - 0.35 * ease(attack.age / attack.windup), trail: 0 };
-  if (attack.age < contact)
-    return {
-      offset:
-        -1.15 *
-        (1 -
-          ease(
-            (attack.age - attack.windup) /
-              Math.max(0.001, contact - attack.windup),
-          )),
-      trail: 0.55,
-    };
-  if (attack.age < end)
-    return {
-      offset:
-        0.65 * ease((attack.age - contact) / Math.max(0.001, end - contact)),
-      trail: 0.55,
-    };
-  const returnTime = ease((attack.age - end) / attack.recovery);
-  return { offset: 0.65 - 1.1 * returnTime, trail: 0.55 * (1 - returnTime) };
-}

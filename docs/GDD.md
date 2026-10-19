@@ -175,3 +175,28 @@ Gatling deja de usar una onda periódica independiente del combate: cada brazo p
 Las espadas preparan el corte y cruzan la dirección del objetivo en el contacto; la estela sigue detrás del filo. Las estocadas se presentan como avance y retracción. Los pies se orientan con la patada, con sandalia para Luffy, zapato y pantalón oscuro para Sanji y pezuña para Chopper. La pierna de Sanji tiene longitud visual limitada y la señal de impacto representa el área cubierta por la patada. Alcances, daños y colisiones conservan los valores de combate. El barrido de Muchi mantiene el recorrido empleado por su colisión.
 
 Parámetros visuales en `src/data/animation.ts`; interpolación en `src/render/motion.ts`. No se regeneran modelos ni se añade contenido. Revisión de secuencias ampliadas, 145 tests y 15 E2E del build, incluyendo el banco de 18 técnicas y una evolución. La naturalidad final y el criterio de diversión requieren valoración al jugar; los otros personajes conservan sus atlas corporales actuales. Captura: `docs/screenshots/tecnicas-pulido-fase3.png`.
+
+
+## Auditoría de fidelidad de técnicas — revisión v5 de FASE 3
+
+El fallo visual de Zoro procedía de superponer una hoja dibujada desde el hombro a un sprite que ya sostenía su katana. El mismo patrón duplicaba piernas de Sanji y antebrazos de Franky. Se separa la representación corporal de los efectos: una sola acción posee el cuerpo; los efectos de otras técnicas simultáneas no crean más extremidades. No cambia el balance de daño, alcance, cadencia o colisiones.
+
+Oni Giri es Santoryu. Por coherencia se cambia el estilo base de Zoro de «Una espada» a «Santoryu»; el segundo pasa a «Santoryu · Bandana», conservando sus estadísticas. Asura compone tres manifestaciones con los agarres correctos y oculta los apoyos inferiores duplicados. No se usan espadas flotantes para simular el número de hojas.
+
+| Personaje | Técnicas | Gesto y efecto verificados |
+| --- | --- | --- |
+| Luffy | Pistol, Gatling, Bazooka | Dos brazos texturizados, extensión/contacto/retorno; Gatling sigue cada evento; Bazooka usa palmas |
+| Luffy | Muchi, Fusen | Pierna elástica sustituye la ausente del cuerpo y comparte giro/longitud del barrido; Fusen tiene silueta hinchada ilustrada propia |
+| Zoro | Oni Giri, Phoenix | Katanas agarradas por dos manos y boca, anticipación de corte, seguimiento y recogida; Phoenix libera estela tras el corte |
+| Sanji | Collier, Concassé | Rodilla recogida, patada y retorno con dos piernas; Concassé gira hacia un talonazo descendente; botas naranjas/azules en Diable/Ifrit |
+| Nami | Thunder, Cyclone | Un Clima-Tact sujeto, elevación y gesto de lanzamiento; tormenta o remolino crecen junto al objetivo; Zeus conserva su identidad |
+| Usopp | Fire Star, Pop Green | Tirachinas tensado y liberado con ambas manos; estrella incendiaria sale desde el arma; brotes y lianas para Pop Green |
+| Chopper | Hoof | Golpe de pezuña delantera, con volumen Brain/Heavy/Monster, sin pierna humana añadida |
+| Robin | Clutch | Cruza sus brazos; manos brotan junto a la víctima con pétalos, articulación y cierre de dedos |
+| Franky | Strong Right | Torso sin antebrazos, dos piezas mecánicas; una sale desde el codo con cadena y retorna antes de guardar |
+| Brook | Aubade | Preparación de desenvaine, una hoja y una vaina, continuación y recogida; hielo/alma en sus estilos avanzados |
+| Jinbe | Shark Brick | Palma azul abierta, apoyo ancho de karate gyojin, impulso de cadera y ondas de presión; no un puño humano genérico |
+
+Los tiempos se toman del motor de combate y del evento real de impacto. Los atlas usan seis claves por acción con vistas de tres cuartos frontal/posterior y espejo lateral. Se elige esta solución para mantener ropa, anatomía y agarres dibujados juntos, frente al error de añadir miembros a un cuerpo ya completo. Luffy y Franky necesitan piezas separadas porque su extremidad sale de la celda. El selector permite inspeccionar las 18 técnicas y las 30 combinaciones de personaje/forma; no exige activar depuración ni modifica una partida.
+
+Límites explícitos: las vistas no son una animación dibujada en 360 grados; los ataques cercanos representan un área estilizada, cuyo alcance jugable puede superar la longitud anatómica del miembro. Reposo/marcha de los otros nueve personajes mantiene la revisión anterior. Los tests comprueban eventos, recursos y ejecución; la calidad artística final y la diversión de cinco minutos necesitan valoración humana. No se declara «animación perfecta» por pasar tests. La siguiente fase de contenido continúa siendo FASE 4.

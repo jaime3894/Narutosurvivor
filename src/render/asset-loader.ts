@@ -1,4 +1,6 @@
 import { loadLuffyLayers } from "./luffy-assets";
+import { loadCombatAtlases } from "./combat-assets";
+import { loadCombatParts } from "./combat-parts";
 import { characters } from "../data/crew";
 import { enemyTypes } from "../data/combat";
 
@@ -9,7 +11,11 @@ export const replacementAtlas = (key: string): HTMLImageElement | undefined =>
 export async function loadCustomAtlases(): Promise<void> {
   try {
     const root = new URL(import.meta.env.BASE_URL, location.href);
-    await loadLuffyLayers(root);
+    await Promise.all([
+      loadLuffyLayers(root),
+      loadCombatAtlases(root),
+      loadCombatParts(root),
+    ]);
     const response = await fetch(new URL("assets/manifest.json", root), {
       cache: "no-cache",
     });

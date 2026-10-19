@@ -1,3 +1,4 @@
+import { drawProjectile } from "./projectile";
 import { getEnemyAtlas, drawSprite, facingDirection } from "./sprites";
 import { drawTechniques } from "./techniques";
 import { drawFighter } from "./fighter";
@@ -184,30 +185,7 @@ export class BattleRenderer {
       ctx.arc(player.position.x, player.position.y - 4, 22, 0, Math.PI * 2);
       ctx.stroke();
     }
-    for (const projectile of run.projectiles) {
-      const { x, y } = projectile.position;
-      ctx.fillStyle = "#f1aa56";
-      ctx.strokeStyle = "#704238";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let i = 0; i < 10; i++) {
-        const angle = (i * Math.PI) / 5;
-        const radius = i % 2 === 0 ? 8 : 3;
-        if (i === 0)
-          ctx.moveTo(
-            x + Math.cos(angle) * radius,
-            y - 45 + Math.sin(angle) * radius,
-          );
-        else
-          ctx.lineTo(
-            x + Math.cos(angle) * radius,
-            y - 45 + Math.sin(angle) * radius,
-          );
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    }
+    for (const projectile of run.projectiles) drawProjectile(ctx, projectile);
     for (const effect of run.effects) {
       const progress = 1 - effect.life / effect.total;
       ctx.globalAlpha = 1 - progress;

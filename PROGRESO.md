@@ -122,3 +122,16 @@ Límites: los otros nueve personajes y las marchas de Gear Second/Boundman conse
 - 145 tests, build estricto y 15 E2E aprobados. Revisión visual ampliada de Pistol, Gatling, Bazooka, Oni Giri y Collier Shoot; banco completo de 18 técnicas cubierto por E2E. No cambian datos de daño, alcance ni colisiones.
 
 La fase 3 sigue disponible: diez personajes, tres estilos, innatos y nakama con sinergias. Pendientes de valoración humana: acabado de movimiento y diversión durante cinco minutos. El resto de cuerpos conserva sus animaciones actuales; este pulido no equivale a una renovación de todos los atlas. Siguiente bloque de contenido previsto: fase 4, islas y jefes, tras probar la tripulación actual.
+
+
+## Auditoría completa de técnicas y corrección de Zoro — FASE 3 / v5
+
+- Sustituidas las superposiciones de armas/miembros por ocho hojas de poses completas y rigs específicos de Luffy/Franky. Zoro sujeta sus tres katanas durante el corte; Asura añade manifestaciones de torso sin duplicar piernas. Base renombrada a Santoryu para que Oni Giri sea coherente.
+- Revisadas las 18 técnicas en tres formas: anticipación, contacto, continuación y regreso. Corregidos Concassé descendente, ropa continua de Robin/Nami, guardia de Sogeking y recortes de las alas de Robin. Codos/cadera medidos en datos; el antebrazo de Franky sale de su cuerpo, no aparece otro puño sobre el existente.
+- Muchi utiliza cuerpo con una sola pierna de apoyo y la pierna móvil texturizada; Fusen tiene sus doce vistas/cuerpos hinchados propios. Pistol/Bazooka/Gatling conservan el rig conectado y su sincronización con el motor.
+- Selector con demostración de técnicas y cuatro vistas para toda la tripulación, incluyendo formas avanzadas; accesible sin herramientas de depuración. Galerías de 54 combinaciones × seis tiempos en docs/screenshots/tecnicas-forma-*-v5.png.
+- PNG originales de esta revisión asistidos por IA; sin recursos oficiales descargados. Precarga completa de arte de aproximadamente 7,33 MB, con compresión sin pérdida y presupuesto total de 8 MB.
+
+Validación: 182 tests de lógica/recursos, build estricto y 18 E2E del build, incluida la comprobación de 288 celdas sin vacíos/recortes, selector de todas las técnicas, demostración de Zoro en móvil y ruta de Pages. Las tres simulaciones de cinco minutos conservan sus resultados de victoria y progresión. Los resultados exactos de ejecución se comunican junto al commit publicado.
+
+Pendientes documentados: valoración artística y prueba humana de diversión; direcciones de ataque con vistas de tres cuartos y espejo, sin dibujos independientes para 360 grados; marcha/reposo de los otros nueve personajes conserva dos poses; las técnicas simultáneas comparten un único gesto corporal y mantienen sus efectos/eventos. Esos límites no se presentan como acabado perfecto. La petición actual corrige FASE 3; no se adelantan islas, jefes o meta-progresión.

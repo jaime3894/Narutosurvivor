@@ -14,7 +14,7 @@ try {
     const result = await page.evaluate(
       async ({ kind, encoded }) => {
         const columns = kind === "base" ? 8 : kind === "arms" ? 4 : 3,
-          rows = kind === "arms" ? 3 : 4;
+          rows = kind === "franky" ? 1 : kind === "arms" ? 3 : 4;
         const image = new Image();
         image.src = "data:image/png;base64," + encoded;
         await image.decode();
@@ -29,6 +29,11 @@ try {
           labels = new Int32Array(width * height),
           queue = new Int32Array(labels.length),
           parts = [];
+        const cuts =
+          kind === "frankyBody" ? [0, 260, 514, 769, height] : [0, height];
+        const bands = new Int16Array(height);
+        for (let row = 0; row < cuts.length - 1; row++)
+          bands.fill(row, cuts[row], cuts[row + 1]);
         for (let start = 0; start < labels.length; start++) {
           if (labels[start] || pixels[start * 4 + 3] <= 100) continue;
           const label = parts.length + 1;
@@ -54,7 +59,12 @@ try {
               y > 0 ? index - width : -1,
               y < height - 1 ? index + width : -1,
             ])
-              if (next >= 0 && !labels[next] && pixels[next * 4 + 3] > 100) {
+              if (
+                next >= 0 &&
+                bands[Math.floor(next / width)] === bands[y] &&
+                !labels[next] &&
+                pixels[next * 4 + 3] > 100
+              ) {
                 labels[next] = label;
                 queue[tail++] = next;
               }
@@ -141,7 +151,12 @@ try {
           }
           output["luffy-base-v4.png"] = atlas.toDataURL().split(",")[1];
           output["luffy-base-body-v4.png"] = bodies.toDataURL().split(",")[1];
-        } else if (kind === "bodies") {
+        } else if (
+          kind === "bodies" ||
+          kind === "kick" ||
+          kind === "frankyBody" ||
+          kind === "balloon"
+        ) {
           const atlas = canvas(288, 320),
             target = atlas.getContext("2d");
           for (let row = 0; row < 4; row++)
@@ -151,10 +166,48 @@ try {
                 row * 3 + form,
                 form * 96 + 48,
                 row * 80 + 74,
-                form === 2 ? 72 : 68,
+                kind === "frankyBody"
+                  ? [70, 72, 74][form]
+                  : form === 2
+                    ? 72
+                    : 68,
                 92,
               );
-          output["luffy-bodies-v4.png"] = atlas.toDataURL().split(",")[1];
+          output[
+            kind === "balloon"
+              ? "luffy-balloon-v5.png"
+              : kind === "frankyBody"
+                ? "franky-bodies-v5.png"
+                : kind === "kick"
+                  ? "luffy-kick-bodies-v5.png"
+                  : "luffy-bodies-v4.png"
+          ] = atlas.toDataURL().split(",")[1];
+          if (kind === "kick") {
+            const feet = canvas(96, 16),
+              footCtx = feet.getContext("2d");
+            for (let form = 0; form < 3; form++) {
+              const source = figures[6 + form].canvas,
+                h = Math.round(source.height * 0.16);
+              footCtx.drawImage(
+                source,
+                source.width * 0.4,
+                source.height - h,
+                source.width * 0.6,
+                h,
+                form * 32 + 4,
+                3,
+                24,
+                10,
+              );
+            }
+            output["luffy-sandals-v5.png"] = feet.toDataURL().split(",")[1];
+          }
+        } else if (kind === "franky") {
+          const atlas = canvas(192, 64),
+            target = atlas.getContext("2d");
+          for (let form = 0; form < 3; form++)
+            body(target, form, form * 64 + 32, 54, 45, 60);
+          output["franky-fists-v5.png"] = atlas.toDataURL().split(",")[1];
         } else {
           const atlas = canvas(512, 192),
             target = atlas.getContext("2d");
