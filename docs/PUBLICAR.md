@@ -4,15 +4,15 @@ Se ha preparado `.github/workflows/pages.yml`: cada push a `main` instala depend
 
 Dirección prevista después del primer despliegue correcto:
 
-https://jaime3894.github.io/Narutosurvivor/
+https://jaime3894.github.io/One-piece-survivor/
 
 Esta URL no constituye prueba de que Pages esté habilitado o de que el despliegue haya terminado. Consultar la ejecución de Actions y comprobar la página antes de anunciarla como publicada.
 
 ## Activación inicial, si aún no está habilitado Pages
 
-1. Abrir https://github.com/jaime3894/Narutosurvivor/settings/pages con la cuenta propietaria.
+1. Abrir https://github.com/jaime3894/One-piece-survivor/settings/pages con la cuenta propietaria.
 2. En **Build and deployment → Source**, seleccionar **GitHub Actions**. No crear un segundo workflow desde una plantilla; el repositorio ya tiene uno.
-3. Abrir https://github.com/jaime3894/Narutosurvivor/actions/workflows/pages.yml y comprobar la ejecución. Si la primera falló porque Pages estaba desactivado, pulsar **Run workflow → main → Run workflow** después de activarlo.
+3. Abrir https://github.com/jaime3894/One-piece-survivor/actions/workflows/pages.yml y comprobar la ejecución. Si la primera falló porque Pages estaba desactivado, pulsar **Run workflow → main → Run workflow** después de activarlo.
 4. Esperar a que terminen «Validar y construir» y «Publicar». El entorno `github-pages` muestra la dirección generada por GitHub.
 
 Una vez activado, las siguientes fases se publican al subir a `main`. No hay que ejecutar npm en el PC para jugar.
@@ -21,7 +21,7 @@ Una vez activado, las siguientes fases se publican al subir a `main`. No hay que
 
 - `npm test`: 82 tests aprobados.
 - `npm run build`: tipos y build aprobados.
-- `npm run test:e2e`: ocho pruebas aprobadas, incluida una que sirve `dist` bajo `/Narutosurvivor/`, carga el juego e inicia una partida.
+- `npm run test:e2e`: ocho pruebas aprobadas, incluida una que sirve `dist` bajo `/One-piece-survivor/`, carga el juego e inicia una partida.
 - `vite.config.ts` usa rutas relativas para que los assets funcionen en la subcarpeta del repositorio.
 
 El test local de ruta no acredita que GitHub haya completado el despliegue remoto.

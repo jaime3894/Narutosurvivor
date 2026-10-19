@@ -3,11 +3,11 @@ import { readFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 import { expect, test } from "@playwright/test";
 
-test("el build arranca bajo /Narutosurvivor/ sin rutas de assets rotas", async ({
+test("el build arranca bajo /One-piece-survivor/ sin rutas de assets rotas", async ({
   page,
 }) => {
   const root = resolve("dist");
-  const prefix = "/Narutosurvivor/";
+  const prefix = "/One-piece-survivor/";
   const contentTypes: Record<string, string> = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",

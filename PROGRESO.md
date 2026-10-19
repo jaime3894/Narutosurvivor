@@ -37,7 +37,7 @@ Proyecto Vite/TypeScript estricto, scripts, lockfile, composición de entidades,
 
 ## Entrega en GitHub
 
-Por indicación del usuario, trabajar en cloud y subir cada fase a jaime3894/Narutosurvivor. Antes de entregar: tests, build, E2E pertinentes, registrar pendientes y crear un commit de fase. Publicar sin forzar ni sobrescribir trabajo remoto.
+Por indicación del usuario, trabajar en cloud y subir cada fase a jaime3894/One-piece-survivor (nombre actual del repositorio). Antes de entregar: tests, build, E2E pertinentes, registrar pendientes y crear un commit de fase. Publicar sin forzar ni sobrescribir trabajo remoto.
 
 ## Información incompleta
 
@@ -73,6 +73,8 @@ Los modelos y atlas definitivos, las tres formas, innatos, selección de los die
 
 ## Publicación web — GitHub Pages
 
-Preparado workflow de Actions para validar y publicar cada push a main, rutas de assets relativas y prueba funcional bajo /Narutosurvivor/. La validación local pasa: 82 tests de lógica, build y ocho E2E. No cambia el alcance de FASE 2 ni adelanta FASE 3. Instrucciones en docs/PUBLICAR.md.
+Preparado workflow de Actions para validar y publicar cada push a main, rutas de assets relativas y prueba funcional bajo /One-piece-survivor/. La validación local pasa: 82 tests de lógica, build y ocho E2E. No cambia el alcance de FASE 2 ni adelanta FASE 3. Instrucciones en docs/PUBLICAR.md.
 
 La API de GitHub y la web github.io están bloqueadas por el proxy de red del entorno (403 CONNECT). Activación remota de Pages y disponibilidad pública aún sin confirmar; no declarar el juego publicado solo por subir el workflow. Destinos requeridos añadidos al borrador de red, pendiente de aplicar desde ajustes. Si Pages no estaba habilitado, el propietario puede seleccionar GitHub Actions como Source en Settings → Pages y ejecutar el workflow ya preparado.
+
+GitHub ha comunicado el cambio de nombre del repositorio a jaime3894/One-piece-survivor. Identidad y commit verificados por Git; origin actualizado a la ubicación canónica. El checkout local conserva /workspace/Narutosurvivor. URL pública prevista actualizada en docs/PUBLICAR.md; la consulta web de Actions sin sesión también devolvió 404, por lo que no se confirma la ejecución remota.
