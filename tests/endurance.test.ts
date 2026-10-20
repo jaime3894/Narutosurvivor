@@ -8,7 +8,7 @@ import {
   linkTechnique,
 } from "../src/game/bonds";
 import { pilot, select } from "./pilot";
-it("una cuenta entrenada resiste 61 minutos, vence a Imu y continúa sin restaurar vida", async () => {
+it("una cuenta entrenada alcanza 60 minutos, vence a Imu y gana sin restaurar vida", async () => {
   const preparation = emptyPreparation();
   for (const id of trainingIds) preparation.levels[id] = training[id].max;
   const run = createRun(
@@ -21,7 +21,7 @@ it("una cuenta entrenada resiste 61 minutos, vence a Imu y continúa sin restaur
   let imuSeconds = 0;
   for (
     let frame = 0;
-    frame < 1000000 && run.elapsed < 3660 && run.status !== "lost";
+    frame < 1000000 && run.status !== "won" && run.status !== "lost";
     frame++
   ) {
     if (frame % 3000 === 0)
@@ -53,8 +53,8 @@ it("una cuenta entrenada resiste 61 minutos, vence a Imu y continúa sin restaur
   console.info(
     `Supervivencia real: ${run.elapsed.toFixed(1)} s, ${run.kills} bajas, nivel ${run.level}, ${run.player.health.current.toFixed(1)} HP, ${run.bossesDefeated} jefes · duelo Imu ${imuSeconds.toFixed(1)} s`,
   );
-  expect(run.elapsed).toBeGreaterThanOrEqual(3660);
-  expect(run.status).not.toBe("lost");
+  expect(run.elapsed).toBeGreaterThanOrEqual(3600);
+  expect(run.status).toBe("won");
   expect(run.kills).toBeGreaterThan(200);
   expect(run.director.imuDefeated).toBe(true);
 }, 240000);

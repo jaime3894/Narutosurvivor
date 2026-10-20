@@ -49,7 +49,7 @@ test("el build arranca bajo /One-piece-survivor/ sin rutas de assets rotas", asy
     if (!address || typeof address === "string")
       throw new Error("Servidor de prueba no disponible");
     await page.goto(`http://127.0.0.1:${address.port}${prefix}`);
-    await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+    await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
     await expect(page.locator("#battle")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog", { name: "Pausa" })).toBeVisible();

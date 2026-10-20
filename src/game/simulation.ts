@@ -1,3 +1,4 @@
+import { moveInArena } from "./arena-terrain";
 import { islandAt } from "../data/islands";
 import { survivalRules, fieldRules, survivalPressure } from "../data/survival";
 import { terrainTime } from "../data/missions";
@@ -342,8 +343,12 @@ export function step(run: Run, input: Input, dt: number): void {
   const before = { ...player.position };
   player.velocity = { x: movement.x * speed, y: movement.y * speed };
   if (run.arena) {
-    player.position.x += player.velocity.x * dt;
-    player.position.y += player.velocity.y * dt;
+    moveInArena(
+      run.arena,
+      player.position,
+      { x: player.velocity.x * dt, y: player.velocity.y * dt },
+      player.radius,
+    );
   } else
     moveOnTerrain(
       player.position,

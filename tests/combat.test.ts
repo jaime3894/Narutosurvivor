@@ -1,3 +1,4 @@
+import { islandDistance } from "../src/data/island-shape";
 import { pilot, select } from "./pilot";
 import {
   chooseBossReward,
@@ -46,9 +47,10 @@ describe("combate y controles", () => {
     a.player.position.y = combat.world.shore + a.player.radius;
     a.spawnTimer = 100;
     advance(a, 25, { x: 1, y: 0, dash: false });
-    expect(a.player.position.x).toBe(
-      combat.world.width - combat.world.shore - a.player.radius,
+    expect(islandDistance(a.player.position)).toBeLessThanOrEqual(
+      -a.player.radius,
     );
+    expect(a.player.position.x).toBeLessThan(combat.world.width - 200);
   });
   it("golpea automáticamente tras la preparación y deja experiencia", () => {
     const run = createRun(1);

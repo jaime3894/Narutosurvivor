@@ -1,3 +1,9 @@
+import {
+  resolveArena,
+  arenaBlocked,
+  moveInArena,
+  arenaHeading,
+} from "./arena-terrain";
 import { sustainedDamage } from "./techniques";
 import { survivalRules } from "../data/survival";
 import { updateRegionalBoss } from "./regional-bosses";
@@ -90,6 +96,7 @@ export function enterRift(run: Run): boolean {
         : 1 + Math.min(run.elapsed / 450, 6) + run.bossesDefeated * 0.12) *
       (rift.encounter?.health ?? 1);
   run.arena = {
+    boss: rift.boss,
     ...(rift.encounter ? { encounter: rift.encounter } : {}),
     center,
     remaining: rift.encounter?.seconds ?? riftRules.arenaTime,
@@ -170,7 +177,11 @@ export function finishArena(run: Run, victory: boolean): void {
     ) {
       run.director.imuDefeated = true;
       run.berries += survivalRules.secretReward;
-      notify(run, "Imu derrotado · +1000 berries · comienza el Nuevo Mundo");
+      run.bossesDefeated++;
+      run.director.finalDefeated = true;
+      run.status = "won";
+      notify(run, "Imu derrotado · +1000 berries · isla liberada");
+      return;
     }
     run.bossesDefeated++;
     offerBossRewards(run);
@@ -185,16 +196,7 @@ export function finishArena(run: Run, victory: boolean): void {
 }
 export function clampArena(run: Run): void {
   if (!run.arena) return;
-  const p = run.player.position,
-    c = run.arena.center,
-    dx = p.x - c.x,
-    dy = p.y - c.y,
-    d = Math.hypot(dx, dy),
-    radius = riftRules.arenaRadius - run.player.radius;
-  if (d > radius) {
-    p.x = c.x + (dx / d) * radius;
-    p.y = c.y + (dy / d) * radius;
-  }
+  resolveArena(run.arena, run.player.position, run.player.radius);
 }
 export function hurtPlayer(run: Run, amount: number): void {
   const player = run.player;
@@ -207,14 +209,7 @@ export function hurtPlayer(run: Run, amount: number): void {
 }
 function clampBoss(run: Run, enemy: Enemy): void {
   if (!run.arena) return;
-  const c = run.arena.center,
-    dx = enemy.position.x - c.x,
-    dy = enemy.position.y - c.y,
-    len = Math.hypot(dx, dy);
-  if (len > 255) {
-    enemy.position.x = c.x + (dx / len) * 255;
-    enemy.position.y = c.y + (dy / len) * 255;
-  }
+  resolveArena(run.arena, enemy.position, enemy.radius);
 }
 function emitFan(
   run: Run,
@@ -278,8 +273,20 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
     if (len > desired) {
       const speed =
         d.speed * ((enemy.slow ?? 0) > 0 ? 0.7 : 1) * (enraged ? 1.15 : 1);
-      enemy.position.x += (dx / len) * speed * dt;
-      enemy.position.y += (dy / len) * speed * dt;
+      if (run.arena) {
+        const heading = arenaHeading(
+          run.arena,
+          enemy.position,
+          p,
+          enemy.radius,
+        );
+        moveInArena(
+          run.arena,
+          enemy.position,
+          { x: heading.x * speed * dt, y: heading.y * speed * dt },
+          enemy.radius,
+        );
+      }
       state.moving = true;
       state.walkTime += dt;
     }
@@ -349,12 +356,20 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
           : state.move === "charge"
             ? 470
             : 660;
-      enemy.position.x += state.direction.x * speed * dt;
-      enemy.position.y += state.direction.y * speed * dt;
+      if (run.arena)
+        moveInArena(
+          run.arena,
+          enemy.position,
+          {
+            x: state.direction.x * speed * dt,
+            y: state.direction.y * speed * dt,
+          },
+          enemy.radius,
+        );
     }
     if (state.time <= 0) {
       state.phase = "recover";
-      state.time = move.recovery * (enraged ? 0.75 : 1);
+      state.time = move.recovery * (enraged ? 0.65 : 0.85);
     }
   } else if (state.phase === "recover" && state.time <= 0) {
     state.cycle++;
@@ -383,12 +398,21 @@ export function updateRifts(run: Run, dt: number): void {
     run.arena.remaining -= dt;
 
     for (const h of run.hazards) {
-      h.position.x += h.velocity.x * dt;
-      h.position.y += h.velocity.y * dt;
+      const steps = Math.max(
+        1,
+        Math.ceil((Math.hypot(h.velocity.x, h.velocity.y) * dt) / 5),
+      );
+      for (let i = 0; i < steps && h.life > 0; i++) {
+        h.position.x += (h.velocity.x * dt) / steps;
+        h.position.y += (h.velocity.y * dt) / steps;
+        if (h.kind !== "bomb" && arenaBlocked(run.arena, h.position, h.radius))
+          h.life = 0;
+      }
       h.life -= dt;
       if (
+        h.life > 0 &&
         distanceSquared(h.position, run.player.position) <
-        (h.radius + run.player.radius) ** 2
+          (h.radius + run.player.radius) ** 2
       ) {
         hurtPlayer(run, h.damage);
         h.life = 0;

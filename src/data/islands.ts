@@ -136,6 +136,7 @@ export const islands: Readonly<Record<IslandId, IslandDefinition>> = {
 };
 export const islandIds = Object.keys(islands) as IslandId[];
 export const newIslandIds = islandIds.slice(2);
+/** Una sola isla: quince ambientes temporales, sin seleccionar destinos ni reiniciar. */
 export const survivalRoute: readonly IslandId[] = [
   "east-blue",
   "east-blue",
@@ -146,7 +147,39 @@ export const survivalRoute: readonly IslandId[] = [
   "marineford",
   "dressrosa",
   "wano",
+  "skypiea",
+  "enies-lobby",
+  "marineford",
+  "dressrosa",
+  "wano",
+  "thriller-bark",
 ];
+const environmentNames = [
+  "Costa pirata",
+  "Puerto asediado",
+  "Dunas y ruinas",
+  "Jardín de nubes",
+  "Fortaleza judicial",
+  "Bosque de sombras",
+  "Campo de guerra",
+  "Plaza de los hilos",
+  "Jardín de las Bestias",
+  "Tormenta celeste",
+  "Asedio del Gobierno",
+  "Guerra total",
+  "Red carmesí",
+  "Dominio de las Bestias",
+  "Antesala del Trono Vacío",
+] as const;
+export function survivalStageIndex(seconds: number): number {
+  return Math.min(
+    survivalRoute.length - 1,
+    Math.max(0, Math.floor(seconds / 240)),
+  );
+}
+export function survivalEnvironment(seconds: number): string {
+  return environmentNames[survivalStageIndex(seconds)] ?? environmentNames[0];
+}
 export function islandAt(
   seconds: number,
   mission: string = "survival",
@@ -154,8 +187,5 @@ export function islandAt(
   if (mission in islands) return islands[mission as IslandId];
   if (mission === "voyage")
     return seconds >= 240 ? islands.alabasta : islands["east-blue"];
-  return islands[
-    survivalRoute[Math.floor(seconds / 240) % survivalRoute.length] ??
-      "east-blue"
-  ];
+  return islands[survivalRoute[survivalStageIndex(seconds)] ?? "east-blue"];
 }

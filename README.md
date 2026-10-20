@@ -1,10 +1,10 @@
 # Marea de aventuras
 
-Survivor pirata web de One Piece. **Supervivencia continua:** zonas cada cuatro minutos, grietas con jefes, técnicas vinculadas e Imu al minuto 60. Diez capitanes con tres formas, 18 técnicas y 14 pasivos. Monedas globales y entrenamiento propio por capitán. Ocho islas disponibles como capítulos de práctica: East Blue, Alabasta, Skypiea, Enies Lobby, Thriller Bark, Marineford, Dressrosa y Wano. Dieciocho jefes en total. Arte original creado para el juego; no contiene sprites oficiales extraídos.
+Survivor pirata web de One Piece. **Una única isla de 28.800 × 21.600 unidades:** su entorno, facciones y jefes cambian cada cuatro minutos mientras conservas tu build. Quince tramos conducen a Imu al minuto 60; vencerlo completa la partida. Las grietas llevan a recintos temáticos con obstáculos y cobertura. Diez capitanes con tres formas, 18 técnicas, 14 pasivos y 18 jefes. Monedas globales y entrenamiento propio por capitán. Arte original, sin sprites oficiales extraídos.
 
 ## Jugar online
 
-[**Abrir Marea de aventuras**](https://jaime3894.github.io/One-piece-survivor/) y pulsar **Elegir tripulación** antes de **Zarpar hacia East Blue**. No requiere instalar Node ni descargar el repositorio.
+[**Abrir Marea de aventuras**](https://jaime3894.github.io/One-piece-survivor/) y pulsar **Elegir tripulación** antes de **Comenzar supervivencia**. No requiere instalar Node ni descargar el repositorio.
 
 ## Iniciar en desarrollo
 
@@ -15,14 +15,15 @@ npm ci
 npm run dev
 ```
 
-Abre el puerto 5173 y pulsa **Zarpar hacia East Blue**.
+Abre el puerto 5173 y pulsa **Comenzar supervivencia**.
 
 - **WASD / ZQSD / flechas:** movimiento. El ataque es automático.
 - **Espacio:** embestida, con protección y eliminación por contacto; enfriamiento 2,6 s.
 - **Escape / P:** pausa. Cambiar de pestaña también pausa.
 - **1 / 2 / 3** o clic: elegir mejora cuando subes de nivel.
 - Recoge cristales para ganar experiencia, carne para curarte y cofres para elegir una de tres recompensas.
-- Las zonas cambian cada cuatro minutos; la ruta completa dura 36 minutos y vuelve a empezar sin reiniciar tu build. Las islas nuevas aparecen desde 12:00. Usa **Islas y jefes** para practicarlas directamente.
+- El entorno cambia automáticamente cada cuatro minutos sobre la misma isla. No hay selección de destinos ni reinicio entre ambientes; Imu es el jefe final a 60:00. El reloj se pausa durante elecciones, pausas y duelos.
+- Cada grieta lleva a un recinto propio del jefe, con cuatro obstáculos sólidos. Las columnas y cajas detienen proyectiles; los ataques de suelo y corredores de energía conservan su aviso y no se bloquean con cobertura.
 - En supervivencia: rompe barriles con ataques o embestida, recoge suministros y permanece tres segundos cerca de una caja fuerte para abrirla.
 - Fusileros anuncian sus tiros; árboles y piedras sirven de cobertura. Flanquea a los guardias y prioriza a los oficiales que curan.
 - La cuenta comparte berries entre todos los capitanes; las mejoras compradas pertenecen al capitán elegido.
@@ -40,11 +41,11 @@ npm run build
 npm run test:e2e
 ```
 
-`npm test` verifica lógica, recursos, migración de monedas, colisiones, objetivos, roles e Imu. Incluye partidas completas sin restaurar salud, una simulación de 61 minutos con entrenamiento máximo y dos nakama, y una escena sintética de estrés con 150 enemigos. La prueba larga puede tardar varios minutos. `npm run test:e2e` comprueba el build real, móvil, ajustes, compras, cofres, vínculos y las tres fases de Imu. Los recorridos largos de interfaz usan depuración y no demuestran balance de una hora.
+`npm test` verifica lógica, recursos, migración de monedas, colisiones, objetivos, roles e Imu. Incluye partidas completas sin restaurar salud, una simulación hasta vencer a Imu al minuto 60 con entrenamiento máximo y dos nakama, y una escena sintética de estrés con 150 enemigos. La prueba larga puede tardar varios minutos. `npm run test:e2e` comprueba el build real, móvil, ajustes, compras, cofres, vínculos y las tres fases de Imu. Los recorridos largos de interfaz usan depuración y no demuestran balance de una hora.
 
 El entorno cloud ya tiene Chromium en `/usr/bin/chromium`. Fuera de él puedes usar `CHROMIUM_PATH=/ruta/al/navegador npm run test:e2e` o instalar el navegador de Playwright con `npx playwright install chromium`. No requiere ese navegador para jugar, compilar ni ejecutar los tests de lógica.
 
-`npm run preview` sirve `dist`. Añade `?debug` al abrir el juego para mostrar +10 XP, selector del banco de 18 técnicas, preparación de evolución, desbloqueo de formas y el puente de pruebas `window.__MAREA_DEBUG__` (documentado en el GDD). No aparece en modo normal.
+`npm run preview` sirve `dist`. Añade `?debug` al abrir el juego para mostrar +10 XP, selector del banco de 18 técnicas, preparación de evolución, desbloqueo de formas y el puente de pruebas `window.__MAREA_DEBUG__` (documentado en el GDD). No aparece en modo normal. El banco de capítulos y jefes solo está disponible con `?debug`; no son destinos de la aventura.
 
 ## Documentación
 

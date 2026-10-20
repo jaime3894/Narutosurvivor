@@ -6,7 +6,7 @@ test("HUD dentro del campo, ajustes persistentes y pantalla completa funcional",
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   const viewport = page.viewportSize()!;
   const field = await page.locator(".arena").boundingBox();
   expect(field!.width).toBe(viewport.width);
@@ -77,7 +77,7 @@ test("HUD móvil sin recortes y ajustes desde una pausa respetan la pausa", asyn
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await page.getByRole("button", { name: "Pausar partida" }).click();
   await page
     .getByRole("button", { name: "Ajustes", exact: true })

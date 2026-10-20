@@ -5,7 +5,7 @@ test("tres jefes permiten elegir vínculos de dos, tres y cuatro técnicas por l
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   for (const [i, id] of (["gatling", "bazooka", "whip"] as const).entries()) {
     await page.evaluate(
       (technique) => window.__MAREA_DEBUG__!.learnTechnique(technique),
@@ -56,7 +56,7 @@ test("cofre en móvil ofrece tres tarjetas y la tecla 3 concede únicamente la t
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await page.getByRole("button", { name: "Cofre", exact: true }).click();
   await page.evaluate(() =>
     window.__MAREA_DEBUG__!.advance(0.5, { x: 1, y: 0, dash: false }),

@@ -1,3 +1,4 @@
+import { islandDistance } from "./island-shape";
 import { combat } from "./combat";
 import { terrainStage } from "./voyage";
 import { createRandom } from "../core/random";
@@ -13,7 +14,7 @@ export interface WorldProp {
   footprint: readonly Position[];
 }
 /** Pies medidos en el atlas 128 px: hojas, telas y copas no bloquean. */
-const feet: readonly (readonly (readonly [number, number])[])[] = [
+export const feet: readonly (readonly (readonly [number, number])[])[] = [
   [
     [43, 104],
     [57, 104],
@@ -269,14 +270,28 @@ const feet: readonly (readonly (readonly [number, number])[])[] = [
     [116, 99],
   ],
 ];
-export function pathCenter(x: number): number {
+export const horizontalTracks = [0, 0.22, 0.48, 0.76] as const;
+export const verticalTracks = [0.13, 0.47, 0.81] as const;
+export function pathCenter(x: number, track = 0): number {
   return (
-    900 + Math.sin((x - 1200) / 790) * 250 + Math.sin((x - 1200) / 2110) * 450
+    900 +
+    (horizontalTracks[track] ?? 0) * combat.world.height +
+    Math.sin((x - 1200) / (790 + track * 190) + track * 0.7) * 250 +
+    Math.sin((x - 1200) / (2110 + track * 240)) * 450
+  );
+}
+export function verticalPath(y: number, track: number): number {
+  return (
+    (verticalTracks[track] ?? 0.5) * combat.world.width +
+    Math.sin(y / (1250 + track * 170) + track) * 370 +
+    Math.sin(y / 430) * 95
   );
 }
 export function clearing(x: number, y: number): boolean {
   return (
-    Math.hypot(x - 1200, y - 900) < 155 || Math.abs(y - pathCenter(x)) < 70
+    Math.hypot(x - 1200, y - 900) < 180 ||
+    horizontalTracks.some((_, i) => Math.abs(y - pathCenter(x, i)) < 70) ||
+    verticalTracks.some((_, i) => Math.abs(x - verticalPath(y, i)) < 55)
   );
 }
 const cache = new Map<string, readonly WorldProp[]>();
@@ -288,18 +303,35 @@ export function worldProps(seconds: number): readonly WorldProp[] {
     result: WorldProp[] = [],
     bins = new Map<string, Position[]>();
   // Centros de vegetación independientes de las posiciones de las piedras; muestreo por rechazo, sin cuadrícula visible.
-  const clusters = Array.from({ length: 150 }, () => ({
+  const clusters = Array.from({ length: 600 }, () => ({
     x: 100 + random() * (combat.world.width - 200),
     y: 100 + random() * (combat.world.height - 200),
     r: 130 + random() * 350,
   }));
-  for (let attempt = 0; attempt < 13500; attempt++) {
+  const clusterBins = new Map<string, typeof clusters>();
+  for (const c of clusters) {
+    const key = `${Math.floor(c.x / 640)},${Math.floor(c.y / 640)}`,
+      bin = clusterBins.get(key) ?? [];
+    bin.push(c);
+    clusterBins.set(key, bin);
+  }
+  for (let attempt = 0; attempt < 54000; attempt++) {
     const x = 140 + random() * (combat.world.width - 280),
       y = 140 + random() * (combat.world.height - 280);
-    const density = clusters.some((c) => Math.hypot(x - c.x, y - c.y) < c.r)
-      ? 0.85
-      : 0.18;
-    if (random() > density || clearing(x, y)) continue;
+    let dense = false;
+    for (let dy = -1; dy <= 1 && !dense; dy++)
+      for (let dx = -1; dx <= 1; dx++)
+        if (
+          clusterBins
+            .get(`${Math.floor(x / 640) + dx},${Math.floor(y / 640) + dy}`)
+            ?.some((c) => Math.hypot(x - c.x, y - c.y) < c.r)
+        ) {
+          dense = true;
+          break;
+        }
+    const density = dense ? 0.85 : 0.18;
+    if (random() > density || clearing(x, y) || islandDistance({ x, y }) > -100)
+      continue;
     const bx = Math.floor(x / 100),
       by = Math.floor(y / 100);
     let close = false;
@@ -369,7 +401,7 @@ export function propsInArea(
 
 /** Manchas de suelo orgánicas, reproducibles y compartidas entre las tres ambientaciones. */
 const patchRandom = createRandom(98761);
-export const groundPatches = Array.from({ length: 500 }, () => {
+export const groundPatches = Array.from({ length: 2000 }, () => {
   const x = 150 + patchRandom() * (combat.world.width - 300),
     y = 150 + patchRandom() * (combat.world.height - 300),
     rx = 90 + patchRandom() * 200,

@@ -1,3 +1,6 @@
+import { arenaBounds } from "../data/arenas";
+import { drawBossArena } from "./boss-arena";
+import { arenaProps } from "../game/arena-terrain";
 import {
   defaultRenderPreferences,
   type RenderPreferences,
@@ -63,8 +66,13 @@ export class BattleRenderer {
     const ctx = this.context;
     this.resize();
     const prefs = this.preferences();
-    const VIEW_WIDTH = this.viewWidth;
-    const VIEW_HEIGHT = this.viewHeight;
+    const fitArena =
+      Boolean(run.arena) && this.bounds.width >= this.bounds.height;
+    const zoom = fitArena
+      ? Math.max(1, 920 / this.viewWidth, 660 / this.viewHeight)
+      : 1;
+    const VIEW_WIDTH = this.viewWidth * zoom;
+    const VIEW_HEIGHT = this.viewHeight * zoom;
     ctx.setTransform(
       this.canvas.width / VIEW_WIDTH,
       0,
@@ -75,16 +83,33 @@ export class BattleRenderer {
     );
     const player = run.player;
     const blend = this.reducedMotion ? 1 : 1 - Math.exp(-10 * dt);
-    this.camera.x += (player.position.x - this.camera.x) * blend;
-    this.camera.y += (player.position.y - this.camera.y) * blend;
-    this.camera.x = Math.max(
-      VIEW_WIDTH / 2 - 16,
-      Math.min(combat.world.width - VIEW_WIDTH / 2 + 16, this.camera.x),
-    );
-    this.camera.y = Math.max(
-      VIEW_HEIGHT / 2 - 16,
-      Math.min(combat.world.height - VIEW_HEIGHT / 2 + 16, this.camera.y),
-    );
+    if (run.arena) {
+      const c = run.arena.center;
+      this.camera.x =
+        fitArena || VIEW_WIDTH >= arenaBounds.halfWidth * 2
+          ? c.x
+          : Math.max(
+              c.x - arenaBounds.halfWidth + VIEW_WIDTH / 2,
+              Math.min(
+                c.x + arenaBounds.halfWidth - VIEW_WIDTH / 2,
+                player.position.x,
+              ),
+            );
+      this.camera.y = c.y;
+    } else {
+      this.camera.x += (player.position.x - this.camera.x) * blend;
+      this.camera.y += (player.position.y - this.camera.y) * blend;
+    }
+    if (!run.arena) {
+      this.camera.x = Math.max(
+        VIEW_WIDTH / 2 - 16,
+        Math.min(combat.world.width - VIEW_WIDTH / 2 + 16, this.camera.x),
+      );
+      this.camera.y = Math.max(
+        VIEW_HEIGHT / 2 - 16,
+        Math.min(combat.world.height - VIEW_HEIGHT / 2 + 16, this.camera.y),
+      );
+    }
     const camX = Math.round(this.camera.x - VIEW_WIDTH / 2);
     const camY = Math.round(this.camera.y - VIEW_HEIGHT / 2);
     ctx.fillStyle = "#245b67";
@@ -96,17 +121,24 @@ export class BattleRenderer {
         ? (Math.sin(hurt.life * 110) * 4 * hurt.life) / hurt.total
         : 0;
     ctx.translate(-camX + shake, -camY);
-    drawWorld(
-      ctx,
-      { x: camX, y: camY, width: VIEW_WIDTH, height: VIEW_HEIGHT },
-      run.elapsed,
-      {
-        lighting: prefs.level > 0,
-        decorations: false,
-        mission: run.mission,
-        ...(run.arena ? { clear: { ...run.arena.center, radius: 290 } } : {}),
-      },
-    );
+    if (run.arena)
+      drawBossArena(ctx, run.arena, {
+        x: camX,
+        y: camY,
+        width: VIEW_WIDTH,
+        height: VIEW_HEIGHT,
+      });
+    else
+      drawWorld(
+        ctx,
+        { x: camX, y: camY, width: VIEW_WIDTH, height: VIEW_HEIGHT },
+        run.elapsed,
+        {
+          lighting: prefs.level > 0,
+          decorations: false,
+          mission: run.mission,
+        },
+      );
     drawRifts(ctx, run, this.reducedMotion);
     drawLoot(ctx, run, this.reducedMotion);
     drawField(ctx, run);
@@ -116,22 +148,16 @@ export class BattleRenderer {
         y: enemy.position.y,
         enemy,
       })),
-      ...propsInArea(
-        terrainTime(run.elapsed, run.mission),
-        camX,
-        camY,
-        VIEW_WIDTH,
-        VIEW_HEIGHT,
-      )
-        .filter(
-          (prop) =>
-            !run.arena ||
-            Math.hypot(
-              prop.x - run.arena.center.x,
-              prop.y - run.arena.center.y,
-            ) > 370,
-        )
-        .map((prop) => ({ kind: "prop" as const, y: prop.y, prop })),
+      ...(run.arena
+        ? arenaProps(run.arena)
+        : propsInArea(
+            terrainTime(run.elapsed, run.mission),
+            camX,
+            camY,
+            VIEW_WIDTH,
+            VIEW_HEIGHT,
+          )
+      ).map((prop) => ({ kind: "prop" as const, y: prop.y, prop })),
       { kind: "player" as const, y: player.position.y },
     ].sort((a, b) => a.y - b.y);
     for (const layer of layers) {

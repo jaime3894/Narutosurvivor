@@ -1,7 +1,11 @@
+import { islandOutline } from "../data/island-shape";
 import { terrainTime, type MissionId } from "../data/missions";
 import {
   propsInArea,
   pathCenter,
+  horizontalTracks,
+  verticalTracks,
+  verticalPath,
   groundPatches,
   type WorldProp,
 } from "../data/terrain";
@@ -56,29 +60,72 @@ export function drawWorld(
   } = {},
 ): void {
   const stage = voyageStage(seconds, options.mission),
-    ps = patterns(ctx),
-    shore = combat.world.shore;
+    ps = patterns(ctx);
+  const borders: Record<
+    string,
+    { outside: string | CanvasPattern; rim: number; line: string }
+  > = {
+    coast: { outside: ps[3] ?? "#236782", rim: 1, line: "#d1f0e3" },
+    harbor: { outside: ps[3] ?? "#236782", rim: 7, line: "#a4abb2" },
+    desert: { outside: ps[3] ?? "#236782", rim: 4, line: "#b58f66" },
+    sky: { outside: "#234862", rim: 8, line: "#eefaff" },
+    judicial: { outside: ps[3] ?? "#244c6c", rim: 11, line: "#a5b4c5" },
+    haunted: { outside: "#111c2a", rim: 13, line: "#736782" },
+    war: { outside: "#233c51", rim: 14, line: "#bfdde5" },
+    roses: { outside: ps[3] ?? "#316b89", rim: 17, line: "#e1bfbc" },
+    samurai: { outside: ps[3] ?? "#23596a", rim: 19, line: "#837664" },
+  };
+  const border = borders[stage.id] ?? borders.coast!;
+  function outline(inset = 0): void {
+    const points = islandOutline(inset);
+    ctx.beginPath();
+    points.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.closePath();
+  }
   ctx.save();
-  ctx.fillStyle = ps[3] ?? "#317f96";
+  ctx.fillStyle = border.outside;
   ctx.fillRect(view.x, view.y, view.width, view.height);
-  ctx.fillStyle = ps[1] ?? "#c7b47c";
-  ctx.fillRect(20, 20, combat.world.width - 40, combat.world.height - 40);
-  ctx.fillStyle =
-    ps[stage.ground] ?? (stage.id === "desert" ? "#b99961" : "#6b8957");
-  ctx.fillRect(
-    shore,
-    shore,
-    combat.world.width - shore * 2,
-    combat.world.height - shore * 2,
-  );
+  outline();
+  ctx.fillStyle = ps[border.rim] ?? "#8b8d8b";
+  ctx.fill();
+  ctx.strokeStyle = border.line;
+  ctx.lineWidth = stage.id === "sky" ? 22 : 9;
+  ctx.stroke();
+  outline(60);
+  ctx.fillStyle = ps[stage.ground] ?? "#71825e";
+  ctx.fill();
+  if (stage.id === "sky") {
+    const points = islandOutline();
+    ctx.fillStyle = "#edfaff";
+    ctx.strokeStyle = "#c5e5f3";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < points.length; i++) {
+      const p = points[i]!;
+      if (
+        p.x < view.x - 50 ||
+        p.x > view.x + view.width + 50 ||
+        p.y < view.y - 50 ||
+        p.y > view.y + view.height + 50
+      )
+        continue;
+      for (const [dx, dy, r] of [
+        [-14, 2, 16],
+        [3, -2, 22],
+        [20, 5, 14],
+      ]) {
+        ctx.beginPath();
+        const variation = 0.85 + (Math.sin(p.x * 0.17 + p.y * 0.09) + 1) * 0.16;
+        ctx.arc(p.x + dx!, p.y + dy!, r! * variation, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  outline();
+  ctx.clip();
   if (stage.id === "coast") {
-    ctx.fillStyle = "rgba(19,45,45,.2)";
-    ctx.fillRect(
-      shore,
-      shore,
-      combat.world.width - shore * 2,
-      combat.world.height - shore * 2,
-    );
+    ctx.fillStyle = "rgba(19,45,45,.16)";
+    outline(60);
+    ctx.fill();
   }
   ctx.save();
   ctx.fillStyle =
@@ -118,12 +165,28 @@ export function drawWorld(
   ctx.beginPath();
   const start = Math.max(80, Math.floor((view.x - 160) / 80) * 80),
     end = Math.min(combat.world.width - 80, view.x + view.width + 160);
-  for (let x = start; x <= end; x += 80) {
-    const y = pathCenter(x);
-    if (x === start) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+  for (const [track] of horizontalTracks.entries()) {
+    ctx.lineWidth = track === 0 ? 105 : 72;
+    ctx.beginPath();
+    for (let x = start; x <= end; x += 80) {
+      const y = pathCenter(x, track);
+      if (x === start) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
   }
-  ctx.stroke();
+  const yStart = Math.max(80, Math.floor((view.y - 160) / 80) * 80),
+    yEnd = Math.min(combat.world.height - 80, view.y + view.height + 160);
+  for (const [track] of verticalTracks.entries()) {
+    ctx.lineWidth = 66;
+    ctx.beginPath();
+    for (let y = yStart; y <= yEnd; y += 80) {
+      const x = verticalPath(y, track);
+      if (y === yStart) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
   ctx.restore();
   if (options.decorations !== false)
     drawDecorations(
@@ -198,4 +261,11 @@ export function drawWorldProp(
     size,
     size,
   );
+}
+
+export function worldPattern(
+  ctx: CanvasRenderingContext2D,
+  index: number,
+): CanvasPattern | undefined {
+  return patterns(ctx)[index];
 }

@@ -1,3 +1,8 @@
+import { combat } from "../data/combat";
+import { terrainTime } from "../data/missions";
+import { freePosition } from "../game/terrain";
+import { bossArenas } from "../data/arenas";
+import { arenaProps } from "../game/arena-terrain";
 import { missions, waveAt, type MissionId } from "../data/missions";
 import { controlIcon } from "./control-icons";
 import { openSettings, toggleFullscreen } from "./settings";
@@ -87,9 +92,17 @@ export interface DebugBridge {
     energy: number;
     linked: WeaponId[];
     boss: string | null;
+    arena: null | {
+      name: string;
+      boss: string;
+      cx: number;
+      cy: number;
+      obstacles: number;
+    };
     rift: boolean;
     bossesDefeated: number;
     stage: string;
+    world: { width: number; height: number };
     mission: MissionId;
     imuDefeated: boolean;
     imuPhase: number;
@@ -115,6 +128,7 @@ export interface DebugBridge {
   closeChest: () => void;
   unlockForms: () => void;
   setTime: (seconds: number) => void;
+  setPosition: (x: number, y: number) => void;
   setBossHealth: (fraction: number) => void;
   openRift: () => void;
   defeatBoss: () => void;
@@ -255,8 +269,7 @@ export function startSession(
   function hud(): void {
     query(".battle-location").textContent =
       run.mission === "voyage" || run.mission === "survival"
-        ? (run.director.imuDefeated ? "NUEVO MUNDO · " : "") +
-          voyageStage(run.elapsed, run.mission).name.toUpperCase()
+        ? "ISLA · " + voyageStage(run.elapsed, run.mission).name.toUpperCase()
         : `${missions[run.mission].name} · ${waveAt(run.elapsed, run.mission)?.name ?? ""}`;
     query("#fps-text").hidden = !preferences.fps;
     query("#fps-text").textContent = `${Math.round(qualityMonitor.fps)} FPS`;
@@ -387,7 +400,7 @@ export function startSession(
       accountReward = settleRun(profile, run);
       saveProfile();
       const won = run.status === "won";
-      content = `<p class="eyebrow">${won ? "TRAVESÍA COMPLETADA" : "EL MAR VOLVERÁ A LLAMARTE"}</p><h1>${won ? (run.mission === "voyage" || run.mission === "survival" ? "La costa es tuya." : `${missions[run.mission].name} completada.`) : "Una ola más."}</h1><p class="modal-subtitle">${won ? (run.mission === "voyage" || run.mission === "survival" ? "Cinco minutos. Una pequeña leyenda." : "Travesía, bombardeo y jefe final superados.") : "Cada intento deja una historia. Vuelve a intentarlo."}</p><div class="results-grid"><div><strong>${formatTime(run.elapsed)}</strong><span>RESISTIDO</span></div><div><strong>${run.kills}</strong><span>DERROTADOS</span></div><div><strong>${run.level}</strong><span>NIVEL</span></div><div><strong>${Math.round(run.damageDealt)}</strong><span>DAÑO CAUSADO</span></div></div><div class="build-summary">${
+      content = `<p class="eyebrow">${won ? "TRAVESÍA COMPLETADA" : "EL MAR VOLVERÁ A LLAMARTE"}</p><h1>${won ? (run.mission === "survival" ? "Imu derrotado. Isla liberada." : run.mission === "voyage" ? "La costa es tuya." : `${missions[run.mission].name} completada.`) : "Una ola más."}</h1><p class="modal-subtitle">${won ? (run.mission === "survival" ? "Has resistido todos los entornos y vencido al jefe final." : run.mission === "voyage" ? "Cinco minutos. Una pequeña leyenda." : "Travesía, bombardeo y jefe final superados.") : "Cada intento deja una historia. Vuelve a intentarlo."}</p><div class="results-grid"><div><strong>${formatTime(run.elapsed)}</strong><span>RESISTIDO</span></div><div><strong>${run.kills}</strong><span>DERROTADOS</span></div><div><strong>${run.level}</strong><span>NIVEL</span></div><div><strong>${Math.round(run.damageDealt)}</strong><span>DAÑO CAUSADO</span></div></div><div class="build-summary">${
         upgrades
           .filter((item) => run.ranks[item.id] > 0)
           .map((item) => `${item.title} ${run.ranks[item.id]}`)
@@ -561,9 +574,19 @@ export function startSession(
         energy: run.energy,
         linked: [...run.linkedWeapons],
         boss: run.enemies.find((e) => e.boss)?.boss?.kind ?? null,
+        arena: run.arena
+          ? {
+              name: bossArenas[run.arena.boss].name,
+              boss: run.arena.boss,
+              cx: run.arena.center.x,
+              cy: run.arena.center.y,
+              obstacles: arenaProps(run.arena).length,
+            }
+          : null,
         rift: Boolean(run.rift),
         bossesDefeated: run.bossesDefeated,
         stage: voyageStage(run.elapsed, run.mission).id,
+        world: { width: combat.world.width, height: combat.world.height },
         mission: run.mission,
         imuDefeated: run.director.imuDefeated,
         imuPhase:
@@ -689,6 +712,16 @@ export function startSession(
         if (boss && Number.isFinite(fraction))
           boss.health.current =
             boss.health.maximum * Math.max(0, Math.min(1, fraction));
+      },
+      setPosition: (x, y) => {
+        if (!Number.isFinite(x) || !Number.isFinite(y) || run.arena) return;
+        run.player.position = freePosition(
+          { x, y },
+          run.player.radius,
+          terrainTime(run.elapsed, run.mission),
+        );
+        hud();
+        renderer.draw(run, 0.016);
       },
       setTime: (seconds) => {
         run.elapsed = Math.max(

@@ -19,11 +19,13 @@ import { updateDangerZones } from "../src/game/danger-zones";
 import { hitEnemy } from "../src/game/rules";
 const run = () => createRun(42);
 describe("Grand Line", () => {
-  it("recorre ocho islas en nueve tramos y repite sin cambiar los capítulos", () => {
+  it("usa quince ambientes de una misma isla hasta Imu, conservando el banco de pruebas", () => {
     expect(islandIds).toHaveLength(8);
     for (const [i, id] of survivalRoute.entries())
       expect(islandAt(i * 240).id).toBe(id);
-    expect(islandAt(2160).id).toBe("east-blue");
+    expect(survivalRoute).toHaveLength(15);
+    expect(islandAt(2160).id).toBe("skypiea");
+    expect(islandAt(3600).id).toBe(survivalRoute.at(-1));
     for (const id of newIslandIds) {
       expect(missions[id].encounters.map((e) => e.boss)).toEqual([
         islands[id].miniboss,

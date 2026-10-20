@@ -14,13 +14,19 @@ it.each(Object.values(missions))(
   "$name se completa con reglas reales, incluidos minijefes, bombardeo y jefe final",
   (mission) => {
     const preparation = emptyPreparation();
-    // Wano valida una cuenta con entrenamiento básico, no vida restaurada durante la partida.
-    if (mission.id === "wano") {
+    // Los bancos avanzados validan entrenamiento básico, sin restaurar vida durante la partida.
+    if (!["east-blue", "alabasta"].includes(mission.id)) {
       preparation.levels.health = 2;
       preparation.levels.damage = 2;
       preparation.levels.regen = 1;
     }
-    const run = createRun(3894, "luffy", [], preparation, mission.id);
+    const run = createRun(
+      3894,
+      "luffy",
+      ["east-blue", "alabasta"].includes(mission.id) ? [] : ["zoro"],
+      preparation,
+      mission.id,
+    );
     for (
       let frame = 0;
       frame < 72000 && !["won", "lost"].includes(run.status);

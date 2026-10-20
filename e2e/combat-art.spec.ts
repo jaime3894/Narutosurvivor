@@ -13,7 +13,7 @@ test("las poses publicadas están completas, separadas y cambian al atacar", asy
     if (message.type() === "warning") warnings.push(message.text());
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).waitFor();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).waitFor();
   const report = await page.evaluate(
     async ({ paths, layout }) =>
       Promise.all(
@@ -174,7 +174,7 @@ test("la demostración de Zoro funciona en móvil sin desbordar el selector", as
   await page
     .getByRole("button", { name: "Confirmar tripulación ↗", exact: true })
     .click();
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await expect(page.locator("#battle")).toBeVisible();
 });
 

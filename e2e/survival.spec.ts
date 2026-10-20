@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
-test("Imu llega al minuto 60, cambia de fase y la supervivencia continúa tras vencerlo (depuración)", async ({
+test("Imu llega al minuto 60, cambia de fase y la isla se completa tras vencerlo (depuración)", async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await page.evaluate(() => {
     const d = window.__MAREA_DEBUG__!;
     d.setTime(3599.99);
@@ -45,10 +45,11 @@ test("Imu llega al minuto 60, cambia de fase y la supervivencia continúa tras v
   expect(
     await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot().imuDefeated),
   ).toBe(true);
-  await page.locator("[data-boss-reward]").first().click();
-  await page.evaluate(() => window.__MAREA_DEBUG__!.advance(0.1));
+  await expect(page.getByRole("dialog", { name: "Resultados" })).toContainText(
+    "Imu derrotado. Isla liberada.",
+  );
   const state = await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot());
-  expect(state.status).toBe("playing");
+  expect(state.status).toBe("won");
   expect(state.elapsed).toBeGreaterThan(3600);
   expect(state.berries).toBeGreaterThanOrEqual(1000);
   expect(errors).toEqual([]);
@@ -98,7 +99,7 @@ test("la pausa explica la siguiente forma y las cartas comparan valores", async 
   page,
 }) => {
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Pausa" })).toContainText(
     "Gear Second",

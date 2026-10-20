@@ -1,6 +1,6 @@
+import { islandDistance, constrainIsland } from "../data/island-shape";
 import { worldProps, type WorldProp } from "../data/terrain";
 import { terrainStage } from "../data/voyage";
-import { combat } from "../data/combat";
 import type { Position } from "../core/entity";
 const bucketSize = 160;
 const indexes = new Map<string, Map<string, WorldProp[]>>();
@@ -40,7 +40,7 @@ export function nearbyObstacles(
   return result;
 }
 /** Punto más cercano y normal exterior sobre el polígono de la base. */
-function penetration(
+export function penetration(
   position: Position,
   radius: number,
   p: WorldProp,
@@ -101,8 +101,11 @@ export function blocked(
   radius: number,
   seconds: number,
 ): boolean {
-  return nearbyObstacles(position, seconds, radius + 95).some((p) =>
-    Boolean(penetration(position, radius, p)),
+  return (
+    islandDistance(position) > -radius ||
+    nearbyObstacles(position, seconds, radius + 95).some((p) =>
+      Boolean(penetration(position, radius, p)),
+    )
   );
 }
 export function resolveObstacles(
@@ -119,15 +122,7 @@ export function resolveObstacles(
         position.y += push.y;
       }
     }
-  const margin = combat.world.shore + radius;
-  position.x = Math.max(
-    margin,
-    Math.min(combat.world.width - margin, position.x),
-  );
-  position.y = Math.max(
-    margin,
-    Math.min(combat.world.height - margin, position.y),
-  );
+  constrainIsland(position, radius);
 }
 /** Pasos cortos también durante la embestida: no se salta un tronco de un fotograma a otro. */
 export function moveOnTerrain(

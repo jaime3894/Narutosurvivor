@@ -1,3 +1,4 @@
+import { arenaBlocked } from "../src/game/arena-terrain";
 import { bossMoves } from "../src/data/boss-moves";
 import { describe, expect, it } from "vitest";
 import { createRun, step, stats, togglePause } from "../src/game/simulation";
@@ -23,7 +24,7 @@ import {
 } from "../src/game/progression";
 import { updateTechniques } from "../src/game/techniques";
 import { updateCrew } from "../src/game/crew";
-import { bosses, riftRules, type BossId } from "../src/data/rifts";
+import { bosses, type BossId } from "../src/data/rifts";
 import { weaponKey, weaponById } from "../src/data/content";
 import type { Run } from "../src/game/types";
 const idle = { x: 0, y: 0, dash: false };
@@ -146,11 +147,8 @@ describe("grieta y arena", () => {
     expect(run.chestTimer).toBe(coast.chestTimer);
     expect(run.enemies).toHaveLength(1);
     expect(
-      Math.hypot(
-        run.player.position.x - run.arena!.center.x,
-        run.player.position.y - run.arena!.center.y,
-      ),
-    ).toBeLessThanOrEqual(riftRules.arenaRadius);
+      arenaBlocked(run.arena!, run.player.position, run.player.radius),
+    ).toBe(false);
     run.arena!.remaining = 0.001;
     step(run, idle, 1 / 60);
     expect(run.arena).toBeNull();

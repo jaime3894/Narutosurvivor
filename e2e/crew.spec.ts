@@ -30,7 +30,7 @@ test("elegir capitán, dos nakama y transformar sin mezclar sus identidades", as
     "Las alas del capitán",
   );
   await page.getByRole("button", { name: "Confirmar tripulación" }).click();
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   let state = await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot());
   expect(state.character).toBe("luffy");
   expect(state.nakama.map((item) => item.character)).toEqual(["zoro", "sanji"]);
@@ -101,7 +101,7 @@ test("las 30 formas se previsualizan y los diez capitanes pueden zarpar", async 
       );
     }
     await page.getByRole("button", { name: "Confirmar tripulación" }).click();
-    await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+    await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
     expect(
       await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot().character),
     ).toBe(id);
@@ -179,7 +179,7 @@ test("un atlas PNG local sustituye al personaje sin cambiar el código del juego
         return false;
       }),
   ).toBe(true);
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await expect(page.locator("#battle")).toBeVisible();
 });
 

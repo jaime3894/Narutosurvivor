@@ -1,3 +1,4 @@
+import { arenaHeading } from "../src/game/arena-terrain";
 import { steerAround } from "../src/game/terrain";
 import { terrainTime } from "../src/data/missions";
 import { chooseUpgrade } from "../src/game/simulation";
@@ -40,7 +41,10 @@ export function pilot(run: Run): Input {
   const goal = arenaGoal ??
     supplies ??
     survivalHeal ??
-    run.rift?.position ??
+    (run.rift?.encounter ||
+    run.player.health.current >= run.player.health.maximum * 0.55
+      ? run.rift?.position
+      : undefined) ??
     nearestDrop?.position ?? {
       x: 1200 + Math.cos(phase) * 370,
       y: 900 + Math.sin(phase) * 320,
@@ -116,6 +120,17 @@ export function pilot(run: Run): Input {
       x += (dx / len) * sign * 4;
       y += (dy / len) * sign * 4;
     }
+  }
+  if (run.arena) {
+    const len = Math.hypot(x, y) || 1;
+    const heading = arenaHeading(
+      run.arena,
+      player,
+      { x: player.x + (x / len) * 100, y: player.y + (y / len) * 100 },
+      run.player.radius,
+    );
+    x = heading.x;
+    y = heading.y;
   }
   if (!run.arena) {
     const len = Math.hypot(x, y) || 1;

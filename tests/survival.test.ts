@@ -80,7 +80,7 @@ describe("supervivencia continua", () => {
     updateDirector(run, 0.02);
     expect(run.director.busterStarted).toBe(true);
   });
-  it("genera Imu una sola vez al minuto 60, espera una arena activa y sigue después de vencer", () => {
+  it("genera Imu una sola vez al minuto 60, espera una arena activa y termina con victoria", () => {
     const run = survival();
     run.elapsed = 3599.99;
     updateDirector(run, 0.001);
@@ -96,13 +96,11 @@ describe("supervivencia continua", () => {
     finishArena(run, true);
     expect(run.director.imuDefeated).toBe(true);
     expect(run.berries).toBe(1000);
-    expect(run.status).toBe("bossReward");
-    run.status = "playing";
-    run.bossRewards = [];
+    expect(run.status).toBe("won");
+    const elapsed = run.elapsed;
     step(run, idle, 0.02);
-    expect(run.status).toBe("playing");
-    expect(run.elapsed).toBeGreaterThan(3600);
-    expect(run.rift?.boss).not.toBe("imu");
+    expect(run.elapsed).toBe(elapsed);
+    expect(run.director.finalDefeated).toBe(true);
   });
   it("Imu cambia de repertorio con la vida; sus zonas avisan antes de dañar y dejan espacio", () => {
     const run = survival();

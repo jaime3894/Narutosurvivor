@@ -5,7 +5,6 @@ export const riftRules = {
   killInterval: 120,
   ttl: 40,
   arenaTime: 75,
-  arenaRadius: 290,
   maxBond: 4,
 } as const;
 export const bosses = {

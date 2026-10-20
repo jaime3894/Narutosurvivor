@@ -1,3 +1,4 @@
+import { bossMoves } from "../data/boss-moves";
 import { allBosses, bossArt, type BossId } from "../data/rifts";
 import type { Enemy } from "../game/types";
 const atlases = new Map<BossId, HTMLImageElement>();
@@ -43,7 +44,7 @@ export function drawBoss(
   if (!state) return false;
   const atlas = bossAtlas(state.kind);
   if (!atlas) return false;
-  const frame =
+  let frame =
     state.phase === "windup"
       ? 2
       : state.phase === "attack"
@@ -76,6 +77,39 @@ export function drawBoss(
     state.phase === "windup" && !reducedMotion
       ? Math.sin(Math.max(0, state.time) * 8) * 0.6
       : 0;
+  const move = bossMoves[state.move];
+  if (!reducedMotion) {
+    const progress =
+      state.phase === "windup"
+        ? Math.max(0, Math.min(1, 1 - state.time / move.windup))
+        : state.phase === "attack"
+          ? Math.max(0, Math.min(1, 1 - state.time / move.active))
+          : 0;
+    const impulse =
+      state.phase === "windup"
+        ? -5 * progress
+        : state.phase === "attack"
+          ? Math.sin(progress * Math.PI) * 13
+          : 0;
+    ctx.translate(
+      Math.abs(state.direction.x) * impulse,
+      state.direction.y * impulse * 0.35,
+    );
+    ctx.rotate(
+      state.phase === "windup"
+        ? -0.035 * progress
+        : state.phase === "attack"
+          ? 0.055 * Math.sin(progress * Math.PI)
+          : 0,
+    );
+    if (state.phase === "attack") {
+      if (progress < 0.16) frame = 2;
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.drawImage(atlas, frame * 256, 0, 256, 128, -139, -118, 256, 128);
+      ctx.restore();
+    }
+  }
   ctx.drawImage(
     atlas,
     frame * 256,

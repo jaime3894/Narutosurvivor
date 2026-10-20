@@ -15,8 +15,8 @@ import { spawnChest } from "../src/game/progression";
 import { spawnRift } from "../src/game/rifts";
 
 describe("terreno sólido compartido", () => {
-  it("multiplica por nueve la superficie y distribuye objetos pequeños en toda la isla", () => {
-    expect(combat.world.width * combat.world.height).toBe(4800 * 3600 * 9);
+  it("multiplica por treinta y seis la superficie y distribuye objetos pequeños en toda la isla", () => {
+    expect(combat.world.width * combat.world.height).toBe(4800 * 3600 * 36);
     const props = worldProps(0);
     expect(props.length).toBeGreaterThan(300);
     expect(props.some((p) => p.x > 4000 && p.y > 3000)).toBe(true);

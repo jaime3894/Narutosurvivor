@@ -12,7 +12,7 @@ test("movimiento, pausa, mejora, derrota y reinicio en el build real", async ({
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await expect(page.locator("#battle")).toBeVisible();
   const start = await page.evaluate(() => window.__MAREA_DEBUG__?.snapshot());
   if (!start) throw new Error("Falta puente de depuración");
@@ -52,7 +52,7 @@ test("movimiento, pausa, mejora, derrota y reinicio en el build real", async ({
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Volver al puerto" }).click();
   await expect(
-    page.getByRole("button", { name: "Zarpar hacia East Blue" }),
+    page.getByRole("button", { name: "Comenzar supervivencia" }),
   ).toBeVisible();
   expect(await page.evaluate(() => window.__MAREA_DEBUG__)).toBeUndefined();
   expect(errors).toEqual([]);
@@ -62,7 +62,7 @@ test("la supervivencia continúa después de cinco minutos y llega al cambio de 
   page,
 }) => {
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await page.evaluate(() => {
     window.__MAREA_DEBUG__!.setTime(300);
     window.__MAREA_DEBUG__!.advance(0.05);
@@ -79,7 +79,7 @@ test("móvil: selección visible, arrastre y controles táctiles básicos", asyn
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   const box = await page.locator("#battle").boundingBox();
   if (!box) throw new Error("Arena ausente");
   const before = await page.evaluate(
@@ -110,7 +110,7 @@ test("el modo normal no expone herramientas de depuración", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   expect(await page.evaluate(() => window.__MAREA_DEBUG__)).toBeUndefined();
   await expect(page.locator(".debug-tools")).toHaveCount(0);
 });
@@ -139,7 +139,7 @@ test("las 18 técnicas se ejecutan sin errores de render en el banco de depuraci
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   const options = await page
     .locator("#debug-technique option")
     .evaluateAll((elements) =>
@@ -161,7 +161,7 @@ test("recoger un cofre evoluciona Rifle, pausa y permite continuar con la nueva 
   page,
 }) => {
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await page.getByRole("button", { name: "Preparar evolución" }).click();
   await expect(page.locator("#weapon-loadout")).toContainText("5/5");
   await page.evaluate(() =>

@@ -1,3 +1,4 @@
+import { arenaHeading, moveInArena } from "./arena-terrain";
 import { regionalMoves, type RegionalMoveId } from "../data/regional-bosses";
 import { bossRepertoire } from "../data/boss-moves";
 import { bosses } from "../data/rifts";
@@ -24,8 +25,21 @@ export function updateRegionalBoss(run: Run, enemy: Enemy, dt: number): void {
         bosses[s.kind].speed *
         (furious ? 1.1 : 1) *
         ((enemy.slow ?? 0) > 0 ? 0.7 : 1);
-      enemy.position.x += (dx / d) * speed * dt;
-      enemy.position.y += (dy / d) * speed * dt;
+      const heading = run.arena
+        ? arenaHeading(
+            run.arena,
+            enemy.position,
+            run.player.position,
+            enemy.radius,
+          )
+        : { x: dx / d, y: dy / d };
+      if (run.arena)
+        moveInArena(
+          run.arena,
+          enemy.position,
+          { x: heading.x * speed * dt, y: heading.y * speed * dt },
+          enemy.radius,
+        );
       s.moving = true;
       s.walkTime += dt;
     }
@@ -90,7 +104,7 @@ export function updateRegionalBoss(run: Run, enemy: Enemy, dt: number): void {
         run.hazards.push({
           id: run.nextId++,
           position: { ...enemy.position },
-          velocity: { x: Math.cos(a) * 245, y: Math.sin(a) * 245 },
+          velocity: { x: Math.cos(a) * 285, y: Math.sin(a) * 285 },
           radius: move.radius,
           damage: bosses[s.kind].damage * move.damage,
           life: 3,
@@ -100,19 +114,27 @@ export function updateRegionalBoss(run: Run, enemy: Enemy, dt: number): void {
     }
   } else if (s.phase === "attack") {
     if (move.behavior === "rush") {
-      enemy.position.x += ((s.direction.x * move.range) / move.active) * dt;
-      enemy.position.y += ((s.direction.y * move.range) / move.active) * dt;
+      if (run.arena)
+        moveInArena(
+          run.arena,
+          enemy.position,
+          {
+            x: ((s.direction.x * move.range) / move.active) * dt,
+            y: ((s.direction.y * move.range) / move.active) * dt,
+          },
+          enemy.radius,
+        );
     }
     if (s.time <= 0) {
       s.phase = "recover";
-      s.time = move.recovery * (furious ? 0.85 : 1);
+      s.time = move.recovery * (furious ? 0.65 : 0.85);
     }
   } else if (s.phase === "recover" && s.time <= 0) {
     s.cycle++;
     const repertoire = bossRepertoire[s.kind];
     s.move = repertoire[s.cycle % repertoire.length] ?? repertoire[0];
     s.phase = "approach";
-    s.time = 0.5;
+    s.time = 0.3;
   }
   if (
     distanceSquared(enemy.position, run.player.position) <

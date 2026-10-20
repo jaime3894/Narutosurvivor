@@ -18,7 +18,7 @@ test("compras por personaje persistentes y aplicadas al empezar, con bolsa compa
   await expect(dialog.locator(".wallet")).toContainText("60");
   await page.getByRole("button", { name: "Volver", exact: true }).click();
   await page.reload();
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   const state = await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot());
   expect(state.health).toBe(108);
   expect(state.character).toBe("luffy");
@@ -54,14 +54,14 @@ test("menú y mejoras móviles: sin desbordar, coste y retorno accesibles", asyn
   );
   await page.getByRole("button", { name: "Volver", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Zarpar hacia East Blue" }),
+    page.getByRole("button", { name: "Comenzar supervivencia" }),
   ).toBeVisible();
 });
 test("el escenario cambia a 4:00 y 8:00 y las cartas llevan iconos ilustrados", async ({
   page,
 }) => {
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   const shots = new Set<string>();
   for (const t of [0, 240, 480]) {
     await page.evaluate((t) => window.__MAREA_DEBUG__!.setTime(t), t);
@@ -75,7 +75,9 @@ test("el escenario cambia a 4:00 y 8:00 y las cartas llevan iconos ilustrados", 
   expect(
     await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot().stage),
   ).toBe("desert");
-  await expect(page.locator(".battle-location")).toContainText("ALABASTA");
+  await expect(page.locator(".battle-location")).toContainText(
+    "DUNAS Y RUINAS",
+  );
   await page.getByRole("button", { name: "+10 XP", exact: true }).click();
   await expect(page.locator("[data-upgrade] .game-icon")).toHaveCount(3);
   const background = await page
@@ -89,7 +91,7 @@ test("Zoro solo puede vincular sus dos técnicas; después el jefe ofrece atribu
 }) => {
   await page.goto("/?debug");
   await page.getByRole("button", { name: "Capitán Zoro", exact: true }).click();
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await page.evaluate(() => window.__MAREA_DEBUG__!.learnTechnique("phoenix"));
   await page.getByRole("button", { name: "Grieta", exact: true }).click();
   await page

@@ -21,35 +21,40 @@ const debug = new URLSearchParams(location.search).has("debug");
 function showPort(): void {
   cleanup?.();
   cleanup = undefined;
-  cleanup = renderPort(app, selection, {
-    play: () => {
-      cleanup?.();
-      cleanup = startSession(app, showPort, debug, selection);
-    },
-    missions: () =>
-      openMissions((id) => {
+  cleanup = renderPort(
+    app,
+    selection,
+    {
+      play: () => {
         cleanup?.();
-        cleanup = startSession(app, showPort, debug, selection, id);
-      }),
-    crew: () =>
-      openCrew(selection, (next) => {
-        selection = next;
-        profile.selected = next.captain;
+        cleanup = startSession(app, showPort, debug, selection);
+      },
+      missions: () =>
+        openMissions((id) => {
+          cleanup?.();
+          cleanup = startSession(app, showPort, debug, selection, id);
+        }),
+      crew: () =>
+        openCrew(selection, (next) => {
+          selection = next;
+          profile.selected = next.captain;
+          saveProfile();
+          showPort();
+        }),
+      training: () => openTraining(selection.captain, showPort),
+      catalog: openCatalog,
+      select: (id) => {
+        selection = {
+          captain: id,
+          nakama: selection.nakama.filter((n) => n !== id),
+        };
+        profile.selected = id;
         saveProfile();
         showPort();
-      }),
-    training: () => openTraining(selection.captain, showPort),
-    catalog: openCatalog,
-    select: (id) => {
-      selection = {
-        captain: id,
-        nakama: selection.nakama.filter((n) => n !== id),
-      };
-      profile.selected = id;
-      saveProfile();
-      showPort();
+      },
     },
-  });
+    debug,
+  );
 }
 app.innerHTML =
   '<main class="loading-screen" role="status"><p class="eyebrow">MAREA DE AVENTURAS</p><h1>Preparando la tripulación…</h1></main>';

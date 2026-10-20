@@ -1,5 +1,10 @@
-import { islands, islandAt, survivalRoute, type IslandId } from "./islands";
-import { survivalRules } from "./survival";
+import {
+  islands,
+  islandAt,
+  survivalRoute,
+  survivalStageIndex,
+  type IslandId,
+} from "./islands";
 import type { BossId } from "./rifts";
 export type MissionId = "survival" | "voyage" | IslandId;
 export interface WaveDefinition {
@@ -154,8 +159,7 @@ export function terrainTime(
   mission: MissionId = "voyage",
 ): number {
   if (mission === "survival") {
-    const zone =
-      Math.floor(seconds / survivalRules.zoneSeconds) % survivalRoute.length;
+    const zone = survivalStageIndex(seconds);
     return zone === 1
       ? 120
       : islands[survivalRoute[zone] ?? "east-blue"].terrain;

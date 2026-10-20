@@ -171,6 +171,7 @@ export interface Rift {
   boss: BossId;
 }
 export interface RiftArena {
+  boss: BossId;
   encounter?: CampaignEncounter;
   center: Position;
   remaining: number;

@@ -1,3 +1,4 @@
+import { arenaBounds } from "../data/arenas";
 import {
   regionalMoves,
   elementColors,
@@ -6,7 +7,7 @@ import {
 import { drawElementProjectile, isRegionalElement } from "./regional-effects";
 import { busterRules } from "../data/missions";
 import { bossMoves, fanPatterns } from "../data/boss-moves";
-import { bosses, riftRules } from "../data/rifts";
+import { bosses } from "../data/rifts";
 import type { Run, Enemy } from "../game/types";
 export function drawRifts(
   ctx: CanvasRenderingContext2D,
@@ -14,6 +15,16 @@ export function drawRifts(
   reduced: boolean,
 ): void {
   ctx.save();
+  if (run.arena) {
+    ctx.beginPath();
+    ctx.rect(
+      run.arena.center.x - arenaBounds.halfWidth,
+      run.arena.center.y - arenaBounds.halfHeight,
+      arenaBounds.halfWidth * 2,
+      arenaBounds.halfHeight * 2,
+    );
+    ctx.clip();
+  }
   for (const shell of run.director.buster?.shells ?? []) {
     const progress = 1 - shell.remaining / busterRules.warning;
     ctx.fillStyle = "rgba(241,116,69,.22)";
@@ -74,16 +85,6 @@ export function drawRifts(
     ctx.textAlign = "center";
     ctx.fillStyle = "#ffefd5";
     ctx.fillText(`GRIETA · ${Math.ceil(run.rift.remaining)}s`, x, y + 33);
-  }
-  if (run.arena) {
-    const c = run.arena.center;
-    ctx.fillStyle = "rgba(30,18,45,.22)";
-    ctx.strokeStyle = "#c6a2e8";
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, riftRules.arenaRadius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
   }
   for (const z of run.imuZones) {
     ctx.save();

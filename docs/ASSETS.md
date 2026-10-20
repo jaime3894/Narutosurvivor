@@ -168,3 +168,9 @@ Fuentes originales con asistencia de IA en `docs/art-source/*-v11.png`: cuatro g
 - Presupuesto total de precarga: 16 MB (antes 10), incluyendo todos los nuevos atlas y materiales. Poses v11 hasta 110 KB; anteriores conservan 100 KB. Marcha hasta 500 KB, facción hasta 250 KB. La ampliación se debe al contenido adicional, no al código.
 
 Límites artísticos: ataques de jefe comparten una clave de ejecución, vistas laterales espejadas y efectos propios mediante Canvas. No se prometen animaciones oficiales ni vistas completas de 360 grados. La punta del hacha de Sentomaru tiene margen reducido en la fuente; la exportación mantiene el cuerpo dentro de sus celdas.
+
+## Recintos y bordes v12
+
+Esta revisión reutiliza los atlas originales existentes. `data/arenas.ts` asigna suelo/objetos a los 18 recintos; `game/arena-terrain.ts` comparte las mismas bases poligonales del atlas con el render. Las animaciones interpolan impulso/retroceso de las claves publicadas y añaden estela, sin afirmar más dibujos corporales. No se han descargado imágenes nuevas.
+
+El contorno de la isla procede de `data/island-shape.ts`, compartido con colisión. Las orillas usan materiales del ambiente y el borde de nubes incluye remates procedurales claros. Las capturas `docs/screenshots/*-v12.png` muestran puerto, recintos, móvil y bordes; son documentación y no se precargan. Se mantiene el presupuesto de PNG del juego en 16 MB.

@@ -1,3 +1,4 @@
+import { survivalEnvironment } from "./islands";
 import { terrainTime, type MissionId } from "./missions";
 export interface VoyageStage {
   id: string;
@@ -129,7 +130,14 @@ export function voyageStage(
   seconds: number,
   mission: MissionId = "voyage",
 ): VoyageStage {
-  return terrainStage(terrainTime(seconds, mission));
+  const stage = terrainStage(terrainTime(seconds, mission));
+  return mission === "survival"
+    ? {
+        ...stage,
+        name: survivalEnvironment(seconds),
+        subtitle: "La misma isla · presión creciente · Imu a 60:00",
+      }
+    : stage;
 }
 /** Código de terreno ya resuelto: no vuelve a aplicar el reloj de una misión. */
 export function terrainStage(code: number): VoyageStage {

@@ -4,7 +4,7 @@ test("un jefe solo ofrece vincular ataques aprendidos y conserva sus rangos", as
   page,
 }) => {
   await page.goto("/?debug");
-  await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
+  await page.getByRole("button", { name: "Comenzar supervivencia" }).click();
   await page.getByRole("button", { name: "Grieta", exact: true }).click();
   await page
     .getByRole("button", { name: "Derrotar jefe", exact: true })
@@ -178,7 +178,7 @@ test("selector de islas móvil: contenido y botones accesibles", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/?debug");
   await page
     .getByRole("button", { name: "Islas y jefes", exact: true })
     .click();

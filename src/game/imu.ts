@@ -1,3 +1,4 @@
+import { arenaHeading, moveInArena } from "./arena-terrain";
 import type { Enemy, Run } from "./types";
 import { bossMoves } from "../data/boss-moves";
 import { bosses } from "../data/rifts";
@@ -27,8 +28,23 @@ export function updateImu(run: Run, enemy: Enemy, dt: number): void {
       dy = run.player.position.y - enemy.position.y,
       len = Math.hypot(dx, dy) || 1;
     if (len > 170) {
-      enemy.position.x += (dx / len) * bosses.imu.speed * dt;
-      enemy.position.y += (dy / len) * bosses.imu.speed * dt;
+      if (run.arena) {
+        const heading = arenaHeading(
+          run.arena,
+          enemy.position,
+          run.player.position,
+          enemy.radius,
+        );
+        moveInArena(
+          run.arena,
+          enemy.position,
+          {
+            x: heading.x * bosses.imu.speed * dt,
+            y: heading.y * bosses.imu.speed * dt,
+          },
+          enemy.radius,
+        );
+      }
       s.moving = true;
       s.walkTime += dt;
     }
