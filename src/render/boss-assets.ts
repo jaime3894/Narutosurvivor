@@ -19,7 +19,10 @@ export async function loadBossAtlases(root: URL): Promise<void> {
       image.src = new URL(bossArt(id).poses, root).href;
       try {
         await image.decode();
-        if (image.width !== 1024 || image.height !== 128)
+        if (
+          image.width !== (id === "imu" ? 1536 : 1024) ||
+          image.height !== 128
+        )
           throw new Error("Dimensiones");
         atlases.set(id, image);
       } catch {
@@ -44,7 +47,13 @@ export function drawBoss(
     state.phase === "windup"
       ? 2
       : state.phase === "attack"
-        ? 3
+        ? state.kind === "imu"
+          ? state.move === "throneRay"
+            ? 5
+            : state.move === "eclipse"
+              ? 4
+              : 3
+          : 3
         : target.y < enemy.position.y
           ? 1
           : 0;

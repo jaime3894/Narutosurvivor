@@ -16,10 +16,10 @@ import {
   type Preparation,
 } from "../data/training";
 import type { Run } from "./types";
-export const profileKey = "marea.profile.v1";
+export const profileKey = "marea.profile.v2";
+export const legacyProfileKey = "marea.profile.v1";
 const ids = Object.keys(characterNames) as CharacterId[];
 export const newSailor = (): SailorRecord => ({
-  berries: 120,
   levels: emptyTraining(),
   banned: [],
   runs: 0,
@@ -28,7 +28,8 @@ export const newSailor = (): SailorRecord => ({
   kills: 0,
 });
 export const newProfile = (): Profile => ({
-  version: 1,
+  version: 2,
+  berries: 120,
   selected: "luffy",
   sailors: Object.fromEntries(ids.map((id) => [id, newSailor()])) as Record<
     CharacterId,
@@ -48,7 +49,8 @@ function number(value: unknown, max = 1e9): number {
 }
 export function parseProfile(value: unknown): Profile {
   const data = record(value);
-  if (data.version !== 1) throw new Error("Versión de guardado no reconocida");
+  if (data.version !== 1 && data.version !== 2)
+    throw new Error("Versión de guardado no reconocida");
   const result = newProfile(),
     sailors = record(data.sailors);
   if (ids.includes(data.selected as CharacterId))
@@ -56,18 +58,20 @@ export function parseProfile(value: unknown): Profile {
   result.receipts = Array.isArray(data.receipts)
     ? data.receipts.filter((v): v is string => typeof v === "string").slice(-64)
     : [];
+  result.berries = data.version === 2 ? number(data.berries) : 0;
   for (const id of ids) {
     const raw = record(sailors[id]);
     if (!Object.keys(raw).length) continue;
     const s = result.sailors[id],
       levels = record(raw.levels),
       own = weapons.filter((w) => w.owner === id).map((w) => w.id);
-    s.berries = number(raw.berries);
+    if (data.version === 1)
+      result.berries = Math.min(1e9, result.berries + number(raw.berries));
     for (const key of trainingIds)
       s.levels[key] = number(levels[key], training[key].max);
     s.runs = number(raw.runs);
     s.wins = Math.min(s.runs, number(raw.wins));
-    s.bestTime = number(raw.bestTime, 300);
+    s.bestTime = number(raw.bestTime, 31_536_000);
     s.kills = number(raw.kills);
     if (s.levels.starter && own.includes(raw.starter as WeaponId))
       s.starter = raw.starter as WeaponId;
@@ -97,8 +101,8 @@ export function purchaseTraining(
   )
     return false;
   const cost = trainingCost(id, level);
-  if (sailor.berries < cost) return false;
-  sailor.berries -= cost;
+  if (profile.berries < cost) return false;
+  profile.berries -= cost;
   sailor.levels[id]++;
   return true;
 }
@@ -161,7 +165,7 @@ export function settleRun(profile: Profile, run: Run): number {
         (run.status === "won" ? 100 : 0),
     ),
   );
-  sailor.berries = Math.min(1e9, sailor.berries + reward);
+  profile.berries = Math.min(1e9, profile.berries + reward);
   sailor.runs++;
   if (run.status === "won") sailor.wins++;
   sailor.bestTime = Math.max(sailor.bestTime, Math.floor(run.elapsed));

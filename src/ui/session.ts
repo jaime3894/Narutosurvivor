@@ -12,6 +12,9 @@ import { prepareSailor, settleRun } from "../game/profile";
 import { profile, saveProfile } from "./profile-store";
 import { iconMarkup, upgradeIcon } from "./icons";
 import { canReroll, rerollUpgrades } from "../game/progression";
+import { formRequirement, masteredForm } from "../game/forms";
+import { characterById } from "../data/crew";
+import { upgradeComparison } from "../game/upgrade-preview";
 import { formMilestones } from "../data/form-progression";
 import {
   activeTechniques,
@@ -88,6 +91,10 @@ export interface DebugBridge {
     bossesDefeated: number;
     stage: string;
     mission: MissionId;
+    imuDefeated: boolean;
+    imuPhase: number;
+    fieldObjects: number;
+    roles: string[];
     encounter: number;
     finalDefeated: boolean;
     buster: number;
@@ -108,6 +115,7 @@ export interface DebugBridge {
   closeChest: () => void;
   unlockForms: () => void;
   setTime: (seconds: number) => void;
+  setBossHealth: (fraction: number) => void;
   openRift: () => void;
   defeatBoss: () => void;
   chooseChest: (index: number) => boolean;
@@ -124,7 +132,7 @@ export function startSession(
   onExit: () => void,
   debug: boolean,
   selection: CrewSelection = { captain: "luffy", nakama: [] },
-  mission: MissionId = "voyage",
+  mission: MissionId = "survival",
 ): () => void {
   const makeRun = () =>
     createRun(
@@ -246,8 +254,9 @@ export function startSession(
 
   function hud(): void {
     query(".battle-location").textContent =
-      run.mission === "voyage"
-        ? voyageStage(run.elapsed).name.toUpperCase()
+      run.mission === "voyage" || run.mission === "survival"
+        ? (run.director.imuDefeated ? "NUEVO MUNDO · " : "") +
+          voyageStage(run.elapsed, run.mission).name.toUpperCase()
         : `${missions[run.mission].name} · ${waveAt(run.elapsed, run.mission)?.name ?? ""}`;
     query("#fps-text").hidden = !preferences.fps;
     query("#fps-text").textContent = `${Math.round(qualityMonitor.fps)} FPS`;
@@ -286,7 +295,7 @@ export function startSession(
               "Refuerzos en la costa",
               "La marea no espera",
               "No dejes que te rodeen",
-              "Último esfuerzo. Resiste.",
+              "Tu leyenda sigue creciendo",
             ][Math.min(wave, 4)] ?? "");
     const nextBuild = JSON.stringify([
       run.character,
@@ -351,7 +360,7 @@ export function startSession(
         .map((id, index) => {
           const upgrade = upgrades.find((item) => item.id === id);
           return upgrade
-            ? `<button class="upgrade-card" data-upgrade="${id}">${upgradeIcon(id)}<span class="card-kind">${id.startsWith("weapon:") ? "TÉCNICA · " + characterNames[run.character] : "BONUS DE COMBATE"}</span><span class="upgrade-name">${upgrade.title}</span><span class="upgrade-description">${upgrade.description}</span><span class="upgrade-rank">RANGO ${run.ranks[id] + 1} / ${upgrade.max} · TECLA ${index + 1}</span></button>`
+            ? `<button class="upgrade-card" data-upgrade="${id}">${upgradeIcon(id)}<span class="card-kind">${id.startsWith("weapon:") ? "TÉCNICA · " + characterNames[run.character] : "BONUS DE COMBATE"}</span><span class="upgrade-name">${upgrade.title}</span><span class="upgrade-description">${upgrade.description}<br><b>${upgradeComparison(run, id)}</b></span><span class="upgrade-rank">RANGO ${run.ranks[id] + 1} / ${upgrade.max} · TECLA ${index + 1}</span></button>`
             : "";
         })
         .join(
@@ -360,7 +369,7 @@ export function startSession(
     } else if (run.status === "chest") {
       content = `<p class="eyebrow">COFRE ABIERTO · ELIGE 1 DE 3</p><h1>El mar guarda tesoros.</h1><p class="modal-subtitle">El combate está detenido. Solo recibirás la opción elegida.</p><div class="upgrade-grid">${run.chestRewards.map((r, i) => `<button class="upgrade-card ${r.kind === "evolution" ? "evolved" : ""}" data-chest="${i}">${iconMarkup(r.id ?? (r.kind === "berries" ? "greed" : r.kind === "haste" ? "stride" : r.kind === "vitality" ? "vitality" : "chest"), "upgrade-icon")}<span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">ELEGIR · TECLA ${i + 1}</span></button>`).join("")}</div>`;
     } else if (run.status === "bossReward") {
-      content = `<p class="eyebrow">JEFE DERROTADO · ELIGE UNA RECOMPENSA</p><h1>La tripulación crece.</h1><div class="upgrade-grid">${run.bossRewards.map((r, i) => `<button class="upgrade-card" data-boss-reward="${i}">${iconMarkup(r.id === "bond" ? "multishot" : r.id === "damage" ? "power" : r.id === "health" ? "vitality" : r.id === "speed" ? "stride" : r.id, "upgrade-icon")}<span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">TECLA ${i + 1}</span></button>`).join("")}</div>`;
+      content = `<p class="eyebrow">JEFE DERROTADO · ELIGE UNA RECOMPENSA</p><h1>La tripulación crece.</h1><div class="upgrade-grid">${run.bossRewards.map((r, i) => `<button class="upgrade-card" data-boss-reward="${i}">${iconMarkup(r.id === "berries" ? "greed" : r.id === "rest" ? "regen" : r.id === "haste" ? "stride" : r.id === "bond" ? "multishot" : r.id === "damage" ? "power" : r.id === "health" ? "vitality" : r.id === "speed" ? "stride" : r.id, "upgrade-icon")}<span class="upgrade-name">${r.title}</span><span class="upgrade-description">${r.detail}</span><span class="upgrade-rank">TECLA ${i + 1}</span></button>`).join("")}</div>`;
     } else if (run.status === "bond") {
       content = `<p class="eyebrow">VÍNCULO · ${Math.max(2, run.linkedWeapons.length + 1)} TÉCNICAS JUNTAS</p><h1>Elige qué técnica vincular.</h1><p class="modal-subtitle">${run.linkedWeapons.length ? run.linkedWeapons.map((w) => weaponById(w).title).join(" + ") : weaponById(run.activeWeapon).title}. Solo aparecen técnicas de ${characterNames[run.character]} que ya has aprendido en esta partida.</p><div class="upgrade-grid">${bondCandidates(
         run,
@@ -373,18 +382,17 @@ export function startSession(
           "",
         )}</div><button id="back-rewards">Volver a recompensas</button>`;
     } else if (run.status === "paused") {
-      content =
-        '<p class="eyebrow">UN RESPIRO EN ALTA MAR</p><h1>A tu ritmo.</h1><p class="modal-subtitle">La partida está en pausa.</p><div class="modal-actions"><button id="resume">Continuar</button><button class="secondary" id="pause-settings">Ajustes</button><button class="secondary" id="leave">Volver al puerto</button></div>';
+      content = `<p class="eyebrow">UN RESPIRO EN ALTA MAR</p><h1>A tu ritmo.</h1><p class="modal-subtitle">La partida está en pausa.</p><p class="build-summary">${masteredForm(run) < 2 ? "Próxima forma: " + characterById(run.character).forms[(masteredForm(run) + 1) as FormTier].name + " · " + formRequirement(run.character, (masteredForm(run) + 1) as FormTier) : "Todas las formas dominadas"}</p><div class="modal-actions"><button id="resume">Continuar</button><button class="secondary" id="pause-settings">Ajustes</button><button class="secondary" id="leave">Volver al puerto</button></div>`;
     } else {
       accountReward = settleRun(profile, run);
       saveProfile();
       const won = run.status === "won";
-      content = `<p class="eyebrow">${won ? "TRAVESÍA COMPLETADA" : "EL MAR VOLVERÁ A LLAMARTE"}</p><h1>${won ? (run.mission === "voyage" ? "La costa es tuya." : `${missions[run.mission].name} completada.`) : "Una ola más."}</h1><p class="modal-subtitle">${won ? (run.mission === "voyage" ? "Cinco minutos. Una pequeña leyenda." : "Travesía, bombardeo y jefe final superados.") : "Cada intento deja una historia. Vuelve a intentarlo."}</p><div class="results-grid"><div><strong>${formatTime(run.elapsed)}</strong><span>RESISTIDO</span></div><div><strong>${run.kills}</strong><span>DERROTADOS</span></div><div><strong>${run.level}</strong><span>NIVEL</span></div><div><strong>${Math.round(run.damageDealt)}</strong><span>DAÑO CAUSADO</span></div></div><div class="build-summary">${
+      content = `<p class="eyebrow">${won ? "TRAVESÍA COMPLETADA" : "EL MAR VOLVERÁ A LLAMARTE"}</p><h1>${won ? (run.mission === "voyage" || run.mission === "survival" ? "La costa es tuya." : `${missions[run.mission].name} completada.`) : "Una ola más."}</h1><p class="modal-subtitle">${won ? (run.mission === "voyage" || run.mission === "survival" ? "Cinco minutos. Una pequeña leyenda." : "Travesía, bombardeo y jefe final superados.") : "Cada intento deja una historia. Vuelve a intentarlo."}</p><div class="results-grid"><div><strong>${formatTime(run.elapsed)}</strong><span>RESISTIDO</span></div><div><strong>${run.kills}</strong><span>DERROTADOS</span></div><div><strong>${run.level}</strong><span>NIVEL</span></div><div><strong>${Math.round(run.damageDealt)}</strong><span>DAÑO CAUSADO</span></div></div><div class="build-summary">${
         upgrades
           .filter((item) => run.ranks[item.id] > 0)
           .map((item) => `${item.title} ${run.ranks[item.id]}`)
           .join(" · ") || "Sin mejoras adquiridas"
-      }</div><p class="results-account">${iconMarkup("greed")} +${accountReward} berries para ${characterNames[run.character]} · Bolsa: ${profile.sailors[run.character].berries}</p><p class="results-loot">฿ ${run.berries} berries · ${run.openedChests} cofres · ${run.evolvedCount} evoluciones</p><div class="modal-actions"><button id="restart">Otra partida ↗</button><button class="secondary" id="leave">Volver al puerto</button></div>`;
+      }</div><p class="results-account">${iconMarkup("greed")} +${accountReward} berries para tu cuenta · Bolsa: ${profile.berries}</p><p class="results-loot">฿ ${run.berries} berries · ${run.openedChests} cofres · ${run.evolvedCount} evoluciones</p><div class="modal-actions"><button id="restart">Otra partida ↗</button><button class="secondary" id="leave">Volver al puerto</button></div>`;
     }
     overlay.innerHTML = `<div class="scrim"><section class="battle-modal" role="dialog" aria-modal="true" aria-label="${run.status === "upgrade" ? "Elige una mejora" : run.status === "paused" ? "Pausa" : run.status === "chest" ? "Botín del cofre" : run.status === "bossReward" ? "Recompensa del jefe" : run.status === "bond" ? "Vincular técnicas" : "Resultados"}">${content}</section></div>`;
     overlay
@@ -557,6 +565,11 @@ export function startSession(
         bossesDefeated: run.bossesDefeated,
         stage: voyageStage(run.elapsed, run.mission).id,
         mission: run.mission,
+        imuDefeated: run.director.imuDefeated,
+        imuPhase:
+          run.enemies.find((e) => e.boss?.kind === "imu")?.boss?.imuPhase ?? 0,
+        fieldObjects: run.fieldObjects.length,
+        roles: run.enemies.flatMap((e) => (e.role ? [e.role] : [])),
         encounter: run.director.nextEncounter,
         finalDefeated: run.director.finalDefeated,
         buster: run.director.buster?.remaining ?? 0,
@@ -671,8 +684,17 @@ export function startSession(
         run.formCooldown = 0;
         hud();
       },
+      setBossHealth: (fraction) => {
+        const boss = run.enemies.find((e) => e.boss);
+        if (boss && Number.isFinite(fraction))
+          boss.health.current =
+            boss.health.maximum * Math.max(0, Math.min(1, fraction));
+      },
       setTime: (seconds) => {
-        run.elapsed = Math.max(0, Math.min(299, seconds));
+        run.elapsed = Math.max(
+          0,
+          Math.min(run.mission === "survival" ? 86400 : 299, seconds),
+        );
         hud();
         renderer.draw(run, 0.016);
       },

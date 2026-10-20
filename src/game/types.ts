@@ -37,6 +37,10 @@ export interface Enemy {
   health: Health;
   kind: EnemyKind;
   elite?: boolean;
+  role?: "rifle" | "shield" | "officer";
+  roleTimer?: number;
+  aim?: Position;
+  warning?: number;
   radius: number;
   flash: number;
   slow?: number;
@@ -44,6 +48,7 @@ export interface Enemy {
   burnTick?: number;
   boss?: {
     kind: BossId;
+    imuPhase?: 1 | 2 | 3;
     move: BossMoveId;
     cycle: number;
     walkTime: number;
@@ -151,6 +156,8 @@ export interface DirectorState {
   nextEncounter: number;
   finalDefeated: boolean;
   busterStarted: boolean;
+  imuSpawned: boolean;
+  imuDefeated: boolean;
   buster: { remaining: number; timer: number; shells: ShellWarning[] } | null;
 }
 export interface Rift {
@@ -176,11 +183,11 @@ export interface Hazard {
   radius: number;
   damage: number;
   life: number;
-  kind: "knife" | "wave" | "bomb" | "claw" | "sand";
+  kind: "knife" | "wave" | "bomb" | "claw" | "sand" | "shadow";
 }
 export interface BossReward {
-  kind: "bond" | "boon";
-  id: "bond" | BoonId;
+  kind: "bond" | "boon" | "supply";
+  id: "bond" | BoonId | "berries" | "rest" | "haste";
   title: string;
   detail: string;
 }
@@ -192,7 +199,31 @@ export interface Nakama {
   timer: number;
   supportTimer: number;
 }
+export interface FieldObject {
+  id: number;
+  kind: "barrel" | "supplies" | "vault";
+  position: Position;
+  health: number;
+  progress: number;
+  remaining: number;
+}
 export interface Run {
+  imuZones: {
+    position: Position;
+    end?: Position;
+    radius: number;
+    warning: number;
+    life: number;
+    damage: number;
+  }[];
+  fieldObjects: FieldObject[];
+  fieldTimer: number;
+  shots: {
+    position: Position;
+    velocity: Velocity;
+    life: number;
+    damage: number;
+  }[];
   mission: MissionId;
   director: DirectorState;
   id: string;
@@ -213,6 +244,7 @@ export interface Run {
   rift: Rift | null;
   arena: RiftArena | null;
   nextRiftTime: number;
+  nextRiftEarliest: number;
   nextRiftKills: number;
   bossesDefeated: number;
   hazards: Hazard[];

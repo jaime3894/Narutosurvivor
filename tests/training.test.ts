@@ -30,21 +30,21 @@ import { voyageStage } from "../src/data/voyage";
 import { bosses, type BossId } from "../src/data/rifts";
 import type { CharacterId } from "../src/data/content";
 describe("entrenamiento por tripulante", () => {
-  it("compra una vez al precio mostrado sin tocar otra bolsa, bloquea saldo y rangos insuficientes", () => {
+  it("compra una vez al precio mostrado sin tocar los rangos de otros, bloquea saldo y rangos insuficientes", () => {
     const p = newProfile(),
       zoro = structuredClone(p.sailors.zoro);
     expect(trainingCost("health", 0)).toBe(60);
     expect(purchaseTraining(p, "luffy", "health")).toBe(true);
-    expect(p.sailors.luffy.berries).toBe(60);
+    expect(p.berries).toBe(60);
     expect(p.sailors.luffy.levels.health).toBe(1);
     expect(p.sailors.zoro).toEqual(zoro);
     expect(purchaseTraining(p, "luffy", "damage")).toBe(false);
-    p.sailors.luffy.berries = 1e7;
+    p.berries = 1e7;
     for (let i = 0; i < 9; i++)
       expect(purchaseTraining(p, "luffy", "health")).toBe(true);
-    const wallet = p.sailors.luffy.berries;
+    const wallet = p.berries;
     expect(purchaseTraining(p, "luffy", "health")).toBe(false);
-    expect(p.sailors.luffy.berries).toBe(wallet);
+    expect(p.berries).toBe(wallet);
   });
   it("aplica cada estadística comprada en el motor sin alterar personajes de apoyo", () => {
     const p = newProfile();
@@ -107,7 +107,7 @@ describe("entrenamiento por tripulante", () => {
     expect(new Set(run.choices).size).toBe(3);
     expect(rerollUpgrades(run)).toBe(false);
   });
-  it("liquida el botín una sola vez, en el personaje usado, y restaura un guardado equivalente", () => {
+  it("liquida el botín una sola vez, en la bolsa global, y restaura un guardado equivalente", () => {
     const p = newProfile(),
       run = createRun(8, "zoro");
     run.status = "won";
@@ -117,22 +117,22 @@ describe("entrenamiento por tripulante", () => {
     run.bossesDefeated = 2;
     const reward = settleRun(p, run);
     expect(reward).toBe(255);
-    expect(p.sailors.zoro.berries).toBe(375);
-    expect(p.sailors.luffy.berries).toBe(120);
+    expect(p.berries).toBe(375);
+    expect(p.sailors.luffy.runs).toBe(0);
     expect(p.sailors.zoro.runs).toBe(1);
     expect(settleRun(p, run)).toBe(0);
     expect(parseProfile(JSON.parse(JSON.stringify(p)) as unknown)).toEqual(p);
   });
   it("sanea rangos, saldo, técnicas ajenas y datos no finitos del guardado", () => {
     const raw = newProfile();
-    raw.sailors.luffy.berries = -90;
+    raw.berries = -90;
     raw.sailors.luffy.levels.health = 999;
     raw.sailors.luffy.levels.starter = 1;
     raw.sailors.luffy.starter = "onigiri";
     raw.sailors.luffy.levels.veto = 2;
     raw.sailors.luffy.banned = ["pistol", "onigiri", "whip"];
     const parsed = parseProfile(raw);
-    expect(parsed.sailors.luffy.berries).toBe(0);
+    expect(parsed.berries).toBe(0);
     expect(parsed.sailors.luffy.levels.health).toBe(10);
     expect(parsed.sailors.luffy.starter).toBeUndefined();
     expect(parsed.sailors.luffy.banned).toEqual(["whip"]);
@@ -194,7 +194,7 @@ describe("escenarios y jefes reforzados", () => {
     expect(run.enemies[0]!.health.maximum).toBeGreaterThan(200);
     expect(run.notice).toContain("Alabasta");
   });
-  it.each(Object.keys(bosses) as BossId[])(
+  it.each((Object.keys(bosses) as BossId[]).filter((id) => id !== "imu"))(
     "%s recorre sus tres ataques y tiene poses de marcha reales en el estado del motor",
     (id) => {
       const run = createRun(8);

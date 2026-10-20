@@ -136,7 +136,7 @@ describe("arte de jefes", () => {
   it.each(bossOrder)("%s tiene cuatro poses en un PNG compacto", (id) => {
     const path = `public/${bossArt(id).poses}`,
       png = readFileSync(path);
-    expect(png.readUInt32BE(16)).toBe(1024);
+    expect(png.readUInt32BE(16)).toBe(id === "imu" ? 1536 : 1024);
     expect(png.readUInt32BE(20)).toBe(128);
     expect(statSync(path).size).toBeLessThan(100_000);
   });

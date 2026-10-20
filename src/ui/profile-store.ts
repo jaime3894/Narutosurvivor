@@ -1,12 +1,26 @@
-import { newProfile, parseProfile, profileKey } from "../game/profile";
+import {
+  newProfile,
+  parseProfile,
+  profileKey,
+  legacyProfileKey,
+} from "../game/profile";
 import type { Profile } from "../data/training";
 let message = "";
 function load(): Profile {
   try {
-    const raw = localStorage.getItem(profileKey);
+    const raw =
+      localStorage.getItem(profileKey) ??
+      localStorage.getItem(legacyProfileKey);
     if (!raw) return newProfile();
     try {
-      return parseProfile(JSON.parse(raw) as unknown);
+      const parsed = parseProfile(JSON.parse(raw) as unknown);
+      try {
+        localStorage.setItem(profileKey, JSON.stringify(parsed));
+      } catch {
+        message =
+          "Migración aplicada en memoria; no se puede guardar en este navegador.";
+      }
+      return parsed;
     } catch {
       localStorage.setItem(profileKey + ".backup", raw);
       message =

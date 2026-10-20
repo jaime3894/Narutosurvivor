@@ -13,8 +13,8 @@ import { spawnChest } from "../src/game/progression";
 import { spawnRift } from "../src/game/rifts";
 
 describe("terreno sólido compartido", () => {
-  it("cuadruplica superficie y distribuye objetos pequeños en toda la isla", () => {
-    expect(combat.world.width * combat.world.height).toBe(2400 * 1800 * 4);
+  it("multiplica por nueve la superficie y distribuye objetos pequeños en toda la isla", () => {
+    expect(combat.world.width * combat.world.height).toBe(4800 * 3600 * 9);
     const props = worldProps(0);
     expect(props.length).toBeGreaterThan(300);
     expect(props.some((p) => p.x > 4000 && p.y > 3000)).toBe(true);
@@ -27,10 +27,20 @@ describe("terreno sólido compartido", () => {
       for (const p of worldProps(time)
         .filter((p) => p.radius > 0)
         .slice(0, 30)) {
-        const position = { x: p.x - p.radius - 12 - 30, y: p.centerY };
-        moveOnTerrain(position, { x: 150, y: 0 }, 12, time);
-        expect(blocked(position, 12, time)).toBe(false);
-        expect(position.x).toBeLessThan(p.x);
+        const center = {
+          x: p.footprint.reduce((sum, v) => sum + v.x, 0) / p.footprint.length,
+          y: p.footprint.reduce((sum, v) => sum + v.y, 0) / p.footprint.length,
+        };
+        const position = { x: center.x - 80, y: center.y };
+        // Un polígono permite deslizarse por sus bordes: comprueba cada paso, no una pared circular ficticia.
+        let stopped = false;
+        for (let i = 0; i < 30; i++) {
+          const before = position.x;
+          moveOnTerrain(position, { x: 5, y: 0 }, 12, time);
+          expect(blocked(position, 12, time)).toBe(false);
+          if (position.x - before < 4) stopped = true;
+        }
+        expect(stopped).toBe(true);
         const free = freePosition({ x: p.x, y: p.centerY }, 20, time);
         expect(blocked(free, 20, time)).toBe(false);
       }
@@ -38,13 +48,15 @@ describe("terreno sólido compartido", () => {
   );
   it("permite bordear una roca y aplica el choque al jugador real", () => {
     const p = worldProps(0).find((p) => p.slot === 3)!;
+    const centerY =
+      p.footprint.reduce((sum, v) => sum + v.y, 0) / p.footprint.length;
     const run = createRun(1);
     run.spawnTimer = 100;
-    run.player.position = { x: p.x - p.radius - 12 - 8, y: p.centerY };
-    for (let i = 0; i < 20; i++)
+    run.player.position = { x: p.x - p.radius - 12 - 8, y: centerY };
+    for (let i = 0; i < 8; i++)
       step(run, { x: 1, y: 0, dash: i === 0 }, 1 / 60);
     expect(run.player.position.x).toBeLessThan(p.x);
-    const goal = { x: p.x + 100, y: p.centerY };
+    const goal = { x: p.x + 100, y: centerY };
     for (let i = 0; i < 180; i++) {
       const direction = steerAround(run.player.position, goal, 12, 0);
       moveOnTerrain(

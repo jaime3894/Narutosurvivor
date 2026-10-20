@@ -174,7 +174,16 @@ export function hitEnemy(
     caster === "zoro" && enemy.health.current > enemy.health.maximum * 0.7
       ? 1.15
       : 1;
-  const amount = damage * (critical ? 1.7 : 1) * firstCut;
+  const facing = enemy.aim;
+  const sourceX = origin.x - enemy.position.x,
+    sourceY = origin.y - enemy.position.y;
+  const guarded =
+    enemy.role === "shield" &&
+    facing !== undefined &&
+    (facing.x * sourceX + facing.y * sourceY) /
+      (Math.hypot(sourceX, sourceY) || 1) >
+      Math.cos(0.8);
+  const amount = damage * (critical ? 1.7 : 1) * firstCut * (guarded ? 0.6 : 1);
   if (source && caster === "brook" && form > 0) enemy.slow = 1.2;
   if (source && caster === "sanji" && form > 0) {
     enemy.burn = 2;

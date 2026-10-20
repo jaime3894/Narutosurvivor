@@ -32,7 +32,7 @@ export const voyageStages = [
     id: "desert",
     at: 240,
     name: "Alabasta · Vanguardia del desierto",
-    subtitle: "Último minuto · enemigos veteranos",
+    subtitle: "Dunas y ruinas · enemigos veteranos",
     ground: 4,
     path: 5,
     props: [8, 9, 10, 11],

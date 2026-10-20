@@ -1,3 +1,4 @@
+import { survivalRules } from "../data/survival";
 import { busterRules, missions, terrainTime } from "../data/missions";
 import { freePosition } from "./terrain";
 import { spawnRift, hurtPlayer } from "./rifts";
@@ -5,10 +6,37 @@ import { effect, notify, distanceSquared } from "./rules";
 import type { Run } from "./types";
 /** Un reloj de costa: pausa, elecciones y arenas congelan los eventos y el bombardeo. */
 export function updateDirector(run: Run, dt: number): void {
-  if (run.mission === "voyage" || run.arena || run.status !== "playing") return;
-  const definition = missions[run.mission],
+  if (run.arena || run.status !== "playing") return;
+  if (run.mission === "survival") {
+    if (run.elapsed >= survivalRules.secretBossAt && !run.director.imuSpawned) {
+      run.rift = null;
+      if (spawnRift(run, "imu")) {
+        run.director.imuSpawned = true;
+        run.rift!.encounter = {
+          index: 60,
+          role: "miniboss",
+          health: 1,
+          seconds: survivalRules.secretBossTime,
+        };
+        run.rift!.remaining = 5;
+        notify(run, "EL TRONO VACÍO · Imu despierta · duelo en 5 s");
+      }
+    }
+  }
+  if (run.mission === "voyage") return;
+  const definition =
+      missions[
+        run.mission === "survival"
+          ? terrainTime(run.elapsed, run.mission) >= 240
+            ? "alabasta"
+            : "east-blue"
+          : run.mission
+      ],
     state = run.director;
-  const next = definition.encounters[state.nextEncounter];
+  const next =
+    run.mission === "survival"
+      ? undefined
+      : definition.encounters[state.nextEncounter];
   if (next && run.elapsed >= next.at && !state.buster && !run.rift?.encounter) {
     run.rift = null;
     if (spawnRift(run, next.boss)) {
@@ -25,7 +53,12 @@ export function updateDirector(run: Run, dt: number): void {
       );
     }
   }
-  if (!state.busterStarted && run.elapsed >= definition.busterAt) {
+  if (
+    !state.busterStarted &&
+    (run.mission === "survival"
+      ? run.elapsed % survivalRules.zoneSeconds
+      : run.elapsed) >= definition.busterAt
+  ) {
     state.busterStarted = true;
     state.buster = {
       remaining: definition.busterDuration,

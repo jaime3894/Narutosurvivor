@@ -1,5 +1,8 @@
+import { survivalRules, fieldRules, survivalPressure } from "../data/survival";
 import { terrainTime } from "../data/missions";
 import { missions, waveAt, type MissionId } from "../data/missions";
+import { updateField } from "./field";
+import { updateEnemyRole, updateShots } from "./enemy-roles";
 import { updateDirector } from "./director";
 import { moveOnTerrain, freePosition, steerAround } from "./terrain";
 import { voyageStage } from "../data/voyage";
@@ -55,11 +58,17 @@ export function createRun(
   }
   const health = combat.player.health + preparation.levels.health * 8;
   return {
+    imuZones: [],
+    fieldObjects: [],
+    fieldTimer: fieldRules.firstAt,
+    shots: [],
     mission,
     director: {
       nextEncounter: 0,
       finalDefeated: false,
       busterStarted: false,
+      imuSpawned: false,
+      imuDefeated: false,
       buster: null,
     },
     id: crypto.randomUUID(),
@@ -79,6 +88,7 @@ export function createRun(
     rift: null,
     arena: null,
     nextRiftTime: riftRules.firstTime,
+    nextRiftEarliest: 0,
     nextRiftKills: riftRules.firstKills,
     bossesDefeated: 0,
     hazards: [],
@@ -173,6 +183,7 @@ function spawn(run: Run): void {
     definition.health *
     (1 + run.elapsed / 600) *
     (wave ? wave.health : stage.health) *
+    (run.director.imuDefeated ? survivalRules.newWorldHealth : 1) *
     (elite ? 1.5 : 1);
   let position: Position = { x: 0, y: 0 };
   for (let attempt = 0; attempt < 8; attempt++) {
@@ -204,6 +215,18 @@ function spawn(run: Run): void {
     id: run.nextId++,
     kind,
     elite,
+    ...(run.mission === "survival" && run.elapsed > 40 && run.random() < 0.28
+      ? {
+          role:
+            kind === "sailor"
+              ? ("rifle" as const)
+              : kind === "brute"
+                ? ("shield" as const)
+                : ("officer" as const),
+          roleTimer: 2,
+          warning: 0,
+        }
+      : {}),
     position,
     velocity: { x: 0, y: 0 },
     health: { current: health, maximum: health },
@@ -225,11 +248,43 @@ export function step(run: Run, input: Input, dt: number): void {
     return;
   }
   const duration =
-    run.mission === "voyage" ? combat.duration : missions[run.mission].duration;
+    run.mission === "survival"
+      ? Infinity
+      : run.mission === "voyage"
+        ? combat.duration
+        : missions[run.mission].duration;
   const previousStage = voyageStage(run.elapsed, run.mission);
   if (!run.arena) run.elapsed = Math.min(duration, run.elapsed + dt);
   const stage = voyageStage(run.elapsed, run.mission);
   if (stage.id !== previousStage.id) {
+    run.player.position = freePosition(
+      run.player.position,
+      run.player.radius,
+      terrainTime(run.elapsed, run.mission),
+    );
+    for (const ally of [...run.nakama, ...run.assists])
+      ally.position = freePosition(
+        ally.position,
+        12,
+        terrainTime(run.elapsed, run.mission),
+      );
+    for (const enemy of run.enemies)
+      enemy.position = freePosition(
+        enemy.position,
+        enemy.radius,
+        terrainTime(run.elapsed, run.mission),
+      );
+    run.director.busterStarted = false;
+    run.director.buster = null;
+    run.fieldObjects = [];
+    run.shots = [];
+    run.fieldTimer = 5;
+    for (const drop of run.drops)
+      drop.position = freePosition(
+        drop.position,
+        8,
+        terrainTime(run.elapsed, run.mission),
+      );
     for (const chest of run.chests)
       chest.position = freePosition(
         chest.position,
@@ -246,6 +301,7 @@ export function step(run: Run, input: Input, dt: number): void {
     run.noticeTime = 6;
   }
   updateDirector(run, dt);
+  if (!run.arena) updateField(run, dt);
   updateCrew(run, dt);
   run.noticeTime = Math.max(0, run.noticeTime - dt);
   run.haste = Math.max(0, run.haste - dt);
@@ -298,7 +354,7 @@ export function step(run: Run, input: Input, dt: number): void {
   if (!run.arena && run.spawnTimer <= 0) {
     const batch =
       waveAt(run.elapsed, run.mission)?.batch ??
-      1 + Math.floor(run.elapsed / 90);
+      Math.min(6, 1 + Math.floor(run.elapsed / 90));
     for (
       let i = 0;
       i < batch && run.enemies.length < combat.maximumEnemies;
@@ -335,11 +391,13 @@ export function step(run: Run, input: Input, dt: number): void {
       updateBoss(run, enemy, dt);
       continue;
     }
+    const roleSpeed = updateEnemyRole(run, enemy, dt);
     const speed =
+      roleSpeed *
       enemyTypes[enemy.kind].speed *
       (waveAt(run.elapsed, run.mission)?.speed ?? stage.speed) *
       (enemy.elite ? 1.08 : 1) *
-      (1 + run.elapsed / 1500) *
+      (1 + Math.min(run.elapsed / 1500, 0.6)) *
       ((enemy.slow ?? 0) > 0 ? 0.6 : 1);
     const heading = steerAround(
       enemy.position,
@@ -373,7 +431,8 @@ export function step(run: Run, input: Input, dt: number): void {
           1,
           enemyTypes[enemy.kind].damage *
             (waveAt(run.elapsed, run.mission)?.damage ?? stage.damage) *
-            (enemy.elite ? 1.2 : 1) -
+            (enemy.elite ? 1.2 : 1) *
+            (run.mission === "survival" ? survivalPressure(run.elapsed) : 1) -
             stats(run).armor,
         );
         player.health.current = Math.max(0, player.health.current - damage);
@@ -387,6 +446,7 @@ export function step(run: Run, input: Input, dt: number): void {
       }
     }
   }
+  if (!run.arena) updateShots(run, dt);
   if (player.health.current > 0) {
     updateTechniques(run, dt);
     if (!run.arena) updateLoot(run, dt);

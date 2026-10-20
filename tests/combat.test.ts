@@ -42,6 +42,7 @@ describe("combate y controles", () => {
     advance(a, 1, { x: 1, y: 0, dash: false });
     advance(b, 1, { x: 1, y: 1, dash: false });
     expect(a.distance).toBeCloseTo(b.distance);
+    a.player.position.x = combat.world.width - 150;
     a.player.position.y = combat.world.shore + a.player.radius;
     a.spawnTimer = 100;
     advance(a, 25, { x: 1, y: 0, dash: false });

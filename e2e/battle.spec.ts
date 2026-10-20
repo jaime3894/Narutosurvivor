@@ -58,36 +58,20 @@ test("movimiento, pausa, mejora, derrota y reinicio en el build real", async ({
   expect(errors).toEqual([]);
 });
 
-test("pantalla de victoria tras 300 segundos simulados (salud restaurada por depuración)", async ({
+test("la supervivencia continúa después de cinco minutos y llega al cambio de zona", async ({
   page,
 }) => {
   await page.goto("/?debug");
   await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
-  const result = await page.evaluate(() => {
-    const bridge = window.__MAREA_DEBUG__;
-    if (!bridge) throw new Error("Falta puente de depuración");
-    for (
-      let i = 0;
-      i < 700 && !["won", "lost"].includes(bridge.snapshot().status);
-      i++
-    ) {
-      const state = bridge.snapshot();
-      if (state.status === "upgrade") {
-        const choice = state.choices[0];
-        if (choice) bridge.choose(choice);
-      } else {
-        bridge.setHealth(100);
-        bridge.advance(0.5);
-      }
-    }
-    return bridge.snapshot();
+  await page.evaluate(() => {
+    window.__MAREA_DEBUG__!.setTime(300);
+    window.__MAREA_DEBUG__!.advance(0.05);
   });
-  expect(result.status).toBe("won");
-  expect(result.elapsed).toBe(300);
-  await expect(page.getByRole("dialog", { name: "Resultados" })).toContainText(
-    "La costa es tuya.",
-  );
-  await expect(page.getByRole("dialog")).toContainText("05:00");
+  const state = await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot());
+  expect(state.status).toBe("playing");
+  expect(state.elapsed).toBeGreaterThan(300);
+  expect(state.mission).toBe("survival");
+  await expect(page.getByRole("dialog", { name: "Resultados" })).toHaveCount(0);
 });
 
 test("móvil: selección visible, arrastre y controles táctiles básicos", async ({

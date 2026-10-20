@@ -1,6 +1,6 @@
 # Marea de aventuras
 
-Survivor pirata web con 33 atlas 2D de cuerpo completo creados para el juego con asistencia de IA. **Fase 3 implementada:** diez capitanes, tres estilos por personaje, innatos y hasta dos nakama con sinergias. Mantiene las partidas de cinco minutos, 18 técnicas, 14 pasivos, cofres y evoluciones. Pendiente validar la diversión con una partida humana.
+Survivor pirata web de One Piece. **Supervivencia continua:** zonas cada cuatro minutos, grietas con jefes, técnicas vinculadas e Imu al minuto 60. Diez capitanes con tres formas, 18 técnicas y 14 pasivos. Monedas globales y entrenamiento propio por capitán. Las misiones cortas de East Blue y Alabasta siguen disponibles como práctica. Arte original creado para el juego; no contiene sprites oficiales extraídos.
 
 ## Jugar online
 
@@ -21,10 +21,13 @@ Abre el puerto 5173 y pulsa **Zarpar hacia East Blue**.
 - **Espacio:** embestida, con protección y eliminación por contacto; enfriamiento 2,6 s.
 - **Escape / P:** pausa. Cambiar de pestaña también pausa.
 - **1 / 2 / 3** o clic: elegir mejora cuando subes de nivel.
-- Recoge cristales para ganar experiencia, carne para curarte y cofres para mejorar o evolucionar técnicas.
+- Recoge cristales para ganar experiencia, carne para curarte y cofres para elegir una de tres recompensas.
+- En supervivencia: rompe barriles con ataques o embestida, recoge suministros y permanece tres segundos cerca de una caja fuerte para abrirla.
+- Fusileros anuncian sus tiros; árboles y piedras sirven de cobertura. Flanquea a los guardias y prioriza a los oficiales que curan.
+- La cuenta comparte berries entre todos los capitanes; las mejoras compradas pertenecen al capitán elegido.
 - Evolución: técnica rango 5 + pasivo vinculado rango 2 + un cofre después de 01:00. Las recetas están en el **Cuaderno de combate** del puerto.
 - Luffy base tiene postura neutral y seis poses de carrera. En el selector: **De pie**, **Correr** y **Golpe de goma** para demostrar el brazo texturizado y conectado.
-- **F** o botones de forma: cambiar estilo. Desbloqueos en niveles 4 y 8; las formas gastan energía, el estilo base la recupera.
+- Las formas se desbloquean y seleccionan automáticamente al dominar sus técnicas a 5/5. Luffy: Pistol → Gear Second; después Gatling → Gear Fourth. No hay consumo de energía. **F** permite alternar los estilos ya disponibles. Consulta el siguiente requisito en la pausa.
 - Cada capitán solo aprende sus técnicas. Los nakama siguen al capitán y atacan con su propia arma; no ocupan huecos de su build.
 - En móvil: arrastra sobre la arena y usa el botón Embestir. Controles táctiles definitivos y mando en fase 6.
 
@@ -36,7 +39,7 @@ npm run build
 npm run test:e2e
 ```
 
-Los 145 tests de lógica y recursos incluyen ejecución y evolución de las 18 técnicas, compatibilidades y tres simulaciones completas de cinco minutos sin trucos. Las quince pruebas E2E usan el build de producción en el puerto 4173 y verifican controles, pausa, mejoras, resultados, diseño móvil, catálogo, las 18 técnicas en el banco, la evolución desde un cofre, tripulación, 30 vistas de formas, sprites propios y la ruta de GitHub Pages. La victoria E2E usa salud restaurada en depuración; verifica interfaz, no dificultad.
+`npm test` verifica lógica, recursos, migración de monedas, colisiones, objetivos, roles e Imu. Incluye partidas completas sin restaurar salud, una simulación de 61 minutos con entrenamiento máximo y dos nakama, y una escena sintética de estrés con 150 enemigos. La prueba larga puede tardar varios minutos. `npm run test:e2e` comprueba el build real, móvil, ajustes, compras, cofres, vínculos y las tres fases de Imu. Los recorridos largos de interfaz usan depuración y no demuestran balance de una hora.
 
 El entorno cloud ya tiene Chromium en `/usr/bin/chromium`. Fuera de él puedes usar `CHROMIUM_PATH=/ruta/al/navegador npm run test:e2e` o instalar el navegador de Playwright con `npx playwright install chromium`. No requiere ese navegador para jugar, compilar ni ejecutar los tests de lógica.
 

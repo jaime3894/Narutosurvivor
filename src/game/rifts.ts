@@ -1,3 +1,6 @@
+import { sustainedDamage } from "./techniques";
+import { survivalRules } from "../data/survival";
+import { updateImu, updateImuZones } from "./imu";
 import { terrainTime } from "../data/missions";
 import { freePosition } from "./terrain";
 import { bossMoves, bossRepertoire, fanPatterns } from "../data/boss-moves";
@@ -27,7 +30,14 @@ export function spawnRift(run: Run, kind?: BossId): boolean {
       ),
     },
     remaining: riftRules.ttl,
-    boss: kind ?? bossOrder[run.bossesDefeated % bossOrder.length] ?? "buggy",
+    boss:
+      kind ??
+      (run.mission === "survival"
+        ? (["buggy", "kuro", "arlong", "mr1", "crocodile"] as const)
+        : bossOrder)[
+        run.bossesDefeated % (run.mission === "survival" ? 5 : bossOrder.length)
+      ] ??
+      "buggy",
   };
   run.rift.position = freePosition(
     run.rift.position,
@@ -43,6 +53,8 @@ export function spawnRift(run: Run, kind?: BossId): boolean {
 }
 function schedule(run: Run): void {
   run.nextRiftTime = run.elapsed + riftRules.interval;
+  run.nextRiftEarliest =
+    run.elapsed + (run.mission === "survival" ? survivalRules.riftRest : 0);
   run.nextRiftKills = run.kills + riftRules.killInterval;
 }
 export function enterRift(run: Run): boolean {
@@ -63,8 +75,12 @@ export function enterRift(run: Run): boolean {
   const id = run.nextId++,
     definition = bosses[rift.boss],
     health =
-      definition.health *
-      (1 + run.elapsed / 450 + run.bossesDefeated * 0.18) *
+      (rift.boss === "imu"
+        ? Math.max(definition.health, sustainedDamage(run) * 60)
+        : definition.health) *
+      (rift.boss === "imu"
+        ? 1
+        : 1 + Math.min(run.elapsed / 450, 6) + run.bossesDefeated * 0.12) *
       (rift.encounter?.health ?? 1);
   run.arena = {
     ...(rift.encounter ? { encounter: rift.encounter } : {}),
@@ -108,6 +124,8 @@ export function enterRift(run: Run): boolean {
   run.attacks = [];
   run.projectiles = [];
   run.hazards = [];
+  run.imuZones = [];
+  run.shots = [];
   run.rift = null;
   notify(
     run,
@@ -128,6 +146,8 @@ export function finishArena(run: Run, victory: boolean): void {
   run.attacks = [];
   run.projectiles = [];
   run.hazards = [];
+  run.imuZones = [];
+  run.shots = [];
   run.effects = [];
   run.player.invulnerable = 1;
   schedule(run);
@@ -135,6 +155,15 @@ export function finishArena(run: Run, victory: boolean): void {
     if (arena.encounter) {
       run.director.nextEncounter = arena.encounter.index + 1;
       if (arena.encounter.role === "final") run.director.finalDefeated = true;
+    }
+    if (
+      run.director.imuSpawned &&
+      !run.director.imuDefeated &&
+      arena.encounter?.index === 60
+    ) {
+      run.director.imuDefeated = true;
+      run.berries += survivalRules.secretReward;
+      notify(run, "Imu derrotado · +1000 berries · comienza el Nuevo Mundo");
     }
     run.bossesDefeated++;
     offerBossRewards(run);
@@ -214,6 +243,11 @@ function emitFan(
 export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
   const state = enemy.boss;
   if (!state) return;
+  if (state.kind === "imu") {
+    updateImu(run, enemy, dt);
+    clampBoss(run, enemy);
+    return;
+  }
   const d = bosses[state.kind],
     p = run.player.position,
     move = bossMoves[state.move],
@@ -335,6 +369,7 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
 export function updateRifts(run: Run, dt: number): void {
   if (run.arena) {
     run.arena.remaining -= dt;
+    updateImuZones(run, dt);
     for (const h of run.hazards) {
       h.position.x += h.velocity.x * dt;
       h.position.y += h.velocity.y * dt;
@@ -367,7 +402,8 @@ export function updateRifts(run: Run, dt: number): void {
     )
       enterRift(run);
   } else if (
-    run.mission === "voyage" &&
+    (run.mission === "voyage" || run.mission === "survival") &&
+    run.elapsed >= run.nextRiftEarliest &&
     (run.elapsed >= run.nextRiftTime || run.kills >= run.nextRiftKills)
   )
     spawnRift(run);

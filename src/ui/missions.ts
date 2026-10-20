@@ -6,7 +6,7 @@ export function openMissions(onStart: (id: MissionId) => void): void {
     dialog = document.createElement("dialog");
   dialog.className = "mission-dialog settings-dialog";
   dialog.setAttribute("aria-label", "Islas y jefes");
-  dialog.innerHTML = `<header><div><p class="eyebrow">RUMBO A LA GRAN LÍNEA</p><h1>Islas y jefes</h1></div><button id="close-missions">Volver</button></header><p>Cinco minutos de travesía, minijefes y un duelo final. El reloj se detiene en las arenas. Vence al jefe final para completar la isla.</p><div class="mission-grid">${Object.values(
+  dialog.innerHTML = `<header><div><p class="eyebrow">RUMBO A LA GRAN LÍNEA</p><h1>Islas y jefes</h1></div><button id="close-missions">Volver</button></header><p>Práctica por capítulos: cinco minutos de travesía, minijefes y un duelo final. El reloj se detiene en las arenas. Vence al jefe final para completar la isla.</p><div class="mission-grid">${Object.values(
     missions,
   )
     .map(
@@ -15,7 +15,7 @@ export function openMissions(onStart: (id: MissionId) => void): void {
     )
     .join(
       "",
-    )}</div><p class="settings-help">El botón principal del puerto conserva la travesía libre con grietas opcionales. Estas misiones tienen encuentros obligatorios y derrota si agotas el tiempo del duelo. Alabasta está disponible para probarla sin bloqueo de cuenta.</p>`;
+    )}</div><p class="settings-help">El botón principal inicia supervivencia sin límite: zonas cada 4 minutos, grietas opcionales e Imu al minuto 60. Estas misiones tienen encuentros obligatorios y derrota si agotas el tiempo del duelo. Alabasta está disponible para probarla sin bloqueo de cuenta.</p>`;
   dialog
     .querySelector("#close-missions")
     ?.addEventListener("click", () => dialog.close());

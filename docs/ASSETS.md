@@ -145,3 +145,14 @@ Mr.1 y Crocodile tienen arte original creado con asistencia de IA, sin recursos 
 - Presupuesto de todos los PNG precargados: **10 MB**, ampliado desde 9 por estos cuatro atlas (aproximadamente 450 KB adicionales). El test suma los cinco jefes y sus marchas; los E2E verifican celdas distintas, transparencia y ausencia de cortes. No se relaja el presupuesto individual de 100 KB de poses ni 500 KB de marcha.
 
 Límites: tres cuartos y espejo lateral; los ataques de cada jefe utilizan dos claves corporales compartidas además de su patrón/telegráfico propio. No se prometen animaciones oficiales ni dibujos independientes en 360 grados.
+
+
+## Imu v10 y colisiones de escenario
+
+- Fuente original con asistencia de IA: `docs/art-source/imu-v10.png`, figura de fan de túnica/corona, sin sprites oficiales ni capturas del anime. La hoja fuente no se precarga en el juego.
+- `assets/bosses/imu-v10.png`: 1536×128, seis celdas 256×128: frente, espalda, anticipación, lanzas, eclipse, rayos. Ancla (128,118).
+- `assets/bosses/imu-walk-v10.png`: 1152×256, seis pasos de frente y seis de espalda. Celda 192×128, ancla (96,118).
+- Exportación: `node scripts/compile-imu-art.mjs docs/art-source/imu-v10.png`; después `node scripts/optimize-png.mjs public/assets/bosses/imu-v10.png public/assets/bosses/imu-walk-v10.png`. Extracción por componentes y cortes de fila medidos para no incluir fragmentos de figuras vecinas. Compresión sin pérdida, sin redibujar el material de origen.
+- El presupuesto de precarga sigue siendo 10 MB y suma los seis jefes. Los patrones de Imu seleccionan tres ejecuciones corporales diferentes; sus proyectiles y avisos son geometría original del juego. Perfiles laterales por espejo.
+- Los props v7 ya no son todos transitables: `data/terrain.ts` registra sus bases poligonales en coordenadas del atlas. Si sustituyes un objeto por arte con otra base, adapta esos vértices. La copa o el rectángulo completo de una celda no se usan como hitbox.
+- Barriles, suministros y cajas fuertes reutilizan tres ilustraciones originales del atlas v7 con anillo/rotulación y progreso de interacción. No se han descargado recursos de Pokesurvivor ni de búsquedas de imágenes para esta revisión.

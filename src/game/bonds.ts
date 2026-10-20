@@ -72,14 +72,30 @@ export function offerBossRewards(run: Run): void {
       });
     }
   }
-  // Siempre hay recompensa útil, incluso después de maximizar todos los atributos.
-  if (!run.bossRewards.length)
-    run.bossRewards.push({
-      kind: "boon",
-      id: "health",
-      title: "Reserva de vida",
-      detail: "+25 vida máxima y recuperas 25",
-    });
+  const supplies: Run["bossRewards"] = [
+    {
+      kind: "supply",
+      id: "berries",
+      title: "Botín del jefe",
+      detail: "+100 berries de partida",
+    },
+    {
+      kind: "supply",
+      id: "rest",
+      title: "Respiro de la tripulación",
+      detail: "Recupera el 40% de tu vida máxima",
+    },
+    {
+      kind: "supply",
+      id: "haste",
+      title: "Impulso de victoria",
+      detail: "12 segundos de velocidad y cadencia",
+    },
+  ];
+  while (run.bossRewards.length < 3) {
+    const supply = supplies.shift();
+    if (supply) run.bossRewards.push(supply);
+  }
   run.rewardSerial++;
   run.status = "bossReward";
 }
@@ -93,7 +109,27 @@ export function chooseBossReward(run: Run, index: number): boolean {
     run.rewardSerial++;
     return true;
   }
-  if (reward.id === "bond") return false;
+  if (reward.kind === "supply") {
+    if (reward.id === "berries") run.berries += 100;
+    else if (reward.id === "rest")
+      run.player.health.current = Math.min(
+        run.player.health.maximum,
+        run.player.health.current + run.player.health.maximum * 0.4,
+      );
+    else if (reward.id === "haste") run.haste = Math.max(run.haste, 12);
+    else return false;
+    finishReward(run);
+    return true;
+  }
+  if (
+    reward.id === "bond" ||
+    reward.id === "berries" ||
+    reward.id === "rest" ||
+    reward.id === "haste" ||
+    run.boons[reward.id] >= boons[reward.id].max
+  )
+    return false;
+
   run.boons[reward.id]++;
   if (reward.id === "health") {
     run.player.health.maximum += 25;

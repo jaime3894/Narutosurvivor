@@ -1,5 +1,6 @@
+import { survivalRules } from "./survival";
 import type { BossId } from "./rifts";
-export type MissionId = "voyage" | "east-blue" | "alabasta";
+export type MissionId = "survival" | "voyage" | "east-blue" | "alabasta";
 export interface WaveDefinition {
   at: number;
   name: string;
@@ -18,7 +19,7 @@ export interface EncounterDefinition {
   seconds: number;
 }
 export interface MissionDefinition {
-  id: Exclude<MissionId, "voyage">;
+  id: Exclude<MissionId, "voyage" | "survival">;
   name: string;
   description: string;
   duration: number;
@@ -47,7 +48,7 @@ const wave = (
   damage,
 });
 export const missions: Readonly<
-  Record<Exclude<MissionId, "voyage">, MissionDefinition>
+  Record<Exclude<MissionId, "voyage" | "survival">, MissionDefinition>
 > = {
   "east-blue": {
     id: "east-blue",
@@ -122,17 +123,19 @@ export function terrainTime(
   seconds: number,
   mission: MissionId = "voyage",
 ): number {
-  return mission === "east-blue"
-    ? Math.min(seconds, 239)
-    : mission === "alabasta"
-      ? 240 + seconds
-      : seconds;
+  return mission === "survival"
+    ? [0, 120, 240][Math.floor(seconds / survivalRules.zoneSeconds) % 3]!
+    : mission === "east-blue"
+      ? Math.min(seconds, 239)
+      : mission === "alabasta"
+        ? 240 + seconds
+        : seconds;
 }
 export function waveAt(
   seconds: number,
   mission: MissionId,
 ): WaveDefinition | undefined {
-  if (mission === "voyage") return undefined;
+  if (mission === "voyage" || mission === "survival") return undefined;
   const waves = missions[mission].waves;
   return [...waves].reverse().find((w) => seconds >= w.at) ?? waves[0];
 }

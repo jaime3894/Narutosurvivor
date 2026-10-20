@@ -24,7 +24,22 @@ export function pilot(run: Run): Input {
         y: run.arena.center.y + Math.sin(arenaTime * 0.9) * 195,
       }
     : undefined;
+  const supplies =
+    run.mission === "survival" &&
+    run.player.health.current < run.player.health.maximum * 0.75
+      ? run.fieldObjects
+          .filter((o) => o.kind === "supplies")
+          .sort(
+            (a, b) =>
+              Math.hypot(a.position.x - player.x, a.position.y - player.y) -
+              Math.hypot(b.position.x - player.x, b.position.y - player.y),
+          )[0]?.position
+      : undefined;
+  const survivalHeal =
+    run.mission === "survival" ? healing[0]?.position : undefined;
   const goal = arenaGoal ??
+    supplies ??
+    survivalHeal ??
     run.rift?.position ??
     nearestDrop?.position ?? {
       x: 1200 + Math.cos(phase) * 370,
@@ -55,6 +70,18 @@ export function pilot(run: Run): Input {
     }
     if (d < 70) close++;
   }
+  if (run.mission === "survival")
+    for (const shot of run.shots) {
+      const dx = player.x - shot.position.x,
+        dy = player.y - shot.position.y,
+        len = Math.hypot(dx, dy) || 1;
+      if (len < 110) {
+        const side = shot.velocity.x * dy - shot.velocity.y * dx >= 0 ? 1 : -1,
+          speed = Math.hypot(shot.velocity.x, shot.velocity.y) || 1;
+        x += (-shot.velocity.y / speed) * side * 2.5;
+        y += (shot.velocity.x / speed) * side * 2.5;
+      }
+    }
   for (const shell of run.director.buster?.shells ?? []) {
     const dx = player.x - shell.position.x,
       dy = player.y - shell.position.y,
@@ -63,6 +90,17 @@ export function pilot(run: Run): Input {
       x += (dx / len) * 3;
       y += (dy / len) * 3;
     }
+  }
+  if (!run.arena) {
+    const len = Math.hypot(x, y) || 1;
+    const safe = steerAround(
+      player,
+      { x: player.x + (x / len) * 100, y: player.y + (y / len) * 100 },
+      run.player.radius,
+      terrainTime(run.elapsed, run.mission),
+    );
+    x = safe.x;
+    y = safe.y;
   }
   return {
     x,

@@ -2,7 +2,10 @@ import {
   defaultRenderPreferences,
   type RenderPreferences,
 } from "../core/preferences";
-import { drawWorld } from "./world";
+import { drawField } from "./field";
+import { propsInArea } from "../data/terrain";
+import { terrainTime } from "../data/missions";
+import { drawWorld, drawWorldProp } from "./world";
 import { drawBoss } from "./boss-assets";
 import { drawRifts, drawBossTelegraph } from "./rifts";
 import { drawProjectile } from "./projectile";
@@ -99,15 +102,53 @@ export class BattleRenderer {
       run.elapsed,
       {
         lighting: prefs.level > 0,
+        decorations: false,
         mission: run.mission,
         ...(run.arena ? { clear: { ...run.arena.center, radius: 290 } } : {}),
       },
     );
     drawRifts(ctx, run, this.reducedMotion);
     drawLoot(ctx, run, this.reducedMotion);
-    for (const enemy of [...run.enemies].sort(
-      (a, b) => a.position.y - b.position.y,
-    )) {
+    drawField(ctx, run);
+    const layers = [
+      ...run.enemies.map((enemy) => ({
+        kind: "enemy" as const,
+        y: enemy.position.y,
+        enemy,
+      })),
+      ...propsInArea(
+        terrainTime(run.elapsed, run.mission),
+        camX,
+        camY,
+        VIEW_WIDTH,
+        VIEW_HEIGHT,
+      )
+        .filter(
+          (prop) =>
+            !run.arena ||
+            Math.hypot(
+              prop.x - run.arena.center.x,
+              prop.y - run.arena.center.y,
+            ) > 370,
+        )
+        .map((prop) => ({ kind: "prop" as const, y: prop.y, prop })),
+      { kind: "player" as const, y: player.position.y },
+    ].sort((a, b) => a.y - b.y);
+    for (const layer of layers) {
+      if (layer.kind === "prop") {
+        drawWorldProp(ctx, layer.prop);
+        continue;
+      }
+      if (layer.kind === "player") {
+        ctx.globalAlpha =
+          player.invulnerable > 0 && Math.floor(run.elapsed * 18) % 2 === 0
+            ? 0.65
+            : 1;
+        drawFighter(ctx, run, this.reducedMotion);
+        ctx.globalAlpha = 1;
+        continue;
+      }
+      const enemy = layer.enemy;
       if (
         enemy.position.x < camX - 40 ||
         enemy.position.x > camX + VIEW_WIDTH + 40 ||
@@ -184,11 +225,6 @@ export class BattleRenderer {
         );
       }
     }
-    ctx.globalAlpha =
-      player.invulnerable > 0 && Math.floor(run.elapsed * 18) % 2 === 0
-        ? 0.65
-        : 1;
-    drawFighter(ctx, run, this.reducedMotion);
     drawTechniques(ctx, run, this.reducedMotion);
     ctx.globalAlpha = 1;
     if (player.dashTime > 0) {

@@ -1,4 +1,28 @@
 export const bossMoves = {
+  shadowFan: {
+    name: "Lanzas del vacío",
+    windup: 1.25,
+    active: 0.5,
+    recovery: 1.5,
+    range: 460,
+    damage: 1,
+  },
+  eclipse: {
+    name: "Eclipse del trono",
+    windup: 1.6,
+    active: 0.6,
+    recovery: 1.8,
+    range: 85,
+    damage: 1.2,
+  },
+  throneRay: {
+    name: "Sentencia del trono",
+    windup: 1.5,
+    active: 0.6,
+    recovery: 2,
+    range: 600,
+    damage: 1.3,
+  },
   bladeCross: {
     name: "Spider · corte de acero",
     windup: 1,
@@ -122,6 +146,7 @@ export const bossMoves = {
 } as const;
 export type BossMoveId = keyof typeof bossMoves;
 export const bossRepertoire = {
+  imu: ["shadowFan", "eclipse", "throneRay"],
   mr1: ["bladeCross", "bladeDash", "bladeFan"],
   crocodile: ["sandFan", "sandTomb", "hookDash"],
   buggy: ["knifeFan", "bomb", "knifeRing"],

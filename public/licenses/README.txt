@@ -21,3 +21,5 @@ Revisión v7: escenarios y props assets/world/*-v7.png, iconos assets/icons/icon
 Tipografía Pixelify Sans: Google Fonts, SIL Open Font License 1.1. Texto íntegro en PixelifySans-OFL.txt; distribuida sin modificar. Referencia de origen fijada en docs/ASSETS.md.
 
 Jefes de isla v9: assets/bosses/{mr1,crocodile}-v9.png y *-walk-v9.png. Arte original creado para este proyecto con asistencia de IA, corregido y adaptado a atlas transparentes. No son sprites extraídos de juegos ni del anime. Fuentes, exportación y límites en docs/ASSETS.md. Personajes y nombres de One Piece pertenecen a sus titulares; proyecto fan no oficial.
+
+Imu v10: assets/bosses/imu-v10.png y imu-walk-v10.png. Ilustración original de fan creada para este proyecto con asistencia de IA, no extraída de juegos ni del anime. Fuente y exportación en docs/ASSETS.md. Nombre/personaje pertenece a sus titulares; los ataques del juego son adaptaciones originales y no una afirmación canónica.

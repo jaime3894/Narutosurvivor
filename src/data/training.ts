@@ -130,7 +130,6 @@ export const emptyPreparation = (): Preparation => ({
   banned: [],
 });
 export interface SailorRecord {
-  berries: number;
   levels: TrainingLevels;
   starter?: WeaponId;
   banned: WeaponId[];
@@ -140,7 +139,8 @@ export interface SailorRecord {
   kills: number;
 }
 export interface Profile {
-  version: 1;
+  version: 2;
+  berries: number;
   selected: CharacterId;
   sailors: Record<CharacterId, SailorRecord>;
   receipts: string[];

@@ -9,6 +9,15 @@ export const riftRules = {
   maxBond: 4,
 } as const;
 export const bosses = {
+  imu: {
+    name: "Imu · El Trono Vacío",
+    subtitle: "Jefe secreto · tres fases",
+    health: 180000,
+    damage: 54,
+    speed: 95,
+    radius: 28,
+    color: "#ce8de5",
+  },
   mr1: {
     name: "Mr.1 · Daz Bones",
     subtitle: "Supa Supa · acero cortante",
@@ -57,10 +66,15 @@ export const bosses = {
 } as const;
 export type BossId = keyof typeof bosses;
 export const bossOrder: readonly BossId[] = ["buggy", "kuro", "arlong"];
-export const allBosses: readonly BossId[] = [...bossOrder, "mr1", "crocodile"];
+export const allBosses: readonly BossId[] = [
+  ...bossOrder,
+  "mr1",
+  "crocodile",
+  "imu",
+];
 export const bossArt = (id: BossId): { poses: string; walk: string } => ({
-  poses: `assets/bosses/${id}-${id === "mr1" || id === "crocodile" ? "v9" : "v6"}.png`,
-  walk: `assets/bosses/${id}-walk-${id === "mr1" || id === "crocodile" ? "v9" : "v7"}.png`,
+  poses: `assets/bosses/${id}-${id === "imu" ? "v10" : id === "mr1" || id === "crocodile" ? "v9" : "v6"}.png`,
+  walk: `assets/bosses/${id}-walk-${id === "imu" ? "v10" : id === "mr1" || id === "crocodile" ? "v9" : "v7"}.png`,
 });
 export const boons = {
   damage: {

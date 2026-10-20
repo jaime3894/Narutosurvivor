@@ -39,15 +39,70 @@ export function nearbyObstacles(
       result.push(...(map.get(`${x},${y}`) ?? []));
   return result;
 }
+/** Punto más cercano y normal exterior sobre el polígono de la base. */
+function penetration(
+  position: Position,
+  radius: number,
+  p: WorldProp,
+): Position | undefined {
+  const vertices = p.footprint;
+  if (!vertices.length) return;
+  let inside = false,
+    nearest = Infinity,
+    qx = 0,
+    qy = 0,
+    nx = 0,
+    ny = 0;
+  for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+    const a = vertices[j]!,
+      b = vertices[i]!;
+    if (
+      a.y > position.y !== b.y > position.y &&
+      position.x < ((b.x - a.x) * (position.y - a.y)) / (b.y - a.y) + a.x
+    )
+      inside = !inside;
+    const dx = b.x - a.x,
+      dy = b.y - a.y,
+      l = dx * dx + dy * dy;
+    const t = Math.max(
+      0,
+      Math.min(
+        1,
+        ((position.x - a.x) * dx + (position.y - a.y) * dy) / (l || 1),
+      ),
+    );
+    const x = a.x + t * dx,
+      y = a.y + t * dy,
+      d = Math.hypot(position.x - x, position.y - y);
+    if (d < nearest) {
+      nearest = d;
+      qx = x;
+      qy = y;
+      nx = dy / Math.sqrt(l || 1);
+      ny = -dx / Math.sqrt(l || 1);
+    }
+  }
+  if (!inside && nearest >= radius - 0.001) return;
+  if (nearest > 0.0001) {
+    nx = (position.x - qx) / nearest;
+    ny = (position.y - qy) / nearest;
+    if (inside) {
+      nx = -nx;
+      ny = -ny;
+    }
+  }
+  return {
+    x: qx + nx * (radius + 0.02) - position.x,
+    y: qy + ny * (radius + 0.02) - position.y,
+  };
+}
 export function blocked(
   position: Position,
   radius: number,
   seconds: number,
 ): boolean {
-  return nearbyObstacles(position, seconds, radius + 40).some(
-    (p) =>
-      Math.hypot(position.x - p.x, position.y - p.centerY) <
-      radius + p.radius - 0.001,
+  return nearbyObstacles(position, seconds, radius + 95).some((p) =>
+    Boolean(penetration(position, radius, p)),
   );
 }
 export function resolveObstacles(
@@ -55,18 +110,13 @@ export function resolveObstacles(
   radius: number,
   seconds: number,
 ): void {
-  const near = nearbyObstacles(position, seconds, radius + 45);
-  for (let pass = 0; pass < 3; pass++)
+  const near = nearbyObstacles(position, seconds, radius + 95);
+  for (let pass = 0; pass < 4; pass++)
     for (const p of near) {
-      const dx = position.x - p.x,
-        dy = position.y - p.centerY,
-        d = Math.hypot(dx, dy),
-        r = radius + p.radius;
-      if (d < r) {
-        const nx = d > 0.0001 ? dx / d : 1,
-          ny = d > 0.0001 ? dy / d : 0;
-        position.x = p.x + nx * (r + 0.01);
-        position.y = p.centerY + ny * (r + 0.01);
+      const push = penetration(position, radius, p);
+      if (push) {
+        position.x += push.x;
+        position.y += push.y;
       }
     }
   const margin = combat.world.shore + radius;

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-test("compras por personaje persistentes y aplicadas al empezar, sin gastar la bolsa de otros", async ({
+test("compras por personaje persistentes y aplicadas al empezar, con bolsa compartida", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -13,7 +13,7 @@ test("compras por personaje persistentes y aplicadas al empezar, sin gastar la b
   await expect(dialog.locator(".wallet")).toContainText("60");
   await expect(dialog.locator('[data-train="damage"]')).toBeDisabled();
   await dialog.locator("#training-character").selectOption("zoro");
-  await expect(dialog.locator(".wallet")).toContainText("120");
+  await expect(dialog.locator(".wallet")).toContainText("60");
   await dialog.locator("#training-character").selectOption("luffy");
   await expect(dialog.locator(".wallet")).toContainText("60");
   await page.getByRole("button", { name: "Volver", exact: true }).click();
@@ -28,7 +28,7 @@ test("compras por personaje persistentes y aplicadas al empezar, sin gastar la b
     window.__MAREA_DEBUG__!.advance(0.1);
   });
   await expect(page.locator(".results-account")).toContainText(
-    "berries para Luffy",
+    "berries para tu cuenta",
   );
   await page.getByRole("button", { name: "Volver al puerto" }).click();
   await expect(page.locator(".port-record")).toContainText("TRAVESÍAS 1");
@@ -57,13 +57,13 @@ test("menú y mejoras móviles: sin desbordar, coste y retorno accesibles", asyn
     page.getByRole("button", { name: "Zarpar hacia East Blue" }),
   ).toBeVisible();
 });
-test("el escenario cambia a 2:00 y 4:00 y las cartas llevan iconos ilustrados", async ({
+test("el escenario cambia a 4:00 y 8:00 y las cartas llevan iconos ilustrados", async ({
   page,
 }) => {
   await page.goto("/?debug");
   await page.getByRole("button", { name: "Zarpar hacia East Blue" }).click();
   const shots = new Set<string>();
-  for (const t of [0, 120, 240]) {
+  for (const t of [0, 240, 480]) {
     await page.evaluate((t) => window.__MAREA_DEBUG__!.setTime(t), t);
     shots.add(
       await page
