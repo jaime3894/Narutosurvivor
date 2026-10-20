@@ -907,3 +907,7 @@ select {
 .training-loadout h2 {
   letter-spacing: 0;
 }
+
+.mission-banner {
+  background: linear-gradient(135deg, var(--island-color, #87adbc), #142a45);
+}

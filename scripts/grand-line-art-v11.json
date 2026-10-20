@@ -1,0 +1,72 @@
+[
+  {
+    "name": "sky-cp-poses",
+    "kind": "poses",
+    "ids": ["satori", "enel", "blueno"],
+    "source": "docs/art-source/sky-cp-poses-v11.png"
+  },
+  {
+    "name": "cp-shadow-poses",
+    "kind": "poses",
+    "ids": ["lucci", "absalom", "moria"],
+    "source": "docs/art-source/cp-shadow-poses-v11.png"
+  },
+  {
+    "name": "navy-poses",
+    "kind": "poses",
+    "ids": ["sentomaru", "akainu", "diamante"],
+    "source": "docs/art-source/navy-poses-v11.png"
+  },
+  {
+    "name": "new-world-poses",
+    "kind": "poses",
+    "ids": ["doflamingo", "king", "kaido"],
+    "source": "docs/art-source/new-world-poses-v11.png"
+  },
+  {
+    "name": "grand-line-tiles",
+    "kind": "tiles",
+    "source": "docs/art-source/grand-line-tiles-v11.png"
+  },
+  {
+    "name": "grand-line-props",
+    "kind": "props",
+    "source": "docs/art-source/grand-line-props-v11.png"
+  },
+  {
+    "name": "navy-walk",
+    "kind": "walk",
+    "ids": ["sentomaru", "akainu", "diamante"],
+    "source": "docs/art-source/navy-walk-v11.png"
+  },
+  {
+    "name": "enemies-a",
+    "kind": "enemies",
+    "ids": ["skypiea", "enies-lobby", "thriller-bark"],
+    "source": "docs/art-source/enemies-a-v11.png"
+  },
+  {
+    "name": "sky-cp-walk",
+    "kind": "walk",
+    "ids": ["satori", "enel", "blueno"],
+    "source": "docs/art-source/sky-cp-walk-v11.png"
+  },
+  {
+    "name": "cp-shadow-walk",
+    "kind": "walk",
+    "ids": ["lucci", "absalom", "moria"],
+    "source": "docs/art-source/cp-shadow-walk-v11.png"
+  },
+  {
+    "name": "new-world-walk",
+    "kind": "walk",
+    "ids": ["doflamingo", "king", "kaido"],
+    "source": "docs/art-source/new-world-walk-v11.png"
+  },
+  {
+    "name": "enemies-b",
+    "kind": "enemies",
+    "ids": ["marineford", "dressrosa", "wano"],
+    "source": "docs/art-source/enemies-b-v11.png"
+  }
+]

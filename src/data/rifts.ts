@@ -9,6 +9,115 @@ export const riftRules = {
   maxBond: 4,
 } as const;
 export const bosses = {
+  satori: {
+    name: "Satori · Prueba de las esferas",
+    subtitle: "Mantra y esferas sorpresa",
+    health: 1600,
+    damage: 20,
+    speed: 80,
+    radius: 26,
+    color: "#f1dcad",
+  },
+  enel: {
+    name: "Enel · Dios del trueno",
+    subtitle: "Goro Goro · descargas celestes",
+    health: 3300,
+    damage: 29,
+    speed: 98,
+    radius: 24,
+    color: "#aee9ff",
+  },
+  blueno: {
+    name: "Blueno · CP9",
+    subtitle: "Doa Doa · puertas y Tekkai",
+    health: 1900,
+    damage: 24,
+    speed: 90,
+    radius: 25,
+    color: "#a0b4ca",
+  },
+  lucci: {
+    name: "Rob Lucci · CP9",
+    subtitle: "Rokushiki · leopardo",
+    health: 3700,
+    damage: 31,
+    speed: 115,
+    radius: 25,
+    color: "#dbbd7d",
+  },
+  absalom: {
+    name: "Absalom · Cementerio",
+    subtitle: "Brazos armados del león",
+    health: 1850,
+    damage: 24,
+    speed: 95,
+    radius: 24,
+    color: "#dccaa6",
+  },
+  moria: {
+    name: "Gecko Moria",
+    subtitle: "Kage Kage · ejército de sombras",
+    health: 3900,
+    damage: 30,
+    speed: 75,
+    radius: 33,
+    color: "#b793d6",
+  },
+  sentomaru: {
+    name: "Sentomaru · Guardia de la Marina",
+    subtitle: "Ashigara · palma y hacha",
+    health: 2400,
+    damage: 27,
+    speed: 75,
+    radius: 30,
+    color: "#e39281",
+  },
+  akainu: {
+    name: "Sakazuki · Akainu",
+    subtitle: "Magu Magu · puño de magma",
+    health: 4300,
+    damage: 35,
+    speed: 85,
+    radius: 27,
+    color: "#f09a66",
+  },
+  diamante: {
+    name: "Diamante · Familia Donquixote",
+    subtitle: "Hira Hira · capa y estoque",
+    health: 2100,
+    damage: 25,
+    speed: 100,
+    radius: 24,
+    color: "#de9b83",
+  },
+  doflamingo: {
+    name: "Donquixote Doflamingo",
+    subtitle: "Ito Ito · hilos del cielo",
+    health: 4200,
+    damage: 33,
+    speed: 105,
+    radius: 25,
+    color: "#e6a0cb",
+  },
+  king: {
+    name: "King · El Incendio",
+    subtitle: "Alas oscuras y fuego",
+    health: 2700,
+    damage: 30,
+    speed: 110,
+    radius: 26,
+    color: "#d99b74",
+  },
+  kaido: {
+    name: "Kaido · Rey de las Bestias",
+    subtitle: "Kanabo y aliento de dragón",
+    health: 5200,
+    damage: 38,
+    speed: 85,
+    radius: 36,
+    color: "#a3abd5",
+  },
+
   imu: {
     name: "Imu · El Trono Vacío",
     subtitle: "Jefe secreto · tres fases",
@@ -71,11 +180,32 @@ export const allBosses: readonly BossId[] = [
   "mr1",
   "crocodile",
   "imu",
+  "satori",
+  "enel",
+  "blueno",
+  "lucci",
+  "absalom",
+  "moria",
+  "sentomaru",
+  "akainu",
+  "diamante",
+  "doflamingo",
+  "king",
+  "kaido",
 ];
-export const bossArt = (id: BossId): { poses: string; walk: string } => ({
-  poses: `assets/bosses/${id}-${id === "imu" ? "v10" : id === "mr1" || id === "crocodile" ? "v9" : "v6"}.png`,
-  walk: `assets/bosses/${id}-walk-${id === "imu" ? "v10" : id === "mr1" || id === "crocodile" ? "v9" : "v7"}.png`,
-});
+export const bossArt = (id: BossId): { poses: string; walk: string } => {
+  const version = (["buggy", "kuro", "arlong"] as string[]).includes(id)
+    ? { poses: "v6", walk: "v7" }
+    : id === "mr1" || id === "crocodile"
+      ? { poses: "v9", walk: "v9" }
+      : id === "imu"
+        ? { poses: "v10", walk: "v10" }
+        : { poses: "v11", walk: "v11" };
+  return {
+    poses: `assets/bosses/${id}-${version.poses}.png`,
+    walk: `assets/bosses/${id}-walk-${version.walk}.png`,
+  };
+};
 export const boons = {
   damage: {
     title: "Voluntad del conquistador",

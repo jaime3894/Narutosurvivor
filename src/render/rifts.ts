@@ -1,3 +1,9 @@
+import {
+  regionalMoves,
+  elementColors,
+  type RegionalMoveId,
+} from "../data/regional-bosses";
+import { drawElementProjectile, isRegionalElement } from "./regional-effects";
 import { busterRules } from "../data/missions";
 import { bossMoves, fanPatterns } from "../data/boss-moves";
 import { bosses, riftRules } from "../data/rifts";
@@ -81,9 +87,16 @@ export function drawRifts(
   }
   for (const z of run.imuZones) {
     ctx.save();
-    ctx.strokeStyle = z.warning > 0 ? "#eac2ff" : "#ffdaf3";
-    ctx.fillStyle =
-      z.warning > 0 ? "rgba(169,93,206,.17)" : "rgba(194,99,218,.65)";
+    ctx.strokeStyle = z.element
+      ? elementColors[z.element][0]
+      : z.warning > 0
+        ? "#eac2ff"
+        : "#ffdaf3";
+    ctx.fillStyle = z.element
+      ? `${elementColors[z.element][1]}${z.warning > 0 ? "33" : "aa"}`
+      : z.warning > 0
+        ? "rgba(169,93,206,.17)"
+        : "rgba(194,99,218,.65)";
     if (z.end) {
       ctx.lineWidth = z.radius * 2;
       ctx.lineCap = "round";
@@ -99,21 +112,36 @@ export function drawRifts(
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(z.position.x, z.position.y, z.radius, 0, Math.PI * 2);
-      ctx.fill();
+      if (z.innerRadius) {
+        ctx.moveTo(z.position.x + z.innerRadius, z.position.y);
+        ctx.arc(
+          z.position.x,
+          z.position.y,
+          z.innerRadius,
+          0,
+          Math.PI * 2,
+          true,
+        );
+      }
+      ctx.fill("evenodd");
       ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(z.position.x - 10, z.position.y);
-      ctx.lineTo(z.position.x + 10, z.position.y);
-      ctx.moveTo(z.position.x, z.position.y - 10);
-      ctx.lineTo(z.position.x, z.position.y + 10);
-      ctx.stroke();
+      if (!z.innerRadius) {
+        ctx.beginPath();
+        ctx.moveTo(z.position.x - 10, z.position.y);
+        ctx.lineTo(z.position.x + 10, z.position.y);
+        ctx.moveTo(z.position.x, z.position.y - 10);
+        ctx.lineTo(z.position.x, z.position.y + 10);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }
   for (const h of run.hazards) {
     ctx.save();
     ctx.translate(h.position.x, h.position.y - (h.kind === "bomb" ? 0 : 34));
-    if (h.kind === "bomb") {
+    if (isRegionalElement(h.kind)) {
+      drawElementProjectile(ctx, h.kind, h.velocity, h.radius);
+    } else if (h.kind === "bomb") {
       const progress = 1 - h.life / 0.35;
       ctx.strokeStyle = "#ffd189";
       ctx.fillStyle = "rgba(244,146,62,.22)";
@@ -122,7 +150,7 @@ export function drawRifts(
       ctx.arc(0, 0, h.radius * (0.6 + progress * 0.4), 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-    } else if (h.kind === "shadow") {
+    } else if (h.kind === "void") {
       ctx.rotate(Math.atan2(h.velocity.y, h.velocity.x));
       ctx.fillStyle = "#301a43";
       ctx.strokeStyle = "#dc9cee";
@@ -179,6 +207,7 @@ export function drawBossTelegraph(
   ctx.lineWidth = 3;
   if (
     b.kind !== "imu" &&
+    !(b.move in regionalMoves) &&
     (b.phase === "windup" ||
       (b.phase === "attack" && (b.move === "slam" || b.move === "claw")))
   ) {
@@ -253,6 +282,27 @@ export function drawBossTelegraph(
       ctx.lineTo(
         enemy.position.x + Math.cos(t) * 460,
         enemy.position.y + Math.sin(t) * 460,
+      );
+      ctx.stroke();
+    }
+  }
+  const regional =
+    b.move in regionalMoves
+      ? regionalMoves[b.move as RegionalMoveId]
+      : undefined;
+  if (regional?.behavior === "fan" && b.phase === "windup") {
+    const count =
+        regional.count +
+        (enemy.health.current < enemy.health.maximum * 0.5 ? 2 : 0),
+      a = Math.atan2(b.direction.y, b.direction.x);
+    ctx.strokeStyle = elementColors[regional.element][0];
+    for (let i = 0; i < count; i++) {
+      const t = a + (i - (count - 1) / 2) * regional.spread;
+      ctx.beginPath();
+      ctx.moveTo(enemy.position.x, enemy.position.y);
+      ctx.lineTo(
+        enemy.position.x + Math.cos(t) * regional.range,
+        enemy.position.y + Math.sin(t) * regional.range,
       );
       ctx.stroke();
     }

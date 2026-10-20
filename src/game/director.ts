@@ -1,3 +1,5 @@
+import { islandAt } from "../data/islands";
+import { bosses } from "../data/rifts";
 import { survivalRules } from "../data/survival";
 import { busterRules, missions, terrainTime } from "../data/missions";
 import { freePosition } from "./terrain";
@@ -26,11 +28,7 @@ export function updateDirector(run: Run, dt: number): void {
   if (run.mission === "voyage") return;
   const definition =
       missions[
-        run.mission === "survival"
-          ? terrainTime(run.elapsed, run.mission) >= 240
-            ? "alabasta"
-            : "east-blue"
-          : run.mission
+        run.mission === "survival" ? islandAt(run.elapsed).id : run.mission
       ],
     state = run.director;
   const next =
@@ -49,7 +47,7 @@ export function updateDirector(run: Run, dt: number): void {
       run.rift!.remaining = 5;
       notify(
         run,
-        `${next.role === "final" ? "JEFE FINAL" : "MINIJEFE"} · ${next.boss === "mr1" ? "Mr.1" : next.boss === "crocodile" ? "Crocodile" : next.boss} · el duelo empieza en 5 s`,
+        `${next.role === "final" ? "JEFE FINAL" : "MINIJEFE"} · ${bosses[next.boss].name} · el duelo empieza en 5 s`,
       );
     }
   }

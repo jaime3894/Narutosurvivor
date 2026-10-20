@@ -1,3 +1,4 @@
+import { newIslandIds } from "../data/islands";
 import { loadWorldAssets } from "./world-assets";
 import { loadBossAtlases } from "./boss-assets";
 import { loadLuffyLayers } from "./luffy-assets";
@@ -32,6 +33,7 @@ export async function loadCustomAtlases(): Promise<void> {
         [0, 1, 2].map((tier) => `hero:${character.id}:${tier}`),
       ),
       ...Object.keys(enemyTypes).map((kind) => `enemy:${kind}`),
+      ...newIslandIds.map((id) => `faction:${id}`),
     ]);
     await Promise.all(
       Object.entries(manifest).map(async ([key, path]: [string, unknown]) => {

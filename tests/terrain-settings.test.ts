@@ -1,3 +1,5 @@
+import { islands } from "../src/data/islands";
+import { emptyPreparation } from "../src/data/training";
 import { describe, expect, it } from "vitest";
 import { combat } from "../src/data/combat";
 import { worldProps } from "../src/data/terrain";
@@ -21,7 +23,7 @@ describe("terreno sólido compartido", () => {
     expect(props.every((p) => p.size >= 76 && p.size <= 94)).toBe(true);
     expect(blocked({ x: 1200, y: 900 }, 12, 0)).toBe(false);
   });
-  it.each([0, 120, 240])(
+  it.each([0, 120, 240, 360, 480, 600, 720, 840, 960])(
     "impide atravesar sólidos incluso embistiendo en etapa %s",
     (time) => {
       for (const p of worldProps(time)
@@ -68,10 +70,17 @@ describe("terreno sólido compartido", () => {
     }
     expect(run.player.position.x).toBeGreaterThan(p.x + 50);
   });
-  it.each([0, 120, 240])(
+  it.each([0, 120, 240, 360, 480, 600, 720, 840, 960])(
     "cofres y grietas nunca nacen dentro de sólidos (%s)",
     (time) => {
-      const run = createRun(1);
+      const island = Object.values(islands).find((i) => i.terrain === time);
+      const run = createRun(
+        1,
+        "luffy",
+        [],
+        emptyPreparation(),
+        time >= 360 ? island!.id : "voyage",
+      );
       run.elapsed = time;
       const p = worldProps(time).find((p) => p.radius > 0)!;
       spawnChest(run, { x: p.x, y: p.centerY });

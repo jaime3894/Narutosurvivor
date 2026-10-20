@@ -504,3 +504,11 @@
     height: 60px;
   }
 }
+
+/* Mantiene el contraste sobre las nubes de Skypiea y el hielo de Marineford. */
+.field-clock small {
+  background: #0d213bd9;
+  color: #f3ead3;
+  border-radius: 6px;
+  padding: 4px 8px;
+}

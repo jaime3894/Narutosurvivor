@@ -98,7 +98,7 @@ export function updateImu(run: Run, enemy: Enemy, dt: number): void {
           radius: 9,
           damage: bosses.imu.damage,
           life: 3,
-          kind: "shadow",
+          kind: "void",
         });
       }
     }
@@ -116,35 +116,4 @@ export function updateImu(run: Run, enemy: Enemy, dt: number): void {
   )
     hurtPlayer(run, bosses.imu.damage);
 }
-export function updateImuZones(run: Run, dt: number): void {
-  for (const z of run.imuZones) {
-    if (z.warning > 0) {
-      z.warning -= dt;
-      continue;
-    }
-    z.life -= dt;
-    let x = z.position.x,
-      y = z.position.y;
-    if (z.end) {
-      const dx = z.end.x - x,
-        dy = z.end.y - y,
-        t = Math.max(
-          0,
-          Math.min(
-            1,
-            ((run.player.position.x - x) * dx +
-              (run.player.position.y - y) * dy) /
-              (dx * dx + dy * dy || 1),
-          ),
-        );
-      x += t * dx;
-      y += t * dy;
-    }
-    if (
-      distanceSquared({ x, y }, run.player.position) <
-      (z.radius + run.player.radius) ** 2
-    )
-      hurtPlayer(run, z.damage);
-  }
-  run.imuZones = run.imuZones.filter((z) => z.life > 0);
-}
+export { updateDangerZones as updateImuZones } from "./danger-zones";

@@ -70,18 +70,17 @@ export function pilot(run: Run): Input {
     }
     if (d < 70) close++;
   }
-  if (run.mission === "survival")
-    for (const shot of run.shots) {
-      const dx = player.x - shot.position.x,
-        dy = player.y - shot.position.y,
-        len = Math.hypot(dx, dy) || 1;
-      if (len < 110) {
-        const side = shot.velocity.x * dy - shot.velocity.y * dx >= 0 ? 1 : -1,
-          speed = Math.hypot(shot.velocity.x, shot.velocity.y) || 1;
-        x += (-shot.velocity.y / speed) * side * 2.5;
-        y += (shot.velocity.x / speed) * side * 2.5;
-      }
+  for (const shot of run.shots) {
+    const dx = player.x - shot.position.x,
+      dy = player.y - shot.position.y,
+      len = Math.hypot(dx, dy) || 1;
+    if (len < 110) {
+      const side = shot.velocity.x * dy - shot.velocity.y * dx >= 0 ? 1 : -1,
+        speed = Math.hypot(shot.velocity.x, shot.velocity.y) || 1;
+      x += (-shot.velocity.y / speed) * side * 2.5;
+      y += (shot.velocity.x / speed) * side * 2.5;
     }
+  }
   for (const shell of run.director.buster?.shells ?? []) {
     const dx = player.x - shell.position.x,
       dy = player.y - shell.position.y,
@@ -89,6 +88,33 @@ export function pilot(run: Run): Input {
     if (len < 100) {
       x += (dx / len) * 3;
       y += (dy / len) * 3;
+    }
+  }
+  for (const zone of run.imuZones) {
+    let zx = zone.position.x,
+      zy = zone.position.y;
+    if (zone.end) {
+      const vx = zone.end.x - zx,
+        vy = zone.end.y - zy,
+        t = Math.max(
+          0,
+          Math.min(
+            1,
+            ((player.x - zx) * vx + (player.y - zy) * vy) /
+              (vx * vx + vy * vy || 1),
+          ),
+        );
+      zx += vx * t;
+      zy += vy * t;
+    }
+    const dx = player.x - zx,
+      dy = player.y - zy,
+      len = Math.hypot(dx, dy) || 1;
+    if (len < zone.radius + 45 && len > (zone.innerRadius ?? 0) - 35) {
+      const sign =
+        zone.innerRadius && len < (zone.radius + zone.innerRadius) / 2 ? -1 : 1;
+      x += (dx / len) * sign * 4;
+      y += (dy / len) * sign * 4;
     }
   }
   if (!run.arena) {

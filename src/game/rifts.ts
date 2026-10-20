@@ -1,6 +1,9 @@
 import { sustainedDamage } from "./techniques";
 import { survivalRules } from "../data/survival";
-import { updateImu, updateImuZones } from "./imu";
+import { updateRegionalBoss } from "./regional-bosses";
+import { regionalRepertoires } from "../data/regional-bosses";
+import { islandAt } from "../data/islands";
+import { updateImu } from "./imu";
 import { terrainTime } from "../data/missions";
 import { freePosition } from "./terrain";
 import { bossMoves, bossRepertoire, fanPatterns } from "../data/boss-moves";
@@ -33,10 +36,14 @@ export function spawnRift(run: Run, kind?: BossId): boolean {
     boss:
       kind ??
       (run.mission === "survival"
-        ? (["buggy", "kuro", "arlong", "mr1", "crocodile"] as const)
-        : bossOrder)[
-        run.bossesDefeated % (run.mission === "survival" ? 5 : bossOrder.length)
-      ] ??
+        ? run.elapsed < 480
+          ? (["buggy", "kuro", "arlong", "mr1", "crocodile"][
+              run.bossesDefeated % 5
+            ] as BossId)
+          : run.bossesDefeated % 2
+            ? islandAt(run.elapsed).boss
+            : islandAt(run.elapsed).miniboss
+        : bossOrder[run.bossesDefeated % bossOrder.length]) ??
       "buggy",
   };
   run.rift.position = freePosition(
@@ -248,6 +255,11 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
     clampBoss(run, enemy);
     return;
   }
+  if (state.kind in regionalRepertoires) {
+    updateRegionalBoss(run, enemy, dt);
+    clampBoss(run, enemy);
+    return;
+  }
   const d = bosses[state.kind],
     p = run.player.position,
     move = bossMoves[state.move],
@@ -369,7 +381,7 @@ export function updateBoss(run: Run, enemy: Enemy, dt: number): void {
 export function updateRifts(run: Run, dt: number): void {
   if (run.arena) {
     run.arena.remaining -= dt;
-    updateImuZones(run, dt);
+
     for (const h of run.hazards) {
       h.position.x += h.velocity.x * dt;
       h.position.y += h.velocity.y * dt;

@@ -1,3 +1,4 @@
+import type { IslandId } from "../data/islands";
 import { replacementAtlas } from "./asset-loader";
 import type { CharacterId } from "../data/content";
 import type { FormTier } from "../data/crew";
@@ -593,8 +594,10 @@ export function getSpriteAtlas(
 }
 export function getEnemyAtlas(
   kind: EnemyKind,
+  faction?: IslandId,
 ): HTMLCanvasElement | HTMLImageElement {
   return (
+    (faction ? replacementAtlas(`faction:${faction}`) : undefined) ??
     replacementAtlas(`enemy:${kind}`) ??
     atlas(`enemy:${kind}`, (ctx, d, s, f) => paintEnemy(ctx, kind, d, s, f))
   );

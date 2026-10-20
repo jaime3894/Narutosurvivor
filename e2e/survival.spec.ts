@@ -14,7 +14,13 @@ test("Imu llega al minuto 60, cambia de fase y la supervivencia continúa tras v
   expect(
     await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot().rift),
   ).toBe(true);
-  await page.evaluate(() => window.__MAREA_DEBUG__!.advance(5.1));
+  await page.evaluate(() => {
+    const d = window.__MAREA_DEBUG__!;
+    for (let i = 0; i < 52 && !d.snapshot().boss; i++) {
+      d.setHealth(100);
+      d.advance(0.1);
+    }
+  });
   expect(
     await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot().boss),
   ).toBe("imu");

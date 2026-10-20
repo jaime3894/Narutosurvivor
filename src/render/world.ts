@@ -22,16 +22,16 @@ function patterns(ctx: CanvasRenderingContext2D): CanvasPattern[] {
   if (source === image && tiles.length) return tiles;
   source = image;
   tiles = [];
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < (worldAsset("terrain-extra") ? 20 : 8); i++) {
     const c = document.createElement("canvas");
     c.width = 128;
     c.height = 128;
     const sc = c.getContext("2d")!;
     sc.imageSmoothingEnabled = false;
     sc.drawImage(
-      image,
-      (i % 4) * 128,
-      Math.floor(i / 4) * 128,
+      i >= 8 ? worldAsset("terrain-extra")! : image,
+      ((i >= 8 ? i - 8 : i) % 4) * 128,
+      Math.floor((i >= 8 ? i - 8 : i) / 4) * 128,
       128,
       128,
       0,
@@ -82,7 +82,8 @@ export function drawWorld(
   }
   ctx.save();
   ctx.fillStyle =
-    ps[stage.id === "coast" ? 1 : stage.id === "harbor" ? 7 : 5] ?? "#b8a178";
+    ps[stage.id === "coast" ? 1 : stage.id === "harbor" ? 7 : stage.path] ??
+    "#b8a178";
   ctx.globalAlpha = stage.id === "coast" ? 0.72 : 0.8;
   for (const patch of groundPatches) {
     if (
@@ -182,9 +183,10 @@ export function drawWorldProp(
   ctx: CanvasRenderingContext2D,
   prop: WorldProp,
 ): void {
-  const props = worldAsset("props");
+  const props = worldAsset(prop.id >= 12 ? "props-extra" : "props");
   if (!props) return;
-  const { x, y, id, size } = prop;
+  const { x, y, size } = prop;
+  const id = prop.id >= 12 ? prop.id - 12 : prop.id;
   ctx.drawImage(
     props,
     (id % 4) * 128,

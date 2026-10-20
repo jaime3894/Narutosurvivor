@@ -1,3 +1,5 @@
+import type { IslandId } from "../data/islands";
+import type { RegionalElement } from "../data/regional-bosses";
 import type { MissionId } from "../data/missions";
 import type { BossMoveId } from "../data/boss-moves";
 import type { Preparation } from "../data/training";
@@ -37,6 +39,7 @@ export interface Enemy {
   health: Health;
   kind: EnemyKind;
   elite?: boolean;
+  faction?: IslandId;
   role?: "rifle" | "shield" | "officer";
   roleTimer?: number;
   aim?: Position;
@@ -49,6 +52,7 @@ export interface Enemy {
   boss?: {
     kind: BossId;
     imuPhase?: 1 | 2 | 3;
+    guard?: boolean;
     move: BossMoveId;
     cycle: number;
     walkTime: number;
@@ -183,7 +187,15 @@ export interface Hazard {
   radius: number;
   damage: number;
   life: number;
-  kind: "knife" | "wave" | "bomb" | "claw" | "sand" | "shadow";
+  kind:
+    | "void"
+    | "knife"
+    | "wave"
+    | "bomb"
+    | "claw"
+    | "sand"
+    | "shadow"
+    | RegionalElement;
 }
 export interface BossReward {
   kind: "bond" | "boon" | "supply";
@@ -208,8 +220,11 @@ export interface FieldObject {
   remaining: number;
 }
 export interface Run {
+  islandTimer: number;
   imuZones: {
     position: Position;
+    element?: RegionalElement;
+    innerRadius?: number;
     end?: Position;
     radius: number;
     warning: number;

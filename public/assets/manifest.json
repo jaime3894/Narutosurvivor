@@ -31,5 +31,11 @@
   "hero:jinbe:2": "assets/characters/jinbe-2.png",
   "enemy:sailor": "assets/enemies/sailor.png",
   "enemy:runner": "assets/enemies/runner.png",
-  "enemy:brute": "assets/enemies/brute.png"
+  "enemy:brute": "assets/enemies/brute.png",
+  "faction:skypiea": "assets/enemies/skypiea-v11.png",
+  "faction:enies-lobby": "assets/enemies/enies-lobby-v11.png",
+  "faction:thriller-bark": "assets/enemies/thriller-bark-v11.png",
+  "faction:marineford": "assets/enemies/marineford-v11.png",
+  "faction:dressrosa": "assets/enemies/dressrosa-v11.png",
+  "faction:wano": "assets/enemies/wano-v11.png"
 }

@@ -1,8 +1,11 @@
+import { islandAt } from "../data/islands";
 import { survivalRules, fieldRules, survivalPressure } from "../data/survival";
 import { terrainTime } from "../data/missions";
 import { missions, waveAt, type MissionId } from "../data/missions";
 import { updateField } from "./field";
 import { updateEnemyRole, updateShots } from "./enemy-roles";
+import { updateDangerZones } from "./danger-zones";
+import { updateIslandEvents } from "./island-events";
 import { updateDirector } from "./director";
 import { moveOnTerrain, freePosition, steerAround } from "./terrain";
 import { voyageStage } from "../data/voyage";
@@ -58,6 +61,7 @@ export function createRun(
   }
   const health = combat.player.health + preparation.levels.health * 8;
   return {
+    islandTimer: 18,
     imuZones: [],
     fieldObjects: [],
     fieldTimer: fieldRules.firstAt,
@@ -214,8 +218,12 @@ function spawn(run: Run): void {
   run.enemies.push({
     id: run.nextId++,
     kind,
+    faction: islandAt(run.elapsed, run.mission).id,
     elite,
-    ...(run.mission === "survival" && run.elapsed > 40 && run.random() < 0.28
+    ...((run.mission === "survival" ||
+      !["voyage", "east-blue", "alabasta"].includes(run.mission)) &&
+    run.elapsed > 40 &&
+    run.random() < islandAt(run.elapsed, run.mission).roleChance
       ? {
           role:
             kind === "sailor"
@@ -279,6 +287,8 @@ export function step(run: Run, input: Input, dt: number): void {
     run.fieldObjects = [];
     run.shots = [];
     run.fieldTimer = 5;
+    run.islandTimer = 12;
+    run.imuZones = [];
     for (const drop of run.drops)
       drop.position = freePosition(
         drop.position,
@@ -301,6 +311,7 @@ export function step(run: Run, input: Input, dt: number): void {
     run.noticeTime = 6;
   }
   updateDirector(run, dt);
+  if (!run.arena) updateIslandEvents(run, dt);
   if (!run.arena) updateField(run, dt);
   updateCrew(run, dt);
   run.noticeTime = Math.max(0, run.noticeTime - dt);
@@ -446,6 +457,7 @@ export function step(run: Run, input: Input, dt: number): void {
       }
     }
   }
+  updateDangerZones(run, dt);
   if (!run.arena) updateShots(run, dt);
   if (player.health.current > 0) {
     updateTechniques(run, dt);

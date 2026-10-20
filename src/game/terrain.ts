@@ -1,11 +1,11 @@
 import { worldProps, type WorldProp } from "../data/terrain";
-import { voyageStage } from "../data/voyage";
+import { terrainStage } from "../data/voyage";
 import { combat } from "../data/combat";
 import type { Position } from "../core/entity";
 const bucketSize = 160;
 const indexes = new Map<string, Map<string, WorldProp[]>>();
 function index(seconds: number): Map<string, WorldProp[]> {
-  const key = voyageStage(seconds).id,
+  const key = terrainStage(seconds).id,
     cached = indexes.get(key);
   if (cached) return cached;
   const result = new Map<string, WorldProp[]>();

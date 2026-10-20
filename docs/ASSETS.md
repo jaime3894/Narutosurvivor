@@ -156,3 +156,15 @@ Límites: tres cuartos y espejo lateral; los ataques de cada jefe utilizan dos c
 - El presupuesto de precarga sigue siendo 10 MB y suma los seis jefes. Los patrones de Imu seleccionan tres ejecuciones corporales diferentes; sus proyectiles y avisos son geometría original del juego. Perfiles laterales por espejo.
 - Los props v7 ya no son todos transitables: `data/terrain.ts` registra sus bases poligonales en coordenadas del atlas. Si sustituyes un objeto por arte con otra base, adapta esos vértices. La copa o el rectángulo completo de una celda no se usan como hitbox.
 - Barriles, suministros y cajas fuertes reutilizan tres ilustraciones originales del atlas v7 con anillo/rotulación y progreso de interacción. No se han descargado recursos de Pokesurvivor ni de búsquedas de imágenes para esta revisión.
+
+## Grand Line v11 — seis islas adicionales
+
+Fuentes originales con asistencia de IA en `docs/art-source/*-v11.png`: cuatro grupos de poses y marcha (`sky-cp`, `cp-shadow`, `navy`, `new-world`), dos de esbirros y dos de entorno. No se sirven al navegador. No se incluyen sprites extraídos de juegos/anime ni imágenes de terceros sin licencia.
+
+- Doce jefes nuevos: atlas de cuatro poses 1024×128 (celda 256×128, pies 128/118) y marcha 1152×256 (seis pasos por vista, celda 192×128, pies 96/118). Escala uniforme dentro de cada hoja y márgenes transparentes.
+- Seis facciones registradas como `faction:<island>` en manifest: atlas 960×320, contrato anterior 64×80. Dos pasos distintos por dirección; otras claves reutilizadas. Si falta el atlas se conserva el enemigo integrado.
+- `world/terrain-v11.png`: 512×384, doce materiales 128×128. `world/props-v11.png`: 512×768, 24 objetos 128×128, pies 64/120. Las bases de colisión están medidas sobre el atlas exportado, sin usar las copas como paredes.
+- Reexportar: `node scripts/compile-grand-line-art.mjs scripts/grand-line-art-v11.json`; recomprimir: `node scripts/optimize-png.mjs public/assets/bosses/*v11.png public/assets/enemies/*v11.png public/assets/world/*v11.png`. El exportador conserva transparencia y componentes, no redibuja. La compresión no cambia píxeles.
+- Presupuesto total de precarga: 16 MB (antes 10), incluyendo todos los nuevos atlas y materiales. Poses v11 hasta 110 KB; anteriores conservan 100 KB. Marcha hasta 500 KB, facción hasta 250 KB. La ampliación se debe al contenido adicional, no al código.
+
+Límites artísticos: ataques de jefe comparten una clave de ejecución, vistas laterales espejadas y efectos propios mediante Canvas. No se prometen animaciones oficiales ni vistas completas de 360 grados. La punta del hacha de Sentomaru tiene margen reducido en la fuente; la exportación mantiene el cuerpo dentro de sus celdas.

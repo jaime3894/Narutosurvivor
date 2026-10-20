@@ -183,7 +183,7 @@ test("un atlas PNG local sustituye al personaje sin cambiar el código del juego
   await expect(page.locator("#battle")).toBeVisible();
 });
 
-test("los 33 atlas reales tienen transparencia, cuatro vistas y dos claves de marcha distintas", async ({
+test("los 39 atlas reales tienen transparencia, cuatro vistas y dos claves de marcha distintas", async ({
   page,
 }) => {
   const failures: string[] = [];
@@ -223,7 +223,7 @@ test("los 33 atlas reales tienen transparencia, cuatro vistas y dos claves de ma
       }),
     );
   });
-  expect(result).toHaveLength(33);
+  expect(result).toHaveLength(39);
   for (const atlas of result)
     for (const view of atlas.views) {
       expect(view.opaque, atlas.id).toBeGreaterThan(150);

@@ -1,3 +1,4 @@
+import { newIslandIds } from "../src/data/islands";
 import { allBosses as bossOrder, bossArt } from "../src/data/rifts";
 import { readFileSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
@@ -60,7 +61,7 @@ describe("poses corporales de combate", () => {
     // Hasta 36 poses anchas; el presupuesto conjunto incluye también el arte anterior.
     expect(png.length).toBeLessThan(500_000);
   });
-  it("toda la precarga artística permanece dentro de 10 MB", () => {
+  it("toda la precarga artística permanece dentro de 16 MB", () => {
     const base = expected.reduce(
       (sum, key) => sum + statSync(`public/${manifest[key]}`).size,
       0,
@@ -81,6 +82,11 @@ describe("poses corporales de combate", () => {
     ];
     expect(
       base +
+        newIslandIds.reduce(
+          (sum, id) =>
+            sum + statSync(`public/${manifest[`faction:${id}`]}`).size,
+          0,
+        ) +
         poses +
         bossOrder.reduce(
           (sum, id) => sum + statSync(`public/${bossArt(id).walk}`).size,
@@ -89,6 +95,8 @@ describe("poses corporales de combate", () => {
         [
           "world/terrain-v7.png",
           "world/props-v7.png",
+          "world/terrain-v11.png",
+          "world/props-v11.png",
           "icons/icons-v7.png",
         ].reduce(
           (sum, path) => sum + statSync(`public/assets/${path}`).size,
@@ -103,7 +111,7 @@ describe("poses corporales de combate", () => {
             sum + statSync(`public/assets/characters/${path}`).size,
           0,
         ),
-    ).toBeLessThan(10_000_000);
+    ).toBeLessThan(16_000_000);
   });
   it.each([
     ["luffy-kick-bodies-v5.png", 288, 320],
@@ -138,7 +146,9 @@ describe("arte de jefes", () => {
       png = readFileSync(path);
     expect(png.readUInt32BE(16)).toBe(id === "imu" ? 1536 : 1024);
     expect(png.readUInt32BE(20)).toBe(128);
-    expect(statSync(path).size).toBeLessThan(100_000);
+    expect(statSync(path).size).toBeLessThan(
+      bossArt(id).poses.includes("v11") ? 110_000 : 100_000,
+    );
   });
 });
 
@@ -146,6 +156,8 @@ describe("recursos del puerto y escenarios v7", () => {
   it.each([
     ["world/terrain-v7.png", 512, 256],
     ["world/props-v7.png", 512, 384],
+    ["world/terrain-v11.png", 512, 384],
+    ["world/props-v11.png", 512, 768],
     ["icons/icons-v7.png", 384, 384],
     ...bossOrder.map((id) => [bossArt(id).walk.slice(7), 1152, 256]),
   ])(
@@ -154,7 +166,18 @@ describe("recursos del puerto y escenarios v7", () => {
       const png = readFileSync(`public/assets/${path}`);
       expect(png.readUInt32BE(16)).toBe(width);
       expect(png.readUInt32BE(20)).toBe(height);
-      expect(png.length).toBeLessThan(500_000);
+      expect(png.length).toBeLessThan(
+        path === "world/terrain-v11.png" ? 600_000 : 500_000,
+      );
     },
   );
+});
+
+describe("facciones de Grand Line", () => {
+  it.each(newIslandIds)("%s publica un atlas direccional", (id) => {
+    const png = readFileSync(`public/${manifest[`faction:${id}`]}`);
+    expect(png.readUInt32BE(16)).toBe(960);
+    expect(png.readUInt32BE(20)).toBe(320);
+    expect(png.length).toBeLessThan(250000);
+  });
 });

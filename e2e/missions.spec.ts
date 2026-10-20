@@ -39,6 +39,12 @@ test("un jefe solo ofrece vincular ataques aprendidos y conserva sus rangos", as
 for (const [mission, bosses] of [
   ["east-blue", ["buggy", "kuro", "arlong"]],
   ["alabasta", ["mr1", "crocodile"]],
+  ["skypiea", ["satori", "enel"]],
+  ["enies-lobby", ["blueno", "lucci"]],
+  ["thriller-bark", ["absalom", "moria"]],
+  ["marineford", ["sentomaru", "akainu"]],
+  ["dressrosa", ["diamante", "doflamingo"]],
+  ["wano", ["king", "kaido"]],
 ] as const) {
   test(`${mission}: minijefes, Buster Call y victoria final por interfaz (recorrido asistido por depuración)`, async ({
     page,
@@ -69,6 +75,15 @@ for (const [mission, bosses] of [
       expect(
         (await page.evaluate(() => window.__MAREA_DEBUG__!.snapshot())).boss,
       ).toBe(bosses[index]);
+      // Recorre anticipación, ataque y recuperación; la salud se fija solo en este recorrido visual asistido.
+      await page.evaluate(() => {
+        const d = window.__MAREA_DEBUG__!;
+        for (let i = 0; i < 130; i++) {
+          d.setHealth(100);
+          d.setBossHealth(1);
+          d.advance(0.1);
+        }
+      });
       await page
         .getByRole("button", { name: "Derrotar jefe", exact: true })
         .click();
@@ -116,6 +131,14 @@ for (const [mission, bosses] of [
     expect(final.status).toBe("playing");
     expect(final.boss).toBe(bosses.at(-1));
     expect(final.finalDefeated).toBe(false);
+    await page.evaluate(() => {
+      const d = window.__MAREA_DEBUG__!;
+      for (let i = 0; i < 130; i++) {
+        d.setHealth(100);
+        d.setBossHealth(1);
+        d.advance(0.1);
+      }
+    });
     await page
       .getByRole("button", { name: "Derrotar jefe", exact: true })
       .click();
@@ -136,7 +159,16 @@ for (const [mission, bosses] of [
     await expect(
       page.getByRole("dialog", { name: "Resultados" }),
     ).toContainText(
-      mission === "east-blue" ? "East Blue completada" : "Alabasta completada",
+      {
+        "east-blue": "East Blue",
+        alabasta: "Alabasta",
+        skypiea: "Skypiea",
+        "enies-lobby": "Enies Lobby",
+        "thriller-bark": "Thriller Bark",
+        marineford: "Marineford",
+        dressrosa: "Dressrosa",
+        wano: "Wano",
+      }[mission] + " completada",
     );
     expect(errors).toEqual([]);
   });
@@ -153,23 +185,38 @@ test("selector de islas móvil: contenido y botones accesibles", async ({
   await expect(
     page.getByRole("dialog", { name: "Islas y jefes" }),
   ).toBeVisible();
-  await page.locator('[data-mission="alabasta"]').scrollIntoViewIfNeeded();
-  await expect(page.locator('[data-mission="alabasta"]')).toBeInViewport();
+  await page.locator('[data-mission="wano"]').scrollIntoViewIfNeeded();
+  await expect(page.locator('[data-mission="wano"]')).toBeInViewport();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);
 });
 
-test("Mr.1 y Crocodile publican poses y doce dibujos de marcha transparentes sin recortes", async ({
+test("los nuevos atlas de jefes conservan dibujos separados, transparencia y márgenes", async ({
   page,
 }) => {
   await page.goto("/");
   const reports = await page.evaluate(async () => {
     const reports = [];
-    for (const id of ["mr1", "crocodile"])
+    for (const id of [
+      "mr1",
+      "crocodile",
+      "satori",
+      "enel",
+      "blueno",
+      "lucci",
+      "absalom",
+      "moria",
+      "sentomaru",
+      "akainu",
+      "diamante",
+      "doflamingo",
+      "king",
+      "kaido",
+    ])
       for (const kind of ["poses", "walk"]) {
         const image = new Image();
-        image.src = `assets/bosses/${id}${kind === "walk" ? "-walk" : ""}-v9.png`;
+        image.src = `assets/bosses/${id}${kind === "walk" ? "-walk" : ""}-v${["mr1", "crocodile"].includes(id) ? 9 : 11}.png`;
         await image.decode();
         const width = kind === "walk" ? 192 : 256,
           rows = kind === "walk" ? 2 : 1,

@@ -40,7 +40,7 @@ describe("supervivencia continua", () => {
       [0, 239.99, 240, 479.99, 480, 720].map(
         (t) => voyageStage(t, "survival").id,
       ),
-    ).toEqual(["coast", "coast", "harbor", "harbor", "desert", "coast"]);
+    ).toEqual(["coast", "coast", "harbor", "harbor", "desert", "sky"]);
     const run = survival();
     run.elapsed = 299.99;
     run.spawnTimer = 100;

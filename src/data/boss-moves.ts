@@ -1,4 +1,6 @@
+import { regionalMoves, regionalRepertoires } from "./regional-bosses";
 export const bossMoves = {
+  ...regionalMoves,
   shadowFan: {
     name: "Lanzas del vacío",
     windup: 1.25,
@@ -146,6 +148,7 @@ export const bossMoves = {
 } as const;
 export type BossMoveId = keyof typeof bossMoves;
 export const bossRepertoire = {
+  ...regionalRepertoires,
   imu: ["shadowFan", "eclipse", "throneRay"],
   mr1: ["bladeCross", "bladeDash", "bladeFan"],
   crocodile: ["sandFan", "sandTomb", "hookDash"],

@@ -183,7 +183,12 @@ export function hitEnemy(
     (facing.x * sourceX + facing.y * sourceY) /
       (Math.hypot(sourceX, sourceY) || 1) >
       Math.cos(0.8);
-  const amount = damage * (critical ? 1.7 : 1) * firstCut * (guarded ? 0.6 : 1);
+  const amount =
+    damage *
+    (critical ? 1.7 : 1) *
+    firstCut *
+    (guarded ? 0.6 : 1) *
+    (enemy.boss?.guard ? 0.45 : 1);
   if (source && caster === "brook" && form > 0) enemy.slow = 1.2;
   if (source && caster === "sanji" && form > 0) {
     enemy.burn = 2;

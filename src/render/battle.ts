@@ -191,7 +191,7 @@ export class BattleRenderer {
       if (!drawBoss(ctx, enemy, player.position, this.reducedMotion))
         drawSprite(
           ctx,
-          getEnemyAtlas(enemy.kind),
+          getEnemyAtlas(enemy.kind, enemy.faction),
           enemy.position,
           direction,
           enemy.flash > 0 ? "hurt" : "walk",

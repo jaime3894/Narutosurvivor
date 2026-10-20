@@ -1,6 +1,6 @@
 # Marea de aventuras
 
-Survivor pirata web de One Piece. **Supervivencia continua:** zonas cada cuatro minutos, grietas con jefes, técnicas vinculadas e Imu al minuto 60. Diez capitanes con tres formas, 18 técnicas y 14 pasivos. Monedas globales y entrenamiento propio por capitán. Las misiones cortas de East Blue y Alabasta siguen disponibles como práctica. Arte original creado para el juego; no contiene sprites oficiales extraídos.
+Survivor pirata web de One Piece. **Supervivencia continua:** zonas cada cuatro minutos, grietas con jefes, técnicas vinculadas e Imu al minuto 60. Diez capitanes con tres formas, 18 técnicas y 14 pasivos. Monedas globales y entrenamiento propio por capitán. Ocho islas disponibles como capítulos de práctica: East Blue, Alabasta, Skypiea, Enies Lobby, Thriller Bark, Marineford, Dressrosa y Wano. Dieciocho jefes en total. Arte original creado para el juego; no contiene sprites oficiales extraídos.
 
 ## Jugar online
 
@@ -22,6 +22,7 @@ Abre el puerto 5173 y pulsa **Zarpar hacia East Blue**.
 - **Escape / P:** pausa. Cambiar de pestaña también pausa.
 - **1 / 2 / 3** o clic: elegir mejora cuando subes de nivel.
 - Recoge cristales para ganar experiencia, carne para curarte y cofres para elegir una de tres recompensas.
+- Las zonas cambian cada cuatro minutos; la ruta completa dura 36 minutos y vuelve a empezar sin reiniciar tu build. Las islas nuevas aparecen desde 12:00. Usa **Islas y jefes** para practicarlas directamente.
 - En supervivencia: rompe barriles con ataques o embestida, recoge suministros y permanece tres segundos cerca de una caja fuerte para abrirla.
 - Fusileros anuncian sus tiros; árboles y piedras sirven de cobertura. Flanquea a los guardias y prioriza a los oficiales que curan.
 - La cuenta comparte berries entre todos los capitanes; las mejoras compradas pertenecen al capitán elegido.
