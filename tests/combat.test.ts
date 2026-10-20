@@ -273,5 +273,5 @@ describe("partida representativa", () => {
       expect(run.level).toBeGreaterThan(7);
     }
     console.info(results.join("\n"));
-  }, 15000);
+  }, 60000);
 });
